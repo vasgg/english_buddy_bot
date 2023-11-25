@@ -8,5 +8,5 @@ class Lesson(Base):
     __tablename__ = "lessons"
 
     title: Mapped[str]
-    slide_amount: Mapped[int]
+    slide_amount: Mapped[int | None]
     level: Mapped[LessonLevel | None]

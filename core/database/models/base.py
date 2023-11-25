@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON
+from sqlalchemy import JSON, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -13,4 +13,4 @@ class Base(DeclarativeBase):
     }
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow(), server_default=func.now())

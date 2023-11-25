@@ -9,4 +9,4 @@ class UserProgress(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
     current_lesson: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"))
-    current_slide: Mapped[int] = mapped_column(ForeignKey("slides.id", ondelete="CASCADE"))
+    current_slide: Mapped[int] = mapped_column(ForeignKey("slides.id", ondelete="CASCADE"), default=1)

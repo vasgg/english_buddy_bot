@@ -12,4 +12,9 @@ class Slide(Base):
     picture: Mapped[str | None]
     keyboard: Mapped[str | None]
     slide_type: Mapped[SlideType]
-    lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"), unique=True)
+    lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
+    right_answer: Mapped[str | None]
+    almost_right_answer: Mapped[str | None]
+    right_answer_reply: Mapped[str | None]
+    almost_right_answer_reply: Mapped[str | None]
+    wrong_answer_reply: Mapped[str | None]
