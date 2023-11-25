@@ -1,5 +1,6 @@
 from sqlalchemy import Result, select
 
+from core.database.models import UserProgress
 from core.database.models.user import User
 
 
@@ -22,3 +23,14 @@ async def get_user_from_db(event, session) -> User:
     if not user:
         user = await create_user_in_db(event, session)
     return user
+
+
+async def check_user_progress(user_id: int, lesson_number: int, session) -> UserProgress.current_slide:
+    query = select(UserProgress).filter(UserProgress.user_id == user_id, UserProgress.current_lesson == lesson_number)
+    result: Result = await session.execute(query)
+    user_progress = result.scalar()
+    if not user_progress:
+        user_progress = UserProgress(user_id=user_id, current_lesson=lesson_number)
+        session.add(user_progress)
+        await session.flush()
+    return user_progress.current_slide
