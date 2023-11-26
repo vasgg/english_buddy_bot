@@ -7,9 +7,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
     __abstract__ = True
-    
-    # TODO: убрать
-    __table_args__ = {"extend_existing": True}
     type_annotation_map = {
         dict[str, Any]: JSON
     }
