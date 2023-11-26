@@ -1,16 +1,13 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-start_keyboard = ReplyKeyboardMarkup(is_persistent=True,
-                                     resize_keyboard=True,
-                                     keyboard=[[KeyboardButton(text='📔 lessons')],
-                                               [KeyboardButton(text='📖 start lesson from beginning')]])
+from core.keyboards.callback_builders import LessonsCallbackFactory
 
 lesson_picker = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text='HE IS HAPPY', callback_data='lesson_1')],
-        [InlineKeyboardButton(text='HE IS NOT HAPPY', callback_data='lesson_2')],
-        [InlineKeyboardButton(text='IS HE HAPPY?', callback_data='lesson_3')],
-        [InlineKeyboardButton(text='HE IS A STUDENT', callback_data='lesson_4')],
-        [InlineKeyboardButton(text='COLORS AND OBJECTS', callback_data='lesson_5')],
+        [InlineKeyboardButton(text='HE IS HAPPY', callback_data=LessonsCallbackFactory(lesson_number=1).pack())],
+        [InlineKeyboardButton(text='HE IS NOT HAPPY', callback_data=LessonsCallbackFactory(lesson_number=2).pack())],
+        [InlineKeyboardButton(text='IS HE HAPPY?', callback_data=LessonsCallbackFactory(lesson_number=3).pack())],
+        [InlineKeyboardButton(text='HE IS A STUDENT', callback_data=LessonsCallbackFactory(lesson_number=4).pack())],
+        [InlineKeyboardButton(text='COLORS AND OBJECTS', callback_data=LessonsCallbackFactory(lesson_number=5).pack())],
     ]
 )
