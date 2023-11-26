@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 settings = Settings()
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s: "
     "%(filename)s: "
     "%(levelname)s: "
