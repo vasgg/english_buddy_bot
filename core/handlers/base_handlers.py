@@ -14,7 +14,8 @@ async def start_message(message: types.Message) -> None:
                               '📖 <b>start lesson from beginning</b> — начать текущий урок с начала',
                          reply_markup=start_keyboard)
 
-
+# TODO: вынести текст в переменные
+# TODO: заменить кнопки на выбор урока сразу
 @router.message(F.text == '📔 lessons')
 async def lessons_button_handler(message: types.Message) -> None:
     await message.answer(text='Выберите урок', reply_markup=lesson_picker)

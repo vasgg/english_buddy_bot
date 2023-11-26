@@ -7,7 +7,7 @@ from core.resources.enums import SlideType
 
 class Slide(Base):
     __tablename__ = "slides"
-
+    # TODO: кажется тоже optional
     text: Mapped[str]
     picture: Mapped[str | None]
     keyboard: Mapped[str | None]

@@ -15,10 +15,14 @@ async def get_lesson_slide_amount(lesson_number: int, session: AsyncSession) -> 
 
 
 async def lesson_routine(callback: types.CallbackQuery, lesson_number: int, current_slide: int, slide_amount: int, session: AsyncSession) -> None:
+    # TODO: assert
     if current_slide < slide_amount:
         text = await get_slide_text(lesson_number=lesson_number, slide_number=current_slide, session=session)
         image_file = await get_slide_picture(lesson_number=lesson_number, slide_number=current_slide, session=session)
         path = f'core/resources/images/lesson{lesson_number}/{image_file}'
+        
+        # TODO: not always has text and photo
+
         await callback.message.answer(text=text)
         await callback.message.answer_photo(photo=types.FSInputFile(path=path),
                                             reply_markup=get_further_button(current_slide=current_slide))
