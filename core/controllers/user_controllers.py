@@ -35,7 +35,9 @@ async def get_user_progress(user_id: int, lesson_number: int, session: AsyncSess
         session.add(user_progress)
         await session.flush()
     # TODO: разнести на 2 функции
-    if user_progress.current_slide < slide_number:
+    elif user_progress.current_slide < slide_number:
         user_progress.current_slide = slide_number
         await session.flush()
+    else:
+        user_progress.current_slide = 1
     return user_progress.current_slide
