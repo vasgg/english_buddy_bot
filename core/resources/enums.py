@@ -1,5 +1,12 @@
 from enum import Enum
 
+from aiogram.filters.state import State, StatesGroup
+
+
+class States(StatesGroup):
+    INPUT_WORD = State()
+    INPUT_PHRASE = State()
+
 
 class SlideType(Enum):
     TEXT = 'text'
