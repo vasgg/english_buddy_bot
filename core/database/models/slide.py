@@ -10,7 +10,7 @@ class Slide(Base):
 
     text: Mapped[str | None]
     picture: Mapped[str | None]
-    delay: Mapped[int | None]
+    delay: Mapped[int | None]  # TODO: сменить тип на float
     slide_type: Mapped[SlideType]
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
     right_answers: Mapped[str | None]
@@ -18,6 +18,6 @@ class Slide(Base):
     right_answer_reply: Mapped[str | None]
     almost_right_answer_reply: Mapped[str | None]
     wrong_answer_reply: Mapped[str | None]
-    wrong_answer_attempts: Mapped[int | None]
+    wrong_answer_attempts: Mapped[int | None]  # TODO: попытки надо накручивать не здесь, а учитывая ID пользователя (users_progress?)
     keyboard_type: Mapped[KeyboardType | None]
     keyboard: Mapped[str | None]
