@@ -1,11 +1,12 @@
-from sqlalchemy import Result, select, update
+from sqlalchemy import Result, delete, select
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database.models import UserProgress
 from core.database.models.user import User
 
 
-async def create_user_in_db(event, session) -> User:
+async def add_user_to_db(event, session) -> User:
     new_user = User(
         telegram_id=event.from_user.id,
         first_name=event.from_user.first_name,
@@ -22,22 +23,25 @@ async def get_user_from_db(event, session) -> User:
     result: Result = await session.execute(query)
     user = result.scalar()
     if not user:
-        user = await create_user_in_db(event, session)
+        user = await add_user_to_db(event, session)
     return user
 
 
-async def get_user_progress(user_id: int, lesson_number: int, session: AsyncSession, slide_number: int = None) -> UserProgress.current_slide:
-    query = select(UserProgress).filter(UserProgress.user_id == user_id, UserProgress.current_lesson == lesson_number)
+async def delete_user_progress(user_id: int, lesson_number: int, session: AsyncSession) -> None:
+    query = delete(UserProgress).filter(UserProgress.user_id == user_id,
+                                        UserProgress.current_lesson == lesson_number)
+    await session.execute(query)
+
+
+async def update_user_progress(user_id: int, lesson_number: int, session: AsyncSession, current_slide: int) -> None:
+    upsert_query = insert(UserProgress).values(user_id=user_id, current_lesson=lesson_number, current_slide=current_slide)
+    upsert_query = upsert_query.on_conflict_do_update(set_={UserProgress.current_slide: current_slide})
+    await session.execute(upsert_query)
+
+
+async def get_lesson_progress(user_id: int, lesson_number: int, session: AsyncSession) -> UserProgress.current_slide:
+    query = select(UserProgress.current_slide).filter(UserProgress.user_id == user_id,
+                                                       UserProgress.current_lesson == lesson_number)
     result: Result = await session.execute(query)
     user_progress = result.scalar()
-    if not user_progress:
-        user_progress = UserProgress(user_id=user_id, current_lesson=lesson_number)
-        session.add(user_progress)
-        await session.flush()
-    # TODO: разнести на 2 функции
-    elif user_progress.current_slide < slide_number:
-        user_progress.current_slide = slide_number
-        await session.flush()
-    else:
-        user_progress.current_slide = 1
-    return user_progress.current_slide
+    return user_progress

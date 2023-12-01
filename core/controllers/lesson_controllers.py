@@ -1,5 +1,6 @@
 import asyncio
 from random import sample
+from typing import Sequence
 
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
@@ -7,16 +8,10 @@ from sqlalchemy import Result, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.controllers.slide_controllers import get_slide
-from core.database.models import Lesson, User
-from core.keyboards.keyboard_builders import get_furher_button, get_quiz_keyboard
+from core.controllers.user_controllers import delete_user_progress, update_user_progress
+from core.database.models import Lesson, User, UserCompleteLesson
+from core.keyboards.keyboards import get_furher_button, get_quiz_keyboard
 from core.resources.enums import KeyboardType, SlideType, States
-
-
-async def get_lesson_slide_amount(lesson_number: int, session: AsyncSession) -> Lesson.slide_amount:
-    query = select(Lesson).filter(Lesson.id == lesson_number)
-    result: Result = await session.execute(query)
-    lesson = result.scalar()
-    return lesson.slide_amount
 
 
 async def get_lesson(lesson_number: int, session: AsyncSession) -> Lesson:
@@ -24,6 +19,26 @@ async def get_lesson(lesson_number: int, session: AsyncSession) -> Lesson:
     result: Result = await session.execute(query)
     lesson = result.scalar()
     return lesson
+
+
+async def get_lessons(session: AsyncSession) -> list[Lesson]:
+    query = select(Lesson)
+    result = await session.execute(query)
+    lessons = result.scalars().all()
+    return [row for row in lessons]
+
+
+async def add_completed_lesson_to_db(user_id: int, lesson_number: int, session: AsyncSession) -> None:
+    competed_lesson = UserCompleteLesson(user_id=user_id, lesson_id=lesson_number)
+    session.add(competed_lesson)
+    await session.flush()
+
+
+async def get_completed_lessons(user_id: int, session: AsyncSession) -> set[int]:
+    query = select(UserCompleteLesson.lesson_id).filter(UserCompleteLesson.user_id == user_id)
+    result = await session.execute(query)
+    completed_lessons_ids = {row[0] for row in result.all()}
+    return completed_lessons_ids
 
 
 async def lesson_routine(bot: Bot,
@@ -36,8 +51,11 @@ async def lesson_routine(bot: Bot,
     if current_slide > slide_amount:
         lesson = await get_lesson(lesson_number=lesson_number, session=session)
         await bot.send_message(chat_id=user.telegram_id, text=f'Поздравляем, вы прошли урок {lesson.title}')
+        await add_completed_lesson_to_db(user_id=user.id, lesson_number=lesson_number, session=session)
+        await delete_user_progress(user_id=user.id, lesson_number=lesson_number, session=session)
         return
     slide = await get_slide(lesson_number=lesson_number, slide_number=current_slide, session=session)
+    await update_user_progress(user_id=user.id, lesson_number=lesson_number, current_slide=slide.id, session=session)
     match slide.slide_type:
         case SlideType.TEXT:
             text = slide.text
