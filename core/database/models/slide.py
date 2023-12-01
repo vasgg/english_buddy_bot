@@ -18,6 +18,5 @@ class Slide(Base):
     right_answer_reply: Mapped[str | None]
     almost_right_answer_reply: Mapped[str | None]
     wrong_answer_reply: Mapped[str | None]
-    wrong_answer_attempts: Mapped[int | None]  # TODO: попытки надо накручивать не здесь, а учитывая ID пользователя (users_progress?)
     keyboard_type: Mapped[KeyboardType | None]
     keyboard: Mapped[str | None]
