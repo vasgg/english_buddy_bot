@@ -26,3 +26,9 @@ class LessonLevel(Enum):
 class KeyboardType(Enum):
     FURTHER = 'further'
     QUIZ = 'quiz'
+
+
+class UserLessonProgress(Enum):
+    NO_PROGRESS = 'no_progress'
+    IN_PROGRESS = 'in_progress'
+
