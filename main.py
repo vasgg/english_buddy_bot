@@ -7,8 +7,8 @@ from core.config import settings
 from core.middlewares.auth_middleware import AuthMiddleware
 from core.middlewares.session_middleware import SessionMiddleware
 from core.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
-# from core.resources.notify_admin import on_shutdown_notify, on_startup_notify
 from core.handlers.base_handlers import router as base_router
+# from core.resources.notify_admin import on_shutdown_notify, on_startup_notify
 # from core.handlers.errors_handler import router as errors_router
 from core.handlers.lesson_handlers import router as lesson_router
 

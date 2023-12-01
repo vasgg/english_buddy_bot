@@ -2,29 +2,54 @@ from aiogram import Bot, Router, types
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.controllers.lesson_controllers import get_lesson_slide_amount, lesson_routine
+from core.controllers.lesson_controllers import get_lesson, lesson_routine
 from core.controllers.slide_controllers import get_slide
-from core.controllers.user_controllers import get_user_progress
+from core.controllers.user_controllers import get_lesson_progress, update_user_progress
 from core.database.models import User
-from core.keyboards.callback_builders import LessonsCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
-from core.resources.enums import States
+from core.keyboards.callback_builders import LessonStartFromCallbackFactory, LessonsCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
+from core.keyboards.keyboards import get_lesson_progress_keyboard
+from core.resources.enums import States, UserLessonProgress
 
 router = Router()
 
 
 async def common_processing(bot: Bot, user: User, lesson_number: int, slide_number: int,
                             state: FSMContext, session: AsyncSession) -> None:
-    progress = await get_user_progress(user_id=user.id, lesson_number=lesson_number, slide_number=slide_number, session=session)
-    slide_amount = await get_lesson_slide_amount(lesson_number=lesson_number, session=session)
-    await lesson_routine(bot=bot, user=user, lesson_number=lesson_number, current_slide=progress, slide_amount=slide_amount,
+    slide = await get_lesson(lesson_number=lesson_number, session=session)
+    slides_amount = slide.slides_amount
+    await update_user_progress(user_id=user.id, lesson_number=lesson_number, current_slide=slide_number, session=session)
+    await lesson_routine(bot=bot, user=user, lesson_number=lesson_number, current_slide=slide_number, slide_amount=slides_amount,
                          state=state, session=session)
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
-async def lesson_callback_processing(callback: types.CallbackQuery, bot: Bot, callback_data: LessonsCallbackFactory, user: User,
-                                     state: FSMContext, session: AsyncSession) -> None:
-    await common_processing(bot=bot, user=user, lesson_number=callback_data.lesson_number, slide_number=1,
-                            state=state, session=session)
+async def lesson_callback_processing(callback: types.CallbackQuery, callback_data: LessonsCallbackFactory, user: User,
+                                     session: AsyncSession) -> None:
+    progress = await get_lesson_progress(user_id=user.id, lesson_number=callback_data.lesson_number, session=session)
+    if not progress:
+        await callback.message.answer(text='Вы можете начать урок сначала, или сразу перейти к экзамену.',
+                                      reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS,
+                                                                                      lesson_number=callback_data.lesson_number, session=session))
+    else:
+        await callback.message.answer(text='Вы можете продолжить урок, или начать его сначала.',
+                                      reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.IN_PROGRESS,
+                                                                                      lesson_number=callback_data.lesson_number,
+                                                                                      current_slide=progress,
+                                                                                      session=session))
+    await callback.answer()
+
+
+@router.callback_query(LessonStartFromCallbackFactory.filter())
+async def lesson_start_from_callback_processing(callback: types.CallbackQuery, callback_data: LessonStartFromCallbackFactory,
+                                                bot: Bot, user: User, state: FSMContext, session: AsyncSession) -> None:
+    lesson_number = callback_data.lesson_number
+    slide_number = callback_data.slide_number
+    if not slide_number:
+        await common_processing(bot=bot, user=user, lesson_number=lesson_number, slide_number=1,
+                                state=state, session=session)
+    else:
+        await common_processing(bot=bot, user=user, lesson_number=lesson_number, slide_number=slide_number,
+                                state=state, session=session)
     await callback.answer()
 
 
