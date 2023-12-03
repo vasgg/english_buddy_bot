@@ -119,21 +119,19 @@ async def lesson_routine(bot: Bot,
             await state.update_data(quiz_options_msg_id=quiz_options_msg_id)
         case SlideType.QUIZ_INPUT_WORD:
             text = slide.text
-            slide_number = slide.id
             msg = await bot.send_message(chat_id=user.telegram_id, text=text)
             quiz_word_msg_id = msg.message_id
             await state.update_data(quiz_word_msg_id=quiz_word_msg_id,
                                     quiz_word_lesson_number=lesson_number,
-                                    quiz_word_slide_number=slide_number)
+                                    quiz_word_slide_number=current_slide)
             await state.set_state(States.INPUT_WORD)
         case SlideType.QUIZ_INPUT_PHRASE:
             text = slide.text
-            slide_number = slide.id
             msg = await bot.send_message(chat_id=user.telegram_id, text=text)
             quiz_phrase_msg_id = msg.message_id
             await state.update_data(quiz_phrase_msg_id=quiz_phrase_msg_id,
                                     quiz_phrase_lesson_number=lesson_number,
-                                    quiz_phrase_slide_number=slide_number)
+                                    quiz_phrase_slide_number=current_slide)
             await state.set_state(States.INPUT_PHRASE)
         case _:
             assert False, f'Unknown slide type: {slide.slide_type}'

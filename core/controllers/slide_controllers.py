@@ -17,18 +17,11 @@ async def get_slide_by_slide_index(lesson_number: int, slide_index: int, session
     subquery = select(SlideOrder.slide_id).where(
         SlideOrder.lesson_id == lesson_number,
         SlideOrder.slide_index == slide_index
-    ).subquery()
-
-    query = select(Slide).join(subquery, Slide.id == subquery.c.slide_id)
+    )
+    query = select(Slide).filter(Slide.id.in_(subquery))
     result = await session.execute(query)
     slide = result.scalars().first()
     return slide
-
-
-    # query = select(Slide).join(SlideOrder).filter(SlideOrder.lesson_id == lesson_number, SlideOrder.slide_index == slide_index)
-    # result: Result = await session.execute(query)
-    # slide = result.scalar()
-    # return slide
 
 
 async def count_slides_by_type(session: AsyncSession, slide_types: list[SlideType]) -> int:
