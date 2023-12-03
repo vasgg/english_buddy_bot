@@ -15,4 +15,4 @@ async def start_message(message: types.Message, user: User, session: AsyncSessio
     completed_lessons = await get_completed_lessons(user_id=user.id, session=session)
     await message.answer(text='<b>Вас приветствует <i>поли-бот</i>!</b>\n',
                          reply_markup=await get_lesson_picker_keyboard(lessons=lessons,
-                                                                       completed_lessons=completed_lessons))
+                                                                       completed_lessons=completed_lessons)) 

@@ -10,4 +10,4 @@ class SlideOrder(Base):
 
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"))
     slide_id: Mapped[int] = mapped_column(ForeignKey("slides.id", ondelete="CASCADE"))
-    slide_number: Mapped[int]
+    slide_index: Mapped[int]

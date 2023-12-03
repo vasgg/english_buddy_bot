@@ -11,7 +11,9 @@ class States(StatesGroup):
 class SlideType(Enum):
     TEXT = 'text'
     IMAGE = 'image'
-    STICKER = 'sticker'
+    SMALL_STICKER = 'small_sticker'
+    BIG_STICKER = 'big_sticker'
+    PIN_DICT = 'pin_dict'
     QUIZ_OPTIONS = 'quiz_options'
     QUIZ_INPUT_WORD = 'quiz_input_word'
     QUIZ_INPUT_PHRASE = 'quiz_input_phrase'
@@ -31,4 +33,3 @@ class KeyboardType(Enum):
 class UserLessonProgress(Enum):
     NO_PROGRESS = 'no_progress'
     IN_PROGRESS = 'in_progress'
-

@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.controllers.lesson_controllers import get_lesson, lesson_routine
-from core.controllers.slide_controllers import get_slide
+from core.controllers.slide_controllers import get_slide_by_slide_index
 from core.controllers.user_controllers import get_lesson_progress, update_user_progress
 from core.database.models import User
 from core.keyboards.callback_builders import LessonStartFromCallbackFactory, LessonsCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
@@ -69,7 +69,7 @@ async def quiz_callback_processing(callback: types.CallbackQuery, bot: Bot, call
     lesson_number = callback_data.lesson_number
     slide_number = callback_data.slide_number
     answer = callback_data.answer
-    slide = await get_slide(lesson_number=lesson_number, slide_number=slide_number, session=session)
+    slide = await get_slide_by_slide_index(lesson_number=lesson_number, slide_index=slide_number, session=session)
     data = await state.get_data()
     if answer == 'wrong':
         try:
@@ -99,7 +99,7 @@ async def check_input_word(message: types.Message, bot: Bot, user: User, state: 
     data = await state.get_data()
     lesson_number = data['quiz_word_lesson_number']
     slide_number = data['quiz_word_slide_number']
-    slide = await get_slide(lesson_number=lesson_number, slide_number=slide_number, session=session)
+    slide = await get_slide_by_slide_index(lesson_number=lesson_number, slide_index=slide_number, session=session)
     if input_word.lower() != slide.right_answers.lower():
         await message.answer(text=slide.wrong_answer_reply)
         await common_processing(bot=bot, user=user, lesson_number=lesson_number, slide_number=slide_number,
@@ -122,7 +122,7 @@ async def check_input_phrase(message: types.Message, bot: Bot, user: User, state
     data = await state.get_data()
     lesson_number = data['quiz_phrase_lesson_number']
     slide_number = data['quiz_phrase_slide_number']
-    slide = await get_slide(lesson_number=lesson_number, slide_number=slide_number, session=session)
+    slide = await get_slide_by_slide_index(lesson_number=lesson_number, slide_index=slide_number, session=session)
     answers = slide.right_answers.split('|')
     answers_lower = [answer.lower() for answer in answers]
     almost_right_answers = slide.almost_right_answers.split('|')

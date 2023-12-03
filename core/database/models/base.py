@@ -1,8 +1,16 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, func
+from sqlalchemy import Engine, JSON, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import event
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 
 class Base(DeclarativeBase):

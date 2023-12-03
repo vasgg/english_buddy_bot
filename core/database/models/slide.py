@@ -10,7 +10,7 @@ class Slide(Base):
 
     text: Mapped[str | None]
     picture: Mapped[str | None]
-    delay: Mapped[int | None]  # TODO: сменить тип на float
+    delay: Mapped[float | None]
     slide_type: Mapped[SlideType]
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
     right_answers: Mapped[str | None]
