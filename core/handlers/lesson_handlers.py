@@ -20,24 +20,29 @@ async def common_processing(bot: Bot, user: User, lesson_id: int, slide_id: int,
 
 @router.callback_query(LessonsCallbackFactory.filter())
 async def lesson_callback_processing(callback: types.CallbackQuery, callback_data: LessonsCallbackFactory, user: User,
-                                     session: AsyncSession) -> None:
+                                     state: FSMContext, session: AsyncSession) -> None:
+    data = await state.get_data()
+    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=data['start_msg_id'])
     progress = await get_lesson_progress(user_id=user.id, lesson_id=callback_data.lesson_id, session=session)
     if not progress:
-        await callback.message.answer(text='Вы можете начать урок сначала, или сразу перейти к экзамену.',
-                                      reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS,
-                                                                                      lesson_id=callback_data.lesson_id, session=session))
+        msg = await callback.message.answer(text='Вы можете начать урок сначала, или сразу перейти к экзамену.',
+                                            reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS,
+                                                                                            lesson_id=callback_data.lesson_id, session=session))
     else:
-        await callback.message.answer(text='Вы можете продолжить урок, или начать его сначала.',
-                                      reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.IN_PROGRESS,
-                                                                                      lesson_id=callback_data.lesson_id,
-                                                                                      current_slide=progress,
-                                                                                      session=session))
+        msg = await callback.message.answer(text='Вы можете продолжить урок, или начать его сначала.',
+                                            reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.IN_PROGRESS,
+                                                                                            lesson_id=callback_data.lesson_id,
+                                                                                            current_slide=progress,
+                                                                                            session=session))
+    await state.update_data(start_from_msg_id=msg.message_id)
     await callback.answer()
 
 
 @router.callback_query(LessonStartFromCallbackFactory.filter())
 async def lesson_start_from_callback_processing(callback: types.CallbackQuery, callback_data: LessonStartFromCallbackFactory,
                                                 bot: Bot, user: User, state: FSMContext, session: AsyncSession) -> None:
+    data = await state.get_data()
+    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=data['start_from_msg_id'])
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
     if not slide_id:
