@@ -17,6 +17,7 @@ class SlideType(Enum):
     QUIZ_OPTIONS = 'quiz_options'
     QUIZ_INPUT_WORD = 'quiz_input_word'
     QUIZ_INPUT_PHRASE = 'quiz_input_phrase'
+    FINAL_SLIDE = 'final_slide'
 
 
 class LessonLevel(Enum):

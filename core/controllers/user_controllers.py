@@ -33,22 +33,21 @@ async def delete_user_progress(user_id: int, lesson_number: int, session: AsyncS
     await session.execute(query)
 
 
-async def update_user_progress(user_id: int, lesson_number: int, session: AsyncSession, current_slide: int) -> None:
-    upsert_query = insert(UserProgress).values(user_id=user_id, current_lesson=lesson_number, current_slide=current_slide)
+async def update_user_progress(user_id: int, lesson_id: int, current_slide: int, session: AsyncSession) -> None:
+    upsert_query = insert(UserProgress).values(user_id=user_id, current_lesson=lesson_id, current_slide=current_slide)
     upsert_query = upsert_query.on_conflict_do_update(set_={UserProgress.current_slide: current_slide})
     await session.execute(upsert_query)
 
 
-async def get_lesson_progress(user_id: int, lesson_number: int, session: AsyncSession) -> UserProgress.current_slide:
+async def get_lesson_progress(user_id: int, lesson_id: int, session: AsyncSession) -> UserProgress.current_slide:
     query = select(UserProgress.current_slide).filter(UserProgress.user_id == user_id,
-                                                      UserProgress.current_lesson == lesson_number)
+                                                      UserProgress.current_lesson == lesson_id)
     result: Result = await session.execute(query)
     user_progress = result.scalar()
     return user_progress
 
 
 async def increment_wrong_attempts_counter(user_id: int, lesson_number: int, session: AsyncSession) -> None:
-
     upsert_query = insert(UserProgress).values(user_id=user_id, current_lesson=lesson_number, wrong_answer_attempts=1)
     upsert_query.on_conflict_do_update(index_elements=['user_id', 'current_lesson'],
                                        set_=dict(wrong_answer_attempts=UserProgress.wrong_answer_attempts + 1))

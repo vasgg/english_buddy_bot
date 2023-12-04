@@ -1,33 +1,9 @@
 import asyncio
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from core.controllers.lesson_controllers import get_lesson
-from core.controllers.slide_controllers import increment_lesson_slides_amount
+from core.controllers.slide_controllers import get_slide_by_position
 from core.database.db import db
-from core.database.models import Slide, SlideOrder
+from core.database.models import Slide
 from core.resources.enums import KeyboardType, SlideType
-
-
-async def routes_helper(lesson_number: int) -> None:
-    async with db.session_factory.begin() as session:
-        lesson = await get_lesson(lesson_number, session=session)
-        slides_amount = lesson.slides_amount
-        for i in range(1, slides_amount + 1):
-            order_record = SlideOrder(lesson_id=lesson_number, slide_index=i, slide_id=i)
-            session.add(order_record)
-        await session.commit()
-
-
-async def change_slides_order(lesson_id: int, slides_amount: int, position: int, session: AsyncSession) -> None:
-    select_query = select(SlideOrder).filter(SlideOrder.lesson_id == lesson_id,
-                                             SlideOrder.slide_index > position)
-    result = await session.execute(select_query)
-    slide_order_list = result.scalars().all()
-    for item in slide_order_list:
-        item.slide_index += 1
-        session.add(item)
 
 
 async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, position: int,
@@ -102,34 +78,16 @@ async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, positio
             )
         case _:
             assert False, f'Unknown slide type: {slide_type}'
+
     async with db.session_factory.begin() as session:
         session.add(new_slide)
         await session.flush()
-        lesson = await get_lesson(lesson_number=lesson_id, session=session)
-        new_slides_amount = await increment_lesson_slides_amount(lesson_id=lesson_id, slides_amount=lesson.slides_amount, session=session)
-        await change_slides_order(lesson_id=lesson_id, slides_amount=new_slides_amount, position=position, session=session)
-        new_slide_position = SlideOrder(lesson_id=lesson_id, slide_id=new_slide.id, slide_index=position)
-        session.add(new_slide_position)
+        old_slide_on_position = await get_slide_by_position(lesson_id=lesson_id, position=position, session=session)
+        next_slide_id = old_slide_on_position.next_slide
+        old_slide_on_position.next_slide = new_slide.id
+        new_slide.next_slide = next_slide_id
         await session.commit()
 
 
 if __name__ == '__main__':
-    # asyncio.run(routes_helper(lesson_number=1))
-    text = '''#словарик #прил
-
-angry - злой
-bad - плохой
-beautiful - красивый
-clever - умный
-free - свободный
-good - хороший
-happy - счастливый
-kind - добрый
-poor - бедный
-rich - богатый
-sad - грустный
-strong - сильный
-stupid - глупый
-weak - слабый'''
-    asyncio.run(add_new_slide_to_lesson(lesson_id=1, slide_type=SlideType.SMALL_STICKER, position=73))
-    asyncio.run(add_new_slide_to_lesson(lesson_id=1, text=text, slide_type=SlideType.PIN_DICT, position=49))
+    asyncio.run(add_new_slide_to_lesson(lesson_id=1, slide_type=SlideType.BIG_STICKER, position=85))

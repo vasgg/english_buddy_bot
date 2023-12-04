@@ -1,26 +1,22 @@
 
-from sqlalchemy import Result, func, select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models import Lesson, Slide, SlideOrder
+from core.database.models import Lesson, Slide
 from core.resources.enums import SlideType
 
 
-async def get_slide(lesson_number: int, slide_number: int, session: AsyncSession) -> Slide:
-    query = select(Slide).filter(Slide.lesson_id == lesson_number, Slide.id == slide_number)
-    result: Result = await session.execute(query)
+async def get_slide_by_id(lesson_id: int, slide_id: int, session: AsyncSession) -> Slide:
+    query = select(Slide).filter(Slide.lesson_id == lesson_id, Slide.id == slide_id)
+    result = await session.execute(query)
     slide = result.scalar()
     return slide
 
 
-async def get_slide_by_slide_index(lesson_number: int, slide_index: int, session: AsyncSession) -> Slide:
-    subquery = select(SlideOrder.slide_id).where(
-        SlideOrder.lesson_id == lesson_number,
-        SlideOrder.slide_index == slide_index
-    )
-    query = select(Slide).filter(Slide.id.in_(subquery))
+async def get_slide_by_position(lesson_id: int, position: int, session: AsyncSession) -> Slide:
+    query = select(Slide).filter(Slide.lesson_id == lesson_id, Slide.next_slide == position)
     result = await session.execute(query)
-    slide = result.scalars().first()
+    slide = result.scalar()
     return slide
 
 
