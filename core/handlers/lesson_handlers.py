@@ -24,6 +24,10 @@ async def lesson_callback_processing(callback: types.CallbackQuery, callback_dat
     data = await state.get_data()
     await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=data['start_msg_id'])
     progress = await get_lesson_progress(user_id=user.id, lesson_id=callback_data.lesson_id, session=session)
+    # TODO:
+    # Передавать через callback_data признак того, начали ли с начала|экзмена или продолжили
+    # чтобы в lesson_start_from_callback_processing можно было определить, нужно ли
+    # начинать новую сессию
     if not progress:
         msg = await callback.message.answer(text='Вы можете начать урок сначала, или сразу перейти к экзамену.',
                                             reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS,
@@ -44,6 +48,8 @@ async def lesson_start_from_callback_processing(callback: types.CallbackQuery, c
     data = await state.get_data()
     await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=data['start_from_msg_id'])
 
+    # TODO: создать новую сессию, если начали сначала или с экзамена
+
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
     if not slide_id:
@@ -53,6 +59,7 @@ async def lesson_start_from_callback_processing(callback: types.CallbackQuery, c
     await callback.answer()
 
 
+# кинуть в квиз и сюда тоже передавать сессию
 @router.callback_query(SlideCallbackFactory.filter())
 async def slide_callback_processing(callback: types.CallbackQuery, bot: Bot, callback_data: SlideCallbackFactory, user: User,
                                     state: FSMContext, session: AsyncSession) -> None:

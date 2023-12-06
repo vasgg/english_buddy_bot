@@ -62,9 +62,3 @@ async def update_session(user_id: int, lesson_id: int, current_slide_id: int, se
     # upsert_query = upsert_query.on_conflict_do_update(set_={Session.current_slide_id: current_slide_id})
     # await session.execute(upsert_query)
 
-
-async def get_lesson_progress(user_id: int, lesson_id: int, session: AsyncSession) -> Session.current_slide_id:
-    query = select(Session.current_slide_id).filter(Session.user_id == user_id, Session.lesson_id == lesson_id, Session.id == ...)
-    result: Result = await session.execute(query)
-    user_progress = result.scalar()
-    return user_progress
