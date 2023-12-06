@@ -34,3 +34,19 @@ class KeyboardType(Enum):
 class UserLessonProgress(Enum):
     NO_PROGRESS = 'no_progress'
     IN_PROGRESS = 'in_progress'
+
+
+class StartsFrom(Enum):
+    BEGIN = 'begin'
+    EXAM = 'exam'
+
+
+class AnswerType(Enum):
+    RIGHT = 'right'
+    WRONG = 'wrong'
+
+
+class SessionStatus(Enum):
+    IN_PROGRESS = 'in_progress'
+    COMPLETED = 'completed'
+    ABORTED = 'aborted'

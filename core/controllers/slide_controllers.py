@@ -1,4 +1,3 @@
-
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +25,5 @@ async def count_slides_by_type(session: AsyncSession, slide_types: list[SlideTyp
     return result.scalar_one()
 
 
-async def increment_lesson_slides_amount(lesson_id: int, slides_amount: int, session: AsyncSession) -> int:
-    query = update(Lesson).filter(Lesson.id == lesson_id).values(slides_amount=slides_amount + 1)
-    await session.execute(query)
-    return slides_amount + 1
+async def set_progress_position(lesson_id: int, position: int, session: AsyncSession) -> None:
+    ...

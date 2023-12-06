@@ -16,8 +16,6 @@ class Slide(Base):
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
     right_answers: Mapped[str | None]
     almost_right_answers: Mapped[str | None]
-    right_answer_reply: Mapped[str | None]
     almost_right_answer_reply: Mapped[str | None]
-    wrong_answer_reply: Mapped[str | None]
     keyboard_type: Mapped[KeyboardType | None]
     keyboard: Mapped[str | None]

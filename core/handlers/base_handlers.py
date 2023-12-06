@@ -1,5 +1,5 @@
 from aiogram import Router, types
-from aiogram.filters import CommandStart
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,3 +18,8 @@ async def start_message(message: types.Message, user: User, state: FSMContext, s
                                reply_markup=await get_lesson_picker_keyboard(lessons=lessons,
                                                                              completed_lessons=completed_lessons))
     await state.update_data(start_msg_id=msg.message_id)
+
+
+@router.message(Command("position"))
+async def set_slide_position(message: types.Message, state: FSMContext) -> None:
+    ...

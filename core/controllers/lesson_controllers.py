@@ -8,11 +8,11 @@ from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.controllers.slide_controllers import get_slide_by_id
-from core.controllers.sticker_controllers import get_random_sticker_id
-from core.controllers.user_controllers import delete_user_progress, update_user_progress
+from core.controllers.choice_controllers import get_random_sticker_id
+from core.controllers.user_controllers import mark_lesson_as_completed, update_session
 from core.database.models import Lesson, User, UserCompleteLesson
 from core.keyboards.keyboards import get_furher_button, get_quiz_keyboard
-from core.resources.enums import KeyboardType, SlideType, States
+from core.resources.enums import KeyboardType, SlideType, StartsFrom, States
 from core.resources.stickers.small_stickers import small_stickers_list
 
 
@@ -48,9 +48,10 @@ async def lesson_routine(bot: Bot,
                          lesson_id: int,
                          slide_id: int,
                          state: FSMContext,
-                         session: AsyncSession) -> None:
+                         session: AsyncSession,
+                         starts_from: StartsFrom = StartsFrom.BEGIN) -> None:
     slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, session=session)
-    await update_user_progress(user_id=user.id, lesson_id=lesson_id, current_slide=slide.id, session=session)
+    await update_session(user_id=user.id, lesson_id=lesson_id, current_slide_id=slide.id, session=session, starts_from=starts_from)
     match slide.slide_type:
         case SlideType.TEXT:
             text = slide.text
@@ -127,7 +128,7 @@ async def lesson_routine(bot: Bot,
             await bot.send_message(chat_id=user.telegram_id, text=f'Поздравляем, вы прошли урок {lesson.title}!')
             await bot.unpin_all_chat_messages(chat_id=user.telegram_id)
             await add_completed_lesson_to_db(user_id=user.id, lesson_id=lesson_id, session=session)
-            await delete_user_progress(user_id=user.id, lesson_number=lesson_id, session=session)
+            await mark_lesson_as_completed(user_id=user.id, lesson_id=lesson_id, session=session)
             await state.clear()
             return
         case _:

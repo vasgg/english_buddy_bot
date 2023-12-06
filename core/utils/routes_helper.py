@@ -10,8 +10,7 @@ async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, positio
                                   text: str = None, picture: str = None, delay: float = None,
                                   keyboard_type: KeyboardType = None, keyboard: str = None,
                                   right_answers: str = None, almost_right_answers: str = None,
-                                  right_answer_reply: str = None, almost_right_answer_reply: str = None,
-                                  wrong_answer_reply: str = None) -> None:
+                                  almost_right_answer_reply: str = None) -> None:
     match slide_type:
         case SlideType.TEXT:
             new_slide = Slide(
@@ -53,8 +52,6 @@ async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, positio
                 keyboard_type=keyboard_type,
                 keyboard=keyboard,
                 right_answers=right_answers,
-                right_answer_reply=right_answer_reply,
-                wrong_answer_reply=wrong_answer_reply
             )
         case SlideType.QUIZ_INPUT_WORD:
             new_slide = Slide(
@@ -62,8 +59,6 @@ async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, positio
                 slide_type=slide_type,
                 text=text,
                 right_answers=right_answers,
-                right_answer_reply=right_answer_reply,
-                wrong_answer_reply=wrong_answer_reply
             )
         case SlideType.QUIZ_INPUT_PHRASE:
             new_slide = Slide(
@@ -72,9 +67,7 @@ async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, positio
                 text=text,
                 right_answers=right_answers,
                 almost_right_answers=almost_right_answers,
-                right_answer_reply=right_answer_reply,
                 almost_right_answer_reply=almost_right_answer_reply,
-                wrong_answer_reply=wrong_answer_reply
             )
         case _:
             assert False, f'Unknown slide type: {slide_type}'

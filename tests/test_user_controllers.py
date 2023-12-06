@@ -1,11 +1,11 @@
-import logging
-from unittest import IsolatedAsyncioTestCase
-
-from sqlalchemy import select
-
-from core.controllers.user_controllers import update_user_progress
-from core.database.db import DatabaseConnector
-from core.database.models import Base, User, UserProgress
+# import logging
+# from unittest import IsolatedAsyncioTestCase
+#
+# from sqlalchemy import select
+#
+# from core.controllers.user_controllers import update_user_progress
+# from core.database.db import DatabaseConnector
+# from core.database.models import Base, User, UserProgress
 
 
 # class Test(IsolatedAsyncioTestCase):

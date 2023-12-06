@@ -7,7 +7,7 @@ from sqlalchemy.exc import PendingRollbackError
 from core.database.db import db
 
 
-class SessionMiddleware(BaseMiddleware):
+class DBSessionMiddleware(BaseMiddleware):
     async def __call__(
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],

@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     @property
     def aiosqlite_db_url(self) -> str:
-        return f'sqlite+aiosqlite:///core/database/{self.DB_NAME}.db'
+        return f'sqlite+aiosqlite:///{self.DB_NAME}.db'
 
     class Config:
         env_file = '.env'
