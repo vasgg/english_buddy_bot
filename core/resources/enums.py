@@ -36,7 +36,7 @@ class UserLessonProgress(Enum):
     IN_PROGRESS = 'in_progress'
 
 
-class StartsFrom(Enum):
+class SessonStartsFrom(Enum):
     BEGIN = 'begin'
     EXAM = 'exam'
 
@@ -50,3 +50,9 @@ class SessionStatus(Enum):
     IN_PROGRESS = 'in_progress'
     COMPLETED = 'completed'
     ABORTED = 'aborted'
+
+
+class LessonStartsFrom(Enum):
+    BEGIN = 'begin'
+    EXAM = 'exam'
+    CONTINUE = 'continue'

@@ -7,38 +7,39 @@ from sqlalchemy import Result, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.controllers.session_controller import update_session_status
 from core.controllers.slide_controllers import get_slide_by_id
 from core.controllers.choice_controllers import get_random_sticker_id
-from core.controllers.user_controllers import mark_lesson_as_completed, update_session
-from core.database.models import Lesson, User, UserCompleteLesson
+from core.controllers.user_controllers import update_session
+from core.database.models import Lesson, Slide, User, UserCompleteLesson
 from core.keyboards.keyboards import get_furher_button, get_quiz_keyboard
-from core.resources.enums import KeyboardType, SlideType, StartsFrom, States
+from core.resources.enums import KeyboardType, SessionStatus, SlideType, SessonStartsFrom, States
 from core.resources.stickers.small_stickers import small_stickers_list
 
 
-async def get_lesson(lesson_id: int, session: AsyncSession) -> Lesson:
+async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
     query = select(Lesson).filter(Lesson.id == lesson_id)
-    result: Result = await session.execute(query)
+    result: Result = await db_session.execute(query)
     lesson = result.scalar()
     return lesson
 
 
-async def get_lessons(session: AsyncSession) -> list[Lesson]:
+async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
     query = select(Lesson)
-    result = await session.execute(query)
+    result = await db_session.execute(query)
     lessons = result.scalars().all()
     return [row for row in lessons]
 
 
-async def add_completed_lesson_to_db(user_id: int, lesson_id: int, session: AsyncSession) -> None:
+async def add_completed_lesson_to_db(user_id: int, lesson_id: int, db_session: AsyncSession) -> None:
     upsert_query = insert(UserCompleteLesson).values(user_id=user_id, lesson_id=lesson_id)
     upsert_query = upsert_query.on_conflict_do_nothing()
-    await session.execute(upsert_query)
+    await db_session.execute(upsert_query)
 
 
-async def get_completed_lessons(user_id: int, session: AsyncSession) -> set[int]:
+async def get_completed_lessons(user_id: int, db_session: AsyncSession) -> set[int]:
     query = select(UserCompleteLesson.lesson_id).filter(UserCompleteLesson.user_id == user_id)
-    result = await session.execute(query)
+    result = await db_session.execute(query)
     completed_lessons_ids = {row[0] for row in result.all()}
     return completed_lessons_ids
 
@@ -48,19 +49,21 @@ async def lesson_routine(bot: Bot,
                          lesson_id: int,
                          slide_id: int,
                          state: FSMContext,
-                         session: AsyncSession,
-                         starts_from: StartsFrom = StartsFrom.BEGIN) -> None:
-    slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, session=session)
-    await update_session(user_id=user.id, lesson_id=lesson_id, current_slide_id=slide.id, session=session, starts_from=starts_from)
+                         session_id: int,
+                         db_session: AsyncSession,
+                         starts_from: SessonStartsFrom = SessonStartsFrom.BEGIN) -> None:
+    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    await update_session(user_id=user.id, lesson_id=lesson_id, current_slide_id=slide.id,
+                         session_id=session_id, db_session=db_session, starts_from=starts_from)
     match slide.slide_type:
         case SlideType.TEXT:
             text = slide.text
             if not slide.keyboard_type:
                 await bot.send_message(chat_id=user.telegram_id, text=text)
                 if slide.delay:
-                    await asyncio.sleep(float(slide.delay))
+                    await asyncio.sleep(slide.delay)
                 await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                     state=state, session=session)
+                                     state=state, session_id=session_id, db_session=db_session)
             else:
                 match slide.keyboard_type:
                     case KeyboardType.FURTHER:
@@ -75,9 +78,9 @@ async def lesson_routine(bot: Bot,
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
-                    await asyncio.sleep(float(slide.delay))
+                    await asyncio.sleep(slide.delay)
                 await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                     state=state, session=session)
+                                     state=state, session_id=session_id, db_session=db_session)
             else:
                 match slide.keyboard_type:
                     case KeyboardType.FURTHER:
@@ -88,18 +91,17 @@ async def lesson_routine(bot: Bot,
         case SlideType.SMALL_STICKER:
             await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=small_stickers_list))
             await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                 state=state, session=session)
+                                 state=state, session_id=session_id, db_session=db_session)
         case SlideType.BIG_STICKER:
-            # TODO: брать большой стикер из другой коллекции, когда она подъедет
             await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=small_stickers_list))
             await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                 state=state, session=session)
+                                 state=state, session_id=session_id, db_session=db_session)
         case SlideType.PIN_DICT:
             text = slide.text
             msg = await bot.send_message(chat_id=user.telegram_id, text=text)
             await bot.pin_chat_message(chat_id=user.telegram_id, message_id=msg.message_id, disable_notification=True)
             await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                 state=state, session=session)
+                                 state=state, db_session=db_session)
         case SlideType.QUIZ_OPTIONS:
             text = slide.text
             answer = slide.right_answers
@@ -123,12 +125,13 @@ async def lesson_routine(bot: Bot,
             await state.set_state(States.INPUT_PHRASE)
         case SlideType.FINAL_SLIDE:
             text = slide.text
-            lesson = await get_lesson(lesson_id=lesson_id, session=session)
+            lesson = await get_lesson(lesson_id=lesson_id, db_session=db_session)
             await bot.send_message(chat_id=user.telegram_id, text=text)
             await bot.send_message(chat_id=user.telegram_id, text=f'Поздравляем, вы прошли урок {lesson.title}!')
             await bot.unpin_all_chat_messages(chat_id=user.telegram_id)
-            await add_completed_lesson_to_db(user_id=user.id, lesson_id=lesson_id, session=session)
-            await mark_lesson_as_completed(user_id=user.id, lesson_id=lesson_id, session=session)
+            await add_completed_lesson_to_db(user_id=user.id, lesson_id=lesson_id, db_session=db_session)
+            await update_session_status(session_id=session_id, status=SessionStatus.IN_PROGRESS, new_status=SessionStatus.COMPLETED,
+                                        db_session=db_session)
             await state.clear()
             return
         case _:

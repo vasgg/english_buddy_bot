@@ -5,25 +5,25 @@ from core.database.models import Lesson, Slide
 from core.resources.enums import SlideType
 
 
-async def get_slide_by_id(lesson_id: int, slide_id: int, session: AsyncSession) -> Slide:
+async def get_slide_by_id(lesson_id: int, slide_id: int, db_session: AsyncSession) -> Slide:
     query = select(Slide).filter(Slide.lesson_id == lesson_id, Slide.id == slide_id)
-    result = await session.execute(query)
+    result = await db_session.execute(query)
     slide = result.scalar()
     return slide
 
 
-async def get_slide_by_position(lesson_id: int, position: int, session: AsyncSession) -> Slide:
+async def get_slide_by_position(lesson_id: int, position: int, db_session: AsyncSession) -> Slide:
     query = select(Slide).filter(Slide.lesson_id == lesson_id, Slide.next_slide == position)
-    result = await session.execute(query)
+    result = await db_session.execute(query)
     slide = result.scalar()
     return slide
 
 
-async def count_slides_by_type(session: AsyncSession, slide_types: list[SlideType]) -> int:
+async def count_slides_by_type(db_session: AsyncSession, slide_types: list[SlideType]) -> int:
     query = select(func.count()).select_from(Slide).where(Slide.slide_type.in_(slide_types))
-    result = await session.execute(query)
+    result = await db_session.execute(query)
     return result.scalar_one()
 
 
-async def set_progress_position(lesson_id: int, position: int, session: AsyncSession) -> None:
+async def set_progress_position(lesson_id: int, position: int, db_session: AsyncSession) -> None:
     ...

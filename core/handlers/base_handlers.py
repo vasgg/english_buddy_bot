@@ -11,9 +11,9 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def start_message(message: types.Message, user: User, state: FSMContext, session: AsyncSession) -> None:
-    lessons = await get_lessons(session)
-    completed_lessons = await get_completed_lessons(user_id=user.id, session=session)
+async def start_message(message: types.Message, user: User, state: FSMContext, db_session: AsyncSession) -> None:
+    lessons = await get_lessons(db_session)
+    completed_lessons = await get_completed_lessons(user_id=user.id, db_session=db_session)
     msg = await message.answer(text='<b>Вас приветствует <i>поли-бот</i>!</b>\n',
                                reply_markup=await get_lesson_picker_keyboard(lessons=lessons,
                                                                              completed_lessons=completed_lessons))

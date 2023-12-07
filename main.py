@@ -12,7 +12,7 @@ from core.resources.notify_admin import on_shutdown_notify, on_startup_notify
 # from core.handlers.errors_handler import router as errors_router
 from core.resources.commands import set_bot_commands
 from core.handlers.lesson_handlers import router as lesson_router
-from core.handlers.quiz_handlers import router as quiz_router
+from core.handlers.session_handlers import router as quiz_router
 
 
 async def main():

@@ -11,7 +11,6 @@ class User(Base):
     first_name: Mapped[str]
     last_name: Mapped[str | None]
     username: Mapped[str | None] = mapped_column(String(32))
-    # TODO: store current session id
 
     def __str__(self):
         return f'{self.__class__.__name__}(id={self.id}, telegram_id={self.telegram_id}, first_name={self.first_name})'

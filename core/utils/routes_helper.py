@@ -72,14 +72,14 @@ async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, positio
         case _:
             assert False, f'Unknown slide type: {slide_type}'
 
-    async with db.session_factory.begin() as session:
-        session.add(new_slide)
-        await session.flush()
-        old_slide_on_position = await get_slide_by_position(lesson_id=lesson_id, position=position, session=session)
+    async with db.session_factory.begin() as db_session:
+        db_session.add(new_slide)
+        await db_session.flush()
+        old_slide_on_position = await get_slide_by_position(lesson_id=lesson_id, position=position, db_session=db_session)
         next_slide_id = old_slide_on_position.next_slide
         old_slide_on_position.next_slide = new_slide.id
         new_slide.next_slide = next_slide_id
-        await session.commit()
+        await db_session.commit()
 
 
 if __name__ == '__main__':

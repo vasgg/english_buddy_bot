@@ -2,17 +2,19 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database.models import Lesson
-from core.keyboards.callback_builders import LessonsCallbackFactory, QuizCallbackFactory, SlideCallbackFactory, LessonStartFromCallbackFactory
-from core.resources.enums import UserLessonProgress
+from core.keyboards.callback_builders import LessonStartsFromCallbackFactory, LessonsCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
+from core.resources.enums import LessonStartsFrom, UserLessonProgress
 
 
 async def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
     buttons = []
     for lesson in lessons:
         if lesson.id in completed_lessons:
-            buttons.append([InlineKeyboardButton(text=f'{lesson.title} ✅', callback_data=LessonsCallbackFactory(lesson_id=lesson.id).pack())])
+            buttons.append([InlineKeyboardButton(text=f'{lesson.title} ✅',
+                                                 callback_data=LessonsCallbackFactory(lesson_id=lesson.id).pack())])
         else:
-            buttons.append([InlineKeyboardButton(text=lesson.title, callback_data=LessonsCallbackFactory(lesson_id=lesson.id).pack())])
+            buttons.append([InlineKeyboardButton(text=lesson.title,
+                                                 callback_data=LessonsCallbackFactory(lesson_id=lesson.id).pack())])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -39,21 +41,25 @@ def get_quiz_keyboard(words: list[str], answer: str, lesson_id: int, slide_id: i
 async def get_lesson_progress_keyboard(mode: UserLessonProgress, lesson_id: int,
                                        session: AsyncSession, current_slide: int = None) -> InlineKeyboardMarkup:
     from core.controllers.lesson_controllers import get_lesson
-    lesson = await get_lesson(lesson_id=lesson_id, session=session)
+    lesson = await get_lesson(lesson_id=lesson_id, db_session=session)
     match mode:
         case UserLessonProgress.NO_PROGRESS:
             buttons = [
-                [InlineKeyboardButton(text='Начать урок сначала', callback_data=LessonStartFromCallbackFactory(lesson_id=lesson_id,
-                                                                                                               slide_id=1).pack())],
-                [InlineKeyboardButton(text='Начать с экзамена', callback_data=LessonStartFromCallbackFactory(lesson_id=lesson_id,
-                                                                                                             slide_id=lesson.exam_slide).pack())],
+                [InlineKeyboardButton(text='Начать урок сначала', callback_data=LessonStartsFromCallbackFactory(lesson_id=lesson_id,
+                                                                                                                slide_id=lesson.first_slide_id,
+                                                                                                                attr=LessonStartsFrom.BEGIN).pack())],
+                [InlineKeyboardButton(text='Начать с экзамена', callback_data=LessonStartsFromCallbackFactory(lesson_id=lesson_id,
+                                                                                                              slide_id=lesson.exam_slide_id,
+                                                                                                              attr=LessonStartsFrom.EXAM).pack())],
             ]
             return InlineKeyboardMarkup(inline_keyboard=buttons)
         case UserLessonProgress.IN_PROGRESS:
             buttons = [
-                [InlineKeyboardButton(text='Начать урок сначала', callback_data=LessonStartFromCallbackFactory(lesson_id=lesson_id,
-                                                                                                               slide_id=1).pack())],
-                [InlineKeyboardButton(text='Продолжить урок', callback_data=LessonStartFromCallbackFactory(lesson_id=lesson_id,
-                                                                                                           slide_id=current_slide).pack())],
+                [InlineKeyboardButton(text='Начать урок сначала', callback_data=LessonStartsFromCallbackFactory(lesson_id=lesson_id,
+                                                                                                                slide_id=lesson.first_slide_id,
+                                                                                                                attr=LessonStartsFrom.BEGIN).pack())],
+                [InlineKeyboardButton(text='Продолжить урок', callback_data=LessonStartsFromCallbackFactory(lesson_id=lesson_id,
+                                                                                                            slide_id=current_slide,
+                                                                                                            attr=LessonStartsFrom.CONTINUE).pack())],
             ]
             return InlineKeyboardMarkup(inline_keyboard=buttons)
