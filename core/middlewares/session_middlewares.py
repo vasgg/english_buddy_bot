@@ -1,13 +1,13 @@
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.exc import PendingRollbackError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.controllers.session_controller import get_current_session
+from core.controllers.session_controller import get_session
 from core.database.db import db
-from core.database.models import Session, User
 
 
 class DBSessionMiddleware(BaseMiddleware):
@@ -34,10 +34,11 @@ class SessionMiddleware(BaseMiddleware):
             event: Message,
             data: Dict[str, Any],
     ) -> Any:
-        # db_session: AsyncSession = data['db_session']
-        # user: User = data['user']
-
-        # TODO: read user sessison by user.current_session_id
-        data['session'] = session
+        state: FSMContext = data['state']
+        state_data = await state.get_data()
+        session_id = state_data['session_id']
+        db_session: AsyncSession = data['db_session']
+        user_session = await get_session(session_id, db_session)
+        data['session'] = user_session
         res = await handler(event, data)
         return res

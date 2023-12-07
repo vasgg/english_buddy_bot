@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.controllers.lesson_controllers import get_lesson, lesson_routine
-from core.controllers.session_controller import get_current_session, get_lesson_progress, update_session_status
+from core.controllers.session_controller import update_session_status, get_current_session
 from core.controllers.user_controllers import update_session
 from core.database.models import Session, User
 from core.keyboards.callback_builders import LessonStartsFromCallbackFactory, LessonsCallbackFactory
