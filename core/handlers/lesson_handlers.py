@@ -14,10 +14,11 @@ router = Router()
 
 
 async def common_processing(bot: Bot, user: User, lesson_id: int, slide_id: int, session: Session,
-                            state: FSMContext, db_session: AsyncSession, starts_from: SessonStartsFrom = SessonStartsFrom.BEGIN) -> None:
+                            state: FSMContext, db_session: AsyncSession, starts_from: SessonStartsFrom) -> None:
     await update_session(user_id=user.id, lesson_id=lesson_id, current_slide_id=slide_id,
                          session_id=session.id, starts_from=starts_from, db_session=db_session)
-    await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide_id, state=state, db_session=db_session, session_id=session.id)
+    await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide_id, state=state,
+                         starts_from=starts_from, db_session=db_session, session_id=session.id)
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
@@ -26,10 +27,6 @@ async def lesson_callback_processing(callback: types.CallbackQuery, callback_dat
     data = await state.get_data()
     await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=data['start_msg_id'])
     session: Session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
-    # TODO:
-    # Передавать через callback_data признак того, начали ли с начала|экзмена или продолжили
-    # чтобы в lesson_start_from_callback_processing можно было определить, нужно ли
-    # начинать новую сессию
     if not session:
         msg = await callback.message.answer(text='Вы можете начать урок сначала, или сразу перейти к экзамену.',
                                             reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS,
@@ -49,7 +46,6 @@ async def lesson_start_from_callback_processing(callback: types.CallbackQuery, c
                                                 bot: Bot, user: User, state: FSMContext, db_session: AsyncSession) -> None:
     data = await state.get_data()
     await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=data['start_from_msg_id'])
-    # TODO: создать новую сессию, если начали сначала или с экзамена
 
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
@@ -62,22 +58,25 @@ async def lesson_start_from_callback_processing(callback: types.CallbackQuery, c
             if session:
                 await update_session_status(session_id=session.id, status=SessionStatus.IN_PROGRESS, new_status=SessionStatus.ABORTED,
                                             db_session=db_session)
-            session = Session(user_id=user.id, lesson_id=lesson_id, current_slide_id=slide_id)
+            session = Session(user_id=user.id, lesson_id=lesson_id, current_slide_id=slide_id, starts_from=SessonStartsFrom.BEGIN)
             db_session.add(session)
             await db_session.flush()
             await common_processing(bot=bot, user=user, lesson_id=lesson_id, slide_id=lesson.first_slide_id,
-                                    state=state, session=session, db_session=db_session)
-
+                                    state=state, starts_from=SessonStartsFrom.BEGIN, session=session, db_session=db_session)
         case LessonStartsFrom.EXAM:
-            session = Session(user_id=user.id, lesson_id=lesson_id, starts_from=SessonStartsFrom.EXAM, current_slide_id=slide_id)
+            session = await get_current_session(user_id=user.id, lesson_id=lesson_id, db_session=db_session)
+            if session:
+                await update_session_status(session_id=session.id, status=SessionStatus.IN_PROGRESS, new_status=SessionStatus.ABORTED,
+                                            db_session=db_session)
+            session = Session(user_id=user.id, lesson_id=lesson_id, current_slide_id=lesson.exam_slide_id, starts_from=SessonStartsFrom.EXAM)
             db_session.add(session)
             await db_session.flush()
             await common_processing(bot=bot, user=user, lesson_id=lesson_id, slide_id=lesson.exam_slide_id,
-                                    state=state, session=session, db_session=db_session)
+                                    state=state, session=session, starts_from=SessonStartsFrom.EXAM, db_session=db_session)
         case LessonStartsFrom.CONTINUE:
             session = await get_current_session(user_id=user.id, lesson_id=lesson_id, db_session=db_session)
             await common_processing(bot=bot, user=user, lesson_id=lesson_id, slide_id=session.current_slide_id,
-                                    state=state, session=session, db_session=db_session)
+                                    state=state, session=session, starts_from=session.starts_from, db_session=db_session)
         case _:
             assert False, 'invalid attr'
     await state.update_data(session_id=session.id)
