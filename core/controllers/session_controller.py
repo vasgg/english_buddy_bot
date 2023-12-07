@@ -17,8 +17,8 @@ async def get_current_session(user_id: int, lesson_id: int, db_session: AsyncSes
     stmt = select(exists().where(Session.user_id == user_id, Session.lesson_id == lesson_id,
                                  Session.status == SessionStatus.IN_PROGRESS))
     result: Result = await db_session.execute(stmt)
-    ok = result.scalar()
-    if not ok:
+    session_exists = result.scalar()
+    if not session_exists:
         return None
     query = select(Session).filter(Session.user_id == user_id, Session.lesson_id == lesson_id,
                                    Session.status == SessionStatus.IN_PROGRESS)
@@ -37,11 +37,3 @@ async def update_session_status(session_id: int, status: SessionStatus, new_stat
     query = update(Session).filter(Session.id == session_id, Session.status == status).values(status=new_status)
     await db_session.execute(query)
 
-    # async def mark_lesson_as_completed(user_id: int, lesson_id: int, db_session: AsyncSession) -> None:
-    #     query = update(Session).filter(Session.user_id == user_id, Session.lesson_id == lesson_id).values(status=SessionStatus.COMPLETED)
-    #     await db_session.execute(query)
-# query = select(Session).filter(Session.user_id == user_id, Session.lesson_id == lesson_id,
-#                                Session.status == SessionStatus.IN_PROGRESS)
-# result: Result = await db_session.execute(query)
-# current_session = result.scalar_one_or_none()
-# return current_session

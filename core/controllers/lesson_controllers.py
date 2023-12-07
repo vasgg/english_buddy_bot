@@ -51,7 +51,7 @@ async def lesson_routine(bot: Bot,
                          state: FSMContext,
                          session_id: int,
                          db_session: AsyncSession,
-                         starts_from: SessonStartsFrom = SessonStartsFrom.BEGIN) -> None:
+                         starts_from: SessonStartsFrom) -> None:
     slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     await update_session(user_id=user.id, lesson_id=lesson_id, current_slide_id=slide.id,
                          session_id=session_id, db_session=db_session, starts_from=starts_from)
@@ -62,8 +62,8 @@ async def lesson_routine(bot: Bot,
                 await bot.send_message(chat_id=user.telegram_id, text=text)
                 if slide.delay:
                     await asyncio.sleep(slide.delay)
-                await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                     state=state, session_id=session_id, db_session=db_session)
+                await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
+                                     session_id=session_id, starts_from=starts_from, db_session=db_session)
             else:
                 match slide.keyboard_type:
                     case KeyboardType.FURTHER:
@@ -79,8 +79,8 @@ async def lesson_routine(bot: Bot,
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
                     await asyncio.sleep(slide.delay)
-                await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                     state=state, session_id=session_id, db_session=db_session)
+                await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
+                                     session_id=session_id, starts_from=starts_from, db_session=db_session)
             else:
                 match slide.keyboard_type:
                     case KeyboardType.FURTHER:
@@ -90,18 +90,18 @@ async def lesson_routine(bot: Bot,
                         assert False, f'Unknown keyboard type: {slide.keyboard_type}'
         case SlideType.SMALL_STICKER:
             await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=small_stickers_list))
-            await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                 state=state, session_id=session_id, db_session=db_session)
+            await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
+                                 session_id=session_id, starts_from=starts_from, db_session=db_session)
         case SlideType.BIG_STICKER:
             await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=small_stickers_list))
-            await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                 state=state, session_id=session_id, db_session=db_session)
+            await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
+                                 session_id=session_id, starts_from=starts_from, db_session=db_session)
         case SlideType.PIN_DICT:
             text = slide.text
             msg = await bot.send_message(chat_id=user.telegram_id, text=text)
             await bot.pin_chat_message(chat_id=user.telegram_id, message_id=msg.message_id, disable_notification=True)
-            await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide,
-                                 state=state, db_session=db_session)
+            await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
+                                 session_id=session_id, starts_from=starts_from, db_session=db_session)
         case SlideType.QUIZ_OPTIONS:
             text = slide.text
             answer = slide.right_answers
