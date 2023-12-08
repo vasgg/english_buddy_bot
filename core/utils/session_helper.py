@@ -79,6 +79,7 @@ async def add_new_slide_to_lesson(lesson_id: int, slide_type: SlideType, positio
         next_slide_id = old_slide_on_position.next_slide
         old_slide_on_position.next_slide = new_slide.id
         new_slide.next_slide = next_slide_id
+        # TODO: при добавлении слайда с викториной инкрементить счётчик слайдов с викториной в таблице лессонс
         await db_session.commit()
 
 

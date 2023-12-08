@@ -1,8 +1,8 @@
-from sqlalchemy import Result, exists, select, update
+from sqlalchemy import Result, exists, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models import Session
-from core.resources.enums import SessionStatus
+from core.database.models import Session, SessionLog
+from core.resources.enums import CountQuizSlidesMode, SessionStatus, SlideType
 
 
 async def get_lesson_progress(user_id: int, lesson_id: int, db_session: AsyncSession) -> int:
@@ -37,3 +37,51 @@ async def update_session_status(session_id: int, status: SessionStatus, new_stat
     query = update(Session).filter(Session.id == session_id, Session.status == status).values(status=new_status)
     await db_session.execute(query)
 
+
+async def count_distinct_slides_by_type(session_id: int, mode: CountQuizSlidesMode, db_session: AsyncSession, slide_type: SlideType = None) -> int:
+    match mode:
+        case CountQuizSlidesMode.WITH_TYPE:
+            if not slide_type:
+                raise ValueError("in WITH_TYPE mode you must provide Slide type")
+            query = select(func.count(SessionLog.slide_id.distinct())).filter(SessionLog.session_id == session_id,
+                                                                              SessionLog.slide_type == slide_type)
+        case CountQuizSlidesMode.WITHOUT_TYPE:
+            if slide_type:
+                query = select(func.count(SessionLog.slide_id.distinct())).filter(SessionLog.session_id == session_id,
+                                                                                  SessionLog.slide_type != slide_type)
+            else:
+                query = select(func.count(SessionLog.slide_id.distinct())).filter(SessionLog.session_id == session_id)
+        case _:
+            assert False, f"Unknown mode: {mode}"
+
+    result = await db_session.execute(query)
+    return result.scalar()
+
+
+async def count_errors_in_slides_by_type(session_id: int, mode: CountQuizSlidesMode, db_session: AsyncSession, slide_type: SlideType = None) -> int:
+    subquery = select(
+        SessionLog.slide_type,
+        SessionLog.slide_id,
+        (func.count(SessionLog.slide_id) - 1).label('errors')
+    ).where(
+        SessionLog.session_id == session_id
+    ).group_by(
+        SessionLog.slide_type, SessionLog.slide_id
+    ).having(
+        func.count(SessionLog.slide_id) > 1
+    ).subquery()
+    match mode:
+        case CountQuizSlidesMode.WITH_TYPE:
+            if not slide_type:
+                raise ValueError("in WITH_TYPE mode you must provide Slide type")
+            query = select(func.sum(subquery.c.errors)).where(subquery.c.slide_type == slide_type)
+        case CountQuizSlidesMode.WITHOUT_TYPE:
+            if slide_type:
+                query = select(func.sum(subquery.c.errors)).where(subquery.c.slide_type != slide_type)
+            else:
+                query = select(func.sum(subquery.c.errors))
+        case _:
+            assert False, f"Unknown mode: {mode}"
+    result = await db_session.execute(query)
+    errors = result.scalar_one_or_none()
+    return errors if errors is not None else 0

@@ -34,4 +34,3 @@ async def update_session(user_id: int, lesson_id: int, current_slide_id: int, db
                                    Session.id == session_id).values(current_slide_id=current_slide_id,
                                                                     starts_from=starts_from)
     await db_session.execute(query)
-

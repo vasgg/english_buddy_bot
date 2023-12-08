@@ -56,3 +56,9 @@ class LessonStartsFrom(Enum):
     BEGIN = 'begin'
     EXAM = 'exam'
     CONTINUE = 'continue'
+
+
+class CountQuizSlidesMode(Enum):
+    WITH_TYPE = 'with_type'
+    WITHOUT_TYPE = 'without_type'
+

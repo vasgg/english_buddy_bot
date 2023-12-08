@@ -13,3 +13,5 @@ class Session(Base):
     current_slide_id: Mapped[int] = mapped_column(ForeignKey("slides.id"))
     starts_from: Mapped[SessonStartsFrom] = mapped_column()
     status: Mapped[SessionStatus] = mapped_column(default=SessionStatus.IN_PROGRESS)
+# TODO: когда мы стартуем сессию, мы замораживаем количество полных слайдов в уроке из таблицы lessons
+#     total_lesson_slides: Mapped[int]

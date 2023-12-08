@@ -1,18 +1,20 @@
-from aiogram import Bot, Router, types
+from aiogram import Bot, Router, flags, types
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.controllers.choice_controllers import get_random_answer
 from core.controllers.slide_controllers import get_slide_by_id
-from core.database.models import Session, User
+from core.database.models import Session, Slide, User
 from core.handlers.lesson_handlers import common_processing
 from core.keyboards.callback_builders import QuizCallbackFactory, SlideCallbackFactory
-from core.middlewares.session_middlewares import SessionMiddleware
+from core.middlewares.session_middlewares import SessionLogCallbackMiddleware, SessionLogMessageMiddleware, SessionMiddleware
 from core.resources.enums import AnswerType, States
 
 router = Router()
 router.message.middleware.register(SessionMiddleware())
 router.callback_query.middleware.register(SessionMiddleware())
+router.message.middleware.register(SessionLogMessageMiddleware())
+router.callback_query.middleware.register(SessionLogCallbackMiddleware())
 
 
 @router.callback_query(SlideCallbackFactory.filter())
@@ -31,9 +33,9 @@ async def quiz_callback_processing(callback: types.CallbackQuery, bot: Bot, call
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
     answer = callback_data.answer
-    slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     data = await state.get_data()
-    if answer == 'wrong':
+    if 'wrong_answer' in answer:
         try:
             await callback.bot.edit_message_reply_markup(chat_id=callback.from_user.id, message_id=data['quiz_options_msg_id'])
         except KeyError:
@@ -61,7 +63,7 @@ async def check_input_word(message: types.Message, bot: Bot, user: User, state: 
     data = await state.get_data()
     lesson_id = data['quiz_word_lesson_id']
     slide_id = data['quiz_word_slide_id']
-    slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     if input_word.lower() != slide.right_answers.lower():
         await message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
         await common_processing(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide_id, state=state,
@@ -85,7 +87,7 @@ async def check_input_phrase(message: types.Message, bot: Bot, user: User, state
     data = await state.get_data()
     lesson_id = data['quiz_phrase_lesson_id']
     slide_id = data['quiz_phrase_slide_id']
-    slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     answers = slide.right_answers.split('|')
     answers_lower = [answer.lower() for answer in answers]
     almost_right_answers = slide.almost_right_answers.split('|')

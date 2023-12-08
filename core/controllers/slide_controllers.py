@@ -19,11 +19,5 @@ async def get_slide_by_position(lesson_id: int, position: int, db_session: Async
     return slide
 
 
-async def count_slides_by_type(db_session: AsyncSession, slide_types: list[SlideType]) -> int:
-    query = select(func.count()).select_from(Slide).where(Slide.slide_type.in_(slide_types))
-    result = await db_session.execute(query)
-    return result.scalar_one()
-
-
 async def set_progress_position(lesson_id: int, position: int, db_session: AsyncSession) -> None:
     ...

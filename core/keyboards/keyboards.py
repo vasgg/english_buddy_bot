@@ -32,7 +32,7 @@ def get_quiz_keyboard(words: list[str], answer: str, lesson_id: int, slide_id: i
                                                                                               lesson_id=lesson_id,
                                                                                               slide_id=slide_id).pack())])
         else:
-            buttons.append([InlineKeyboardButton(text=word, callback_data=QuizCallbackFactory(answer='wrong',
+            buttons.append([InlineKeyboardButton(text=word, callback_data=QuizCallbackFactory(answer=f'wrong_answer {word}',
                                                                                               lesson_id=lesson_id,
                                                                                               slide_id=slide_id).pack())])
     return InlineKeyboardMarkup(inline_keyboard=buttons)

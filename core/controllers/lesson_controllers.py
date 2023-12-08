@@ -7,14 +7,15 @@ from sqlalchemy import Result, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.controllers.session_controller import update_session_status
-from core.controllers.slide_controllers import get_slide_by_id
 from core.controllers.choice_controllers import get_random_sticker_id
+from core.controllers.session_controller import count_distinct_slides_by_type, count_errors_in_slides_by_type, get_session, update_session_status
+from core.controllers.slide_controllers import get_slide_by_id
 from core.controllers.user_controllers import update_session
 from core.database.models import Lesson, Slide, User, UserCompleteLesson
 from core.keyboards.keyboards import get_furher_button, get_quiz_keyboard
-from core.resources.enums import KeyboardType, SessionStatus, SlideType, SessonStartsFrom, States
-from core.resources.stickers.small_stickers import small_stickers_list
+from core.resources.answers import replies
+from core.resources.enums import CountQuizSlidesMode, KeyboardType, SessionStatus, SessonStartsFrom, SlideType, States
+from core.resources.stickers import big_stickers, small_stickers
 
 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -61,6 +62,7 @@ async def lesson_routine(bot: Bot,
             if not slide.keyboard_type:
                 await bot.send_message(chat_id=user.telegram_id, text=text)
                 if slide.delay:
+                    # noinspection PyTypeChecker
                     await asyncio.sleep(slide.delay)
                 await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
                                      session_id=session_id, starts_from=starts_from, db_session=db_session)
@@ -78,6 +80,7 @@ async def lesson_routine(bot: Bot,
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
+                    # noinspection PyTypeChecker
                     await asyncio.sleep(slide.delay)
                 await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
                                      session_id=session_id, starts_from=starts_from, db_session=db_session)
@@ -89,11 +92,11 @@ async def lesson_routine(bot: Bot,
                     case _:
                         assert False, f'Unknown keyboard type: {slide.keyboard_type}'
         case SlideType.SMALL_STICKER:
-            await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=small_stickers_list))
+            await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=small_stickers))
             await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
                                  session_id=session_id, starts_from=starts_from, db_session=db_session)
         case SlideType.BIG_STICKER:
-            await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=small_stickers_list))
+            await bot.send_sticker(chat_id=user.telegram_id, sticker=get_random_sticker_id(collection=big_stickers))
             await lesson_routine(bot=bot, user=user, lesson_id=lesson_id, slide_id=slide.next_slide, state=state,
                                  session_id=session_id, starts_from=starts_from, db_session=db_session)
         case SlideType.PIN_DICT:
@@ -125,9 +128,39 @@ async def lesson_routine(bot: Bot,
             await state.set_state(States.INPUT_PHRASE)
         case SlideType.FINAL_SLIDE:
             text = slide.text
-            lesson = await get_lesson(lesson_id=lesson_id, db_session=db_session)
             await bot.send_message(chat_id=user.telegram_id, text=text)
-            await bot.send_message(chat_id=user.telegram_id, text=f'Поздравляем, вы прошли урок {lesson.title}!')
+            lesson = await get_lesson(lesson_id=lesson_id, db_session=db_session)
+            exam_slides_type = lesson.exam_slide_type
+            session = await get_session(session_id=session_id, db_session=db_session)
+            total_exam_questions = await count_distinct_slides_by_type(session_id=session_id, mode=CountQuizSlidesMode.WITH_TYPE,
+                                                                       slide_type=exam_slides_type,
+                                                                       db_session=db_session)
+            total_exam_questions_errors = await count_errors_in_slides_by_type(session_id=session_id, mode=CountQuizSlidesMode.WITH_TYPE,
+                                                                               slide_type=exam_slides_type,
+                                                                               db_session=db_session)
+            session_starts_from = session.starts_from
+            match session_starts_from:
+                case SessonStartsFrom.BEGIN:
+                    total_base_questions = await count_distinct_slides_by_type(session_id=session_id, mode=CountQuizSlidesMode.WITHOUT_TYPE,
+                                                                               slide_type=exam_slides_type,
+                                                                               db_session=db_session)
+                    total_base_questions_errors = await count_errors_in_slides_by_type(session_id=session_id, mode=CountQuizSlidesMode.WITHOUT_TYPE,
+                                                                                       slide_type=exam_slides_type,
+                                                                                       db_session=db_session)
+                    await bot.send_message(chat_id=user.telegram_id, text=replies['final_report_from_begin'].format(lesson.title,
+                                                                                                                    total_base_questions -
+                                                                                                                    total_base_questions_errors,
+                                                                                                                    total_base_questions,
+                                                                                                                    total_exam_questions -
+                                                                                                                    total_exam_questions_errors,
+                                                                                                                    total_exam_questions))
+                case SessonStartsFrom.EXAM:
+                    await bot.send_message(chat_id=user.telegram_id, text=replies['final_report_from_exam'].format(lesson.title,
+                                                                                                                   total_exam_questions -
+                                                                                                                   total_exam_questions_errors,
+                                                                                                                   total_exam_questions))
+                case _:
+                    assert False, f'Unknown session starts from: {session_starts_from}'
             await bot.unpin_all_chat_messages(chat_id=user.telegram_id)
             await add_completed_lesson_to_db(user_id=user.id, lesson_id=lesson_id, db_session=db_session)
             await update_session_status(session_id=session_id, status=SessionStatus.IN_PROGRESS, new_status=SessionStatus.COMPLETED,

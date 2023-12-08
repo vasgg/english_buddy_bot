@@ -1,6 +1,6 @@
 from unittest import IsolatedAsyncioTestCase
 
-from core.controllers.user_controllers import get_lesson_progress
+from core.controllers.session_controller import get_lesson_progress
 from core.database.database_connector import DatabaseConnector
 from core.database.models import Base, Session, Lesson, User, Slide
 from core.resources.enums import SlideType, SessionStatus
@@ -24,7 +24,7 @@ class Test(IsolatedAsyncioTestCase):
             session.add(Slide(lesson_id=1, slide_type=SlideType.TEXT, id=target_slide_id))
 
         async with self.test_database.session_factory.begin() as session:
-            session.add(Session(lesson_id=1,user_id=1, current_slide_id=target_slide_id, status=SessionStatus.IN_PROGRESS))
+            session.add(Session(lesson_id=1, user_id=1, current_slide_id=target_slide_id, status=SessionStatus.IN_PROGRESS))
             session.add(Session(lesson_id=1, user_id=1, current_slide_id=target_slide_id, status=SessionStatus.ABORTED))
             session.add(Session(lesson_id=1, user_id=1, current_slide_id=target_slide_id, status=SessionStatus.COMPLETED))
 
