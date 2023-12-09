@@ -6,11 +6,15 @@ from core.database.models.base import Base
 
 class UserProgress(Base):
     __tablename__ = "users_progress"
-    __table_args__ = (UniqueConstraint('user_id', 'current_lesson'), )
+    __table_args__ = (UniqueConstraint("user_id", "current_lesson"),)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    current_lesson: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"))
-    current_slide: Mapped[int] = mapped_column(ForeignKey("slides.id", ondelete="CASCADE"), default=1, server_default='1')
+    current_lesson: Mapped[int] = mapped_column(
+        ForeignKey("lessons.id", ondelete="CASCADE")
+    )
+    current_slide: Mapped[int] = mapped_column(
+        ForeignKey("slides.id", ondelete="CASCADE"), default=1, server_default="1"
+    )
     wrong_answer_attempts: Mapped[int | None]
     # __tablename__ = "users_progress"
     # __table_args__ = (UniqueConstraint('user_id', 'lesson_id'), )

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database.models import Session
 from core.database.models.user import User
-from core.resources.enums import SessonStartsFrom
+from core.resources.enums import SessionStartsFrom
 
 
 async def add_user_to_db(event, db_session) -> User:
@@ -18,7 +18,7 @@ async def add_user_to_db(event, db_session) -> User:
     return new_user
 
 
-async def get_user_from_db(event, db_session) -> User:
+async def get_user_from_db(event, db_session: AsyncSession) -> User:
     query = select(User).filter(User.telegram_id == event.from_user.id)
     result: Result = await db_session.execute(query)
     user = result.scalar()
@@ -27,10 +27,20 @@ async def get_user_from_db(event, db_session) -> User:
     return user
 
 
-async def update_session(user_id: int, lesson_id: int, current_slide_id: int, db_session: AsyncSession,
-                         session_id: int, starts_from: SessonStartsFrom) -> None:
-    query = update(Session).filter(Session.user_id == user_id,
-                                   Session.lesson_id == lesson_id,
-                                   Session.id == session_id).values(current_slide_id=current_slide_id,
-                                                                    starts_from=starts_from)
+async def update_session(
+    user_id: int,
+    lesson_id: int,
+    current_slide_id: int,
+    db_session: AsyncSession,
+    session_id: int,
+) -> None:
+    query = (
+        update(Session)
+        .filter(
+            Session.user_id == user_id,
+            Session.lesson_id == lesson_id,
+            Session.id == session_id,
+        )
+        .values(current_slide_id=current_slide_id)
+    )
     await db_session.execute(query)

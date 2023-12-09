@@ -13,7 +13,7 @@ class AuthMiddleware(BaseMiddleware):
         event: Message,
         data: Dict[str, Any],
     ) -> Any:
-        session = data['db_session']
+        session = data["db_session"]
         user = await get_user_from_db(event, session)
-        data['user'] = user
+        data["user"] = user
         return await handler(event, data)

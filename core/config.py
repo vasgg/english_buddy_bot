@@ -12,11 +12,11 @@ class Settings(BaseSettings):
 
     @property
     def aiosqlite_db_url(self) -> str:
-        return f'sqlite+aiosqlite:///{self.DB_NAME}.db'
+        return f"sqlite+aiosqlite:///{self.DB_NAME}.db"
 
     class Config:
-        env_file = '.env'
-        env_file_encoding = 'utf-8'
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
 
 settings = Settings()

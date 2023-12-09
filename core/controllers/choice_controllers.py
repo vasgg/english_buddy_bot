@@ -13,8 +13,12 @@ def get_random_sticker_id(collection: tuple[str]) -> str:
 
 
 async def get_random_answer(mode: AnswerType, db_session: AsyncSession) -> str:
-    query = select(Answer.text).filter(Answer.answer_type == mode).order_by(func.random()).limit(1)
+    query = (
+        select(Answer.text)
+        .filter(Answer.answer_type == mode)
+        .order_by(func.random())
+        .limit(1)
+    )
     result = await db_session.execute(query)
     answer = result.scalar()
     return answer
-

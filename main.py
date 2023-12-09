@@ -9,7 +9,7 @@ from core.middlewares.session_middlewares import DBSessionMiddleware
 from core.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
 from core.handlers.base_handlers import router as base_router
 from core.resources.notify_admin import on_shutdown_notify, on_startup_notify
-# from core.handlers.errors_handler import router as errors_router
+from core.handlers.errors_handler import router as errors_router
 from core.resources.commands import set_bot_commands
 from core.handlers.lesson_handlers import router as lesson_router
 from core.handlers.session_handlers import router as quiz_router
@@ -17,6 +17,7 @@ from core.handlers.session_handlers import router as quiz_router
 
 async def main():
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
+    # TODO: change to persistent storage
     storage = MemoryStorage()
     dispatcher = Dispatcher(storage=storage)
     dispatcher.message.middleware(DBSessionMiddleware())
@@ -29,7 +30,7 @@ async def main():
     dispatcher.shutdown.register(on_shutdown_notify)
     dispatcher.include_routers(
         base_router,
-        # errors_router,
+        errors_router,
         lesson_router,
         quiz_router)
 

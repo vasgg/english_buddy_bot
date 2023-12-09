@@ -8,10 +8,10 @@ from aiogram.types import TelegramObject, Update
 
 class UpdatesDumperMiddleware(BaseMiddleware):
     async def __call__(
-            self,
-            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-            event: Update,
-            data: Dict[str, Any],
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: Update,
+        data: Dict[str, Any],
     ) -> Any:
         json_event = event.model_dump_json(exclude_unset=True)
 

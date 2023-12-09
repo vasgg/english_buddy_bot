@@ -1,3 +1,4 @@
+import logging
 import typing
 
 import aiogram
@@ -13,5 +14,7 @@ router = Router()
 
 
 @router.errors()
-async def error_handler(exception: 'ErrorEvent', bot: aiogram.Bot):
-    await bot.send_message(settings.ADMIN_ID, 'Something went wrong')
+async def error_handler(_: "ErrorEvent", bot: aiogram.Bot):
+    logging.exception("Exception:")
+    # TODO: send exception log to telegram admin
+    await bot.send_message(settings.ADMIN_ID, "Something went wrong")

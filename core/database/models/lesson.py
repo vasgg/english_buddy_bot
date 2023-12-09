@@ -7,8 +7,8 @@ from core.resources.enums import LessonLevel, SlideType
 
 class Lesson(Base):
     __tablename__ = "lessons"
-# TODO: выбрасываем exam_slide_type, добавляем поле total_lesson_slides
-# TODO: add FK to first_slide_id and first_slide_id
+    # TODO: выбрасываем exam_slide_type, добавляем поле total_lesson_slides
+    # TODO: add FK to first_slide_id and first_slide_id
 
     title: Mapped[str]
     level: Mapped[LessonLevel | None]

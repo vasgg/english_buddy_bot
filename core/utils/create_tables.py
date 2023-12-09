@@ -10,5 +10,5 @@ async def create_or_drop_db():
         # await conn.run_sync(Base.metadata.drop_all)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(create_or_drop_db())
