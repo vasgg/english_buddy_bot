@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models import Slide
+from core.database.models.slide import Slide
 
 
 async def get_slide_by_id(

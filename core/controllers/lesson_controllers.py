@@ -16,7 +16,10 @@ from core.controllers.session_controller import (
 )
 from core.controllers.slide_controllers import get_slide_by_id
 from core.controllers.user_controllers import update_session
-from core.database.models import Lesson, Slide, User, UserCompleteLesson
+from core.database.models.lesson import Lesson
+from core.database.models.slide import Slide
+from core.database.models.user import User
+from core.database.models.user_complete_lesson import UserCompleteLesson
 from core.keyboards.keyboards import get_furher_button, get_quiz_keyboard
 from core.resources.answers import replies
 from core.resources.enums import (

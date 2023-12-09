@@ -2,7 +2,7 @@ import asyncio
 
 from core.controllers.slide_controllers import get_slide_by_position
 from core.database.db import db
-from core.database.models import Slide
+from core.database.models.slide import Slide
 from core.resources.enums import KeyboardType, SlideType
 
 
@@ -83,7 +83,8 @@ async def add_new_slide_to_lesson(
         next_slide_id = old_slide_on_position.next_slide
         old_slide_on_position.next_slide = new_slide.id
         new_slide.next_slide = next_slide_id
-        # TODO: при добавлении слайда с викториной инкрементить счётчик слайдов с викториной в таблице лессонс
+        # TODO: при добавлении слайда с викториной инкрементить
+        #  счётчик слайдов с викториной в таблице лессонс
         await db_session.commit()
 
 

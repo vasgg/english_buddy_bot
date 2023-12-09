@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped
 
-from core.database.models import Base
+from core.database.models.base import Base
 from core.resources.enums import AnswerType
 
 

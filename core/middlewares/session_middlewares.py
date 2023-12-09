@@ -1,7 +1,6 @@
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
-from aiogram.dispatcher.flags import get_flag
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.exc import PendingRollbackError
@@ -10,7 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.controllers.session_controller import get_session
 from core.controllers.slide_controllers import get_slide_by_id
 from core.database.db import db
-from core.database.models import Session, SessionLog, Slide
+from core.database.models.session import Session
+from core.database.models.session_log import SessionLog
+from core.database.models.slide import Slide
 
 
 class DBSessionMiddleware(BaseMiddleware):

@@ -1,7 +1,8 @@
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models import Session, SessionLog
+from core.database.models.session import Session
+from core.database.models.session_log import SessionLog
 from core.resources.enums import CountQuizSlidesMode, SessionStatus, SlideType
 
 

@@ -13,7 +13,8 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(String(32))
 
     def __str__(self):
-        return f"{self.__class__.__name__}(id={self.id}, telegram_id={self.telegram_id}, first_name={self.first_name})"
+        return (f"{self.__class__.__name__}(id={self.id}, "
+                f"telegram_id={self.telegram_id}, first_name={self.first_name})")
 
     def __repr__(self):
         return str(self)

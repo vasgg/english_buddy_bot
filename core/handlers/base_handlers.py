@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.controllers.lesson_controllers import get_completed_lessons, get_lessons
-from core.database.models import User
+from core.database.models.user import User
 from core.keyboards.keyboards import get_lesson_picker_keyboard
 
 router = Router()
@@ -12,7 +12,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def start_message(
-    message: types.Message, user: User, state: FSMContext, db_session: AsyncSession
+    message: types.Message, user: User, db_session: AsyncSession
 ) -> None:
     lessons = await get_lessons(db_session)
     completed_lessons = await get_completed_lessons(

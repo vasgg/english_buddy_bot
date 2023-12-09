@@ -3,7 +3,7 @@ from random import choice
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models import Answer
+from core.database.models.answer import Answer
 from core.resources.enums import AnswerType
 
 

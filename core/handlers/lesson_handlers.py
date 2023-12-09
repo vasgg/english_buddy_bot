@@ -8,7 +8,8 @@ from core.controllers.session_controller import (
     get_current_session,
 )
 from core.controllers.user_controllers import update_session
-from core.database.models import Session, User
+from core.database.models.session import Session
+from core.database.models.user import User
 from core.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,

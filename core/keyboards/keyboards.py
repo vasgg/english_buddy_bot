@@ -1,7 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models import Lesson
+from core.database.models.lesson import Lesson
 from core.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,

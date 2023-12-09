@@ -1,7 +1,7 @@
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.database.models import Base
+from core.database.models.base import Base
 from core.resources.enums import SessionStatus, SessionStartsFrom
 
 
@@ -15,5 +15,6 @@ class Session(Base):
     status: Mapped[SessionStatus] = mapped_column(default=SessionStatus.IN_PROGRESS)
 
 
-# TODO: когда мы стартуем сессию, мы замораживаем количество полных слайдов в уроке из таблицы lessons
+# TODO: когда мы стартуем сессию, мы замораживаем
+#  количество полных слайдов в уроке из таблицы lessons
 #     total_lesson_slides: Mapped[int]

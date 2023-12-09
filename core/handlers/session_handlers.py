@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.controllers.choice_controllers import get_random_answer
 from core.controllers.slide_controllers import get_slide_by_id
-from core.database.models import Session, Slide, User
+from core.database.models.session import Session
+from core.database.models.slide import Slide
+from core.database.models.user import User
 from core.handlers.lesson_handlers import common_processing
 from core.keyboards.callback_builders import QuizCallbackFactory, SlideCallbackFactory
 from core.middlewares.session_middlewares import (

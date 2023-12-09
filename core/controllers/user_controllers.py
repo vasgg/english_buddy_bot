@@ -1,9 +1,8 @@
 from sqlalchemy import Result, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.models import Session
+from core.database.models.session import Session
 from core.database.models.user import User
-from core.resources.enums import SessionStartsFrom
 
 
 async def add_user_to_db(event, db_session) -> User:
