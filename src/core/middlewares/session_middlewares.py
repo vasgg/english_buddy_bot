@@ -1,6 +1,7 @@
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
+from aiogram.dispatcher.flags import get_flag
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.exc import PendingRollbackError
@@ -84,14 +85,12 @@ class SessionLogCallbackMiddleware(BaseMiddleware):
         event: CallbackQuery,
         data: Dict[str, Any],
     ) -> Any:
-        # todo: refactor as above
-        state: FSMContext = data["state"]
-        state_data = await state.get_data()
-        session_id = state_data["session_id"]
-        callback_data = data["callback_data"]
+        skip_session_logging = get_flag(data, "skip_session_logging")
+        if skip_session_logging:
+            return await handler(event, data)
         db_session: AsyncSession = data["db_session"]
-        session = await get_session(session_id, db_session)
-        answer = getattr(callback_data, "answer", None)
+        session: Session = data["session"]
+        answer = getattr(data["callback_data"], "answer", None)
         slide: Slide = await get_slide_by_id(
             lesson_id=session.lesson_id,
             slide_id=session.current_slide_id,
@@ -99,7 +98,7 @@ class SessionLogCallbackMiddleware(BaseMiddleware):
         )
         json_event = event.model_dump_json(exclude_unset=True)
         session_log = SessionLog(
-            session_id=session_id,
+            session_id=session.id,
             slide_id=session.current_slide_id,
             slide_type=slide.slide_type,
             data=answer,

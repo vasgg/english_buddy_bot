@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     BOT_TOKEN: SecretStr
-    ADMIN_ID: int
+    ADMINS: list[int]
     DB_NAME: str
     db_echo: bool = True
 

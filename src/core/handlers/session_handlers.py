@@ -23,7 +23,7 @@ router.message.middleware.register(SessionLogMessageMiddleware())
 router.callback_query.middleware.register(SessionLogCallbackMiddleware())
 
 
-@router.callback_query(SlideCallbackFactory.filter())
+@router.callback_query(SlideCallbackFactory.filter(), flags={"skip_session_logging": "true"})
 async def slide_callback_processing(
     callback: types.CallbackQuery,
     bot: Bot,
@@ -60,9 +60,7 @@ async def quiz_callback_processing(
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
     answer = callback_data.answer
-    slide: Slide = await get_slide_by_id(
-        lesson_id=lesson_id, slide_id=slide_id, db_session=db_session
-    )
+    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     data = await state.get_data()
     if "wrong_answer" in answer:
         try:
@@ -71,9 +69,7 @@ async def quiz_callback_processing(
             )
         except KeyError:
             print("something went wrong")
-        await callback.message.answer(
-            text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session)
-        )
+        await callback.message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
         await common_processing(
             bot=bot,
             user=user,
@@ -92,9 +88,7 @@ async def quiz_callback_processing(
             )
         except KeyError:
             print("something went wrong")
-        await callback.message.answer(
-            text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session)
-        )
+        await callback.message.answer(text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session))
         await common_processing(
             bot=bot,
             user=user,
@@ -120,13 +114,9 @@ async def check_input_word(
     data = await state.get_data()
     lesson_id = data["quiz_word_lesson_id"]
     slide_id = data["quiz_word_slide_id"]
-    slide: Slide = await get_slide_by_id(
-        lesson_id=lesson_id, slide_id=slide_id, db_session=db_session
-    )
+    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     if input_word.lower() != slide.right_answers.lower():
-        await message.answer(
-            text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session)
-        )
+        await message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
         await common_processing(
             bot=bot,
             user=user,
@@ -145,9 +135,7 @@ async def check_input_word(
             )
         except KeyError:
             print("something went wrong")
-        await message.answer(
-            text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session)
-        )
+        await message.answer(text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session))
         await common_processing(
             bot=bot,
             user=user,
@@ -172,17 +160,13 @@ async def check_input_phrase(
     data = await state.get_data()
     lesson_id = data["quiz_phrase_lesson_id"]
     slide_id = data["quiz_phrase_slide_id"]
-    slide: Slide = await get_slide_by_id(
-        lesson_id=lesson_id, slide_id=slide_id, db_session=db_session
-    )
+    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     answers = slide.right_answers.split("|")
     answers_lower = [answer.lower() for answer in answers]
     almost_right_answers = slide.almost_right_answers.split("|")
     almost_right_answers_lower = [answer.lower() for answer in almost_right_answers]
     if input_phrase.lower() in answers_lower:
-        await message.answer(
-            text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session)
-        )
+        await message.answer(text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session))
         await common_processing(
             bot=bot,
             user=user,
@@ -204,9 +188,7 @@ async def check_input_phrase(
             db_session=db_session,
         )
     else:
-        await message.answer(
-            text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session)
-        )
+        await message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
         await common_processing(
             bot=bot,
             user=user,
