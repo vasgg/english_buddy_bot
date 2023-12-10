@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -16,6 +17,16 @@ from core.handlers.session_handlers import router as quiz_router
 
 
 async def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s: "
+               "%(filename)s: "
+               "%(levelname)s: "
+               "%(funcName)s(): "
+               "%(lineno)d:\t"
+               "%(message)s",
+    )
+
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
     # TODO: change to persistent storage
     storage = MemoryStorage()
@@ -37,5 +48,9 @@ async def main():
     await dispatcher.start_polling(bot)
 
 
-if __name__ == '__main__':
+def run_main():
     asyncio.run(main())
+
+
+if __name__ == '__main__':
+    run_main()

@@ -1,5 +1,3 @@
-import logging
-
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
@@ -20,13 +18,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s: "
-    "%(filename)s: "
-    "%(levelname)s: "
-    "%(funcName)s(): "
-    "%(lineno)d:\t"
-    "%(message)s",
-)

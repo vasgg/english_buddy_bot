@@ -22,12 +22,15 @@ class DBSessionMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         async with db.session_factory() as db_session:
+            # TODO: mb change to db_session factory
             data["db_session"] = db_session
             res = await handler(event, data)
-            try:
-                await db_session.commit()
-            except PendingRollbackError:
-                ...
+            # TODO: probably,check how session handles it
+            # check how commit behaves
+            # try:
+            #     await db_session.commit()
+            # except PendingRollbackError:
+            #     ...
             return res
 
 
