@@ -3,7 +3,8 @@
 .DS_Store?
 thumbs.db
 node_modules
-
+venv2
+*.egg-info
 .vscode/
 .idea/
 build/
