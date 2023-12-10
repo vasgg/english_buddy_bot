@@ -1,6 +1,42 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=58.0.4", "wheel>=0.37.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "english_buddy_bot"
+description = ""
+version = "0.0.1"
+authors = [
+    { name="vasgg", email="vas.g@me.com" },
+]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+"aiogram>=v3.2.0",
+"sqlalchemy>=2.0",
+"pydantic-settings>=2.1",
+"aiosqlite>=0.19"
+]
+requires-python = ">=3.11"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = false
+
+[options]
+zip_safe = false
+include_package_data = true
+
+[options.packages.find]
+namespace = true
+include = ["src*"]
+
+[project.scripts]
+bot-run = "main:run_main"
 
 [tool.ruff]
 line-length=120
