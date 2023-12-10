@@ -4,16 +4,22 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 # noinspection PyUnresolvedReferences
 import core.database.models.answer
+
 # noinspection PyUnresolvedReferences
 import core.database.models.lesson
+
 # noinspection PyUnresolvedReferences
 import core.database.models.session
+
 # noinspection PyUnresolvedReferences
 import core.database.models.session_log
+
 # noinspection PyUnresolvedReferences
 import core.database.models.slide
+
 # noinspection PyUnresolvedReferences
 import core.database.models.user
+
 # noinspection PyUnresolvedReferences
 import core.database.models.user_complete_lesson
 from core.database.models.base import Base
