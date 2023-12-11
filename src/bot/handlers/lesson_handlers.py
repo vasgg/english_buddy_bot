@@ -12,6 +12,7 @@ from bot.keyboards.callback_builders import (
     LessonsCallbackFactory,
 )
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
+from bot.resources.answers import replies
 from bot.resources.enums import (
     LessonStartsFrom,
     SessionStatus,
@@ -51,6 +52,9 @@ async def lesson_callback_processing(
     await callback.message.delete()
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson(lesson_id=callback_data.lesson_id, db_session=db_session)
+    if lesson.is_paid:
+        await callback.message.answer(text=replies["paywall_message"])
+        return
     if session:
         await callback.message.answer(
             text="Вы можете продолжить урок, или начать его сначала.",

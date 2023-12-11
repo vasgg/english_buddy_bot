@@ -1,15 +1,10 @@
 from aiogram import Router, types
-from aiogram.filters import Command, CommandStart
-from aiogram.fsm.context import FSMContext
-from aiogram.types import BotCommandScopeChat
+from aiogram.filters import CommandStart
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.config import settings
 from bot.controllers.lesson_controllers import get_completed_lessons, get_lessons
 from bot.database.models.user import User
 from bot.keyboards.keyboards import get_lesson_picker_keyboard
-from bot.resources.commands import special_commands
-from bot.resources.enums import States
 
 router = Router()
 

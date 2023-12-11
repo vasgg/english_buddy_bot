@@ -12,3 +12,4 @@ class Lesson(Base):
     level: Mapped[LessonLevel | None]
     first_slide_id: Mapped[int] = mapped_column(ForeignKey("slides.id"))
     exam_slide_id: Mapped[int | None] = mapped_column(ForeignKey("slides.id"))
+    is_paid: Mapped[bool]

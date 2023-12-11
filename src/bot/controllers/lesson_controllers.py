@@ -4,17 +4,17 @@ from random import sample
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import Result, select
-from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.choice_controllers import get_random_sticker_id
 from bot.controllers.session_controller import (
-    count_distinct_slides_by_type,
-    count_errors_in_slides_by_type,
+    count_errors_in_session,
+    get_all_questions_in_session,
+    get_hints_shown_counter_in_session,
     get_session,
     update_session_status,
 )
-from bot.controllers.slide_controllers import get_slide_by_id
+from bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson, get_slide_by_id
 from bot.controllers.user_controllers import update_session
 from bot.database.models.complete_lesson import CompleteLesson
 from bot.database.models.lesson import Lesson
@@ -22,7 +22,7 @@ from bot.database.models.slide import Slide
 from bot.database.models.user import User
 from bot.keyboards.keyboards import get_furher_button, get_quiz_keyboard
 from bot.resources.answers import replies
-from bot.resources.enums import CountQuizSlidesMode, KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States
+from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States
 from bot.resources.stickers import big_stickers, small_stickers
 
 
@@ -41,15 +41,24 @@ async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
 
 
 async def add_completed_lesson_to_db(user_id: int, lesson_id: int, session_id: int, db_session: AsyncSession) -> None:
-    upsert_query = insert(CompleteLesson).values(user_id=user_id, lesson_id=lesson_id, session_id=session_id)
-    upsert_query = upsert_query.on_conflict_do_nothing()
-    await db_session.execute(upsert_query)
+    completed_lesson = CompleteLesson(
+        user_id=user_id,
+        lesson_id=lesson_id,
+        session_id=session_id,
+    )
+    db_session.add(completed_lesson)
 
 
 async def get_completed_lessons(user_id: int, db_session: AsyncSession) -> set[int]:
     query = select(CompleteLesson.lesson_id).filter(CompleteLesson.user_id == user_id)
     result = await db_session.execute(query)
     return {row for row in result.scalars().all()}
+
+
+async def get_all_exam_slides_id_in_lesson(lesson_id: int, db_session: AsyncSession) -> set[int]:
+    query = select(Slide.id).filter(Slide.lesson_id == lesson_id, Slide.is_exam_slide)
+    result = await db_session.execute(query)
+    return {row for row in result.scalars().all()} if result else {}
 
 
 async def lesson_routine(
@@ -204,41 +213,36 @@ async def lesson_routine(
                 new_status=SessionStatus.COMPLETED,
                 db_session=db_session,
             )
-            total_exam_questions = await count_distinct_slides_by_type(
-                session_id=session_id,
-                mode=CountQuizSlidesMode.WITH_TYPE,
-                slide_type=exam_slides_type,
-                db_session=db_session,
+            all_exam_slides_in_lesson = await get_all_exam_slides_id_in_lesson(
+                lesson_id=lesson_id, db_session=db_session
             )
-            total_exam_questions_errors = await count_errors_in_slides_by_type(
-                session_id=session_id,
-                mode=CountQuizSlidesMode.WITH_TYPE,
-                slide_type=exam_slides_type,
-                db_session=db_session,
+            all_questions_slides_in_session = await get_all_questions_in_session(
+                session_id=session_id, db_session=db_session
             )
+            total_exam_questions_in_session = all_exam_slides_in_lesson & all_questions_slides_in_session
+            total_exam_questions_errors = await count_errors_in_session(
+                session_id=session_id, slides_set=total_exam_questions_in_session, db_session=db_session
+            )
+            hints_shown = await get_hints_shown_counter_in_session(session_id=session_id, db_session=db_session)
             session_starts_from = session.starts_from
             match session_starts_from:
                 case SessionStartsFrom.BEGIN:
-                    total_base_questions = await count_distinct_slides_by_type(
-                        session_id=session_id,
-                        mode=CountQuizSlidesMode.WITHOUT_TYPE,
-                        slide_type=exam_slides_type,
-                        db_session=db_session,
+                    total_base_questions_in_lesson = await get_all_base_questions_id_in_lesson(
+                        lesson_id=lesson_id, exam_slides_id=all_exam_slides_in_lesson, db_session=db_session
                     )
-                    total_base_questions_errors = await count_errors_in_slides_by_type(
-                        session_id=session_id,
-                        mode=CountQuizSlidesMode.WITHOUT_TYPE,
-                        slide_type=exam_slides_type,
-                        db_session=db_session,
+                    total_base_questions_in_session = total_base_questions_in_lesson & all_questions_slides_in_session
+                    total_base_questions_errors = await count_errors_in_session(
+                        session_id=session_id, slides_set=total_base_questions_in_lesson, db_session=db_session
                     )
                     await bot.send_message(
                         chat_id=user.telegram_id,
                         text=replies["final_report_from_begin"].format(
                             lesson.title,
-                            total_base_questions - total_base_questions_errors,
-                            total_base_questions,
-                            total_exam_questions - total_exam_questions_errors,
-                            total_exam_questions,
+                            len(total_base_questions_in_session) - total_base_questions_errors,
+                            len(total_base_questions_in_session),
+                            len(total_exam_questions_in_session) - total_exam_questions_errors,
+                            len(total_exam_questions_in_session),
+                            hints_shown,
                         ),
                     )
                 case SessionStartsFrom.EXAM:
@@ -246,13 +250,13 @@ async def lesson_routine(
                         chat_id=user.telegram_id,
                         text=replies["final_report_from_exam"].format(
                             lesson.title,
-                            total_exam_questions - total_exam_questions_errors,
-                            total_exam_questions,
+                            len(total_exam_questions_in_session) - total_exam_questions_errors,
+                            len(total_exam_questions_in_session),
+                            hints_shown,
                         ),
                     )
                 case _:
                     assert False, f"Unknown session starts from: {session_starts_from}"
-
             await state.clear()
             return
         case _:

@@ -60,9 +60,16 @@ class LessonStartsFrom(Enum):
     CUSTOM = "custom"
 
 
-class CountQuizSlidesMode(Enum):
-    WITH_TYPE = "with_type"
-    WITHOUT_TYPE = "without_type"
+class EventType(Enum):
+    MESSAGE = "message"
+    CALLBACK_QUERY = "callback_query"
+    HINT = "hint"
+    CONTINUE = "continue"
+
+
+class QuestionType(Enum):
+    BASE = "base"
+    EXAM = "exam"
 
 
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:

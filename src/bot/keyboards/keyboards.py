@@ -123,6 +123,8 @@ async def get_lesson_progress_keyboard(
 
 
 def get_hint_keyaboard(session_id: int, slide_id: int, lesson_id: int, right_answer: str) -> InlineKeyboardMarkup:
+    if "|" in right_answer:
+        right_answer = right_answer.split("|")[0]
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [

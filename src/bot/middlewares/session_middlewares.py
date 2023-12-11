@@ -8,12 +8,7 @@ from sqlalchemy.exc import PendingRollbackError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.session_controller import get_session
-from bot.controllers.slide_controllers import get_slide_by_id
 from bot.database.db import db
-from bot.database.models.session import Session
-from bot.database.models.session_log import SessionLog
-from bot.database.models.slide import Slide
-from bot.resources.enums import SlideType
 
 
 class DBSessionMiddleware(BaseMiddleware):
@@ -63,39 +58,39 @@ class SessionLogMessageMiddleware(BaseMiddleware):
         skip_session_logging = get_flag(data, "skip_session_logging")
         if skip_session_logging:
             return await handler(event, data)
-        db_session: AsyncSession = data["db_session"]
-        session: Session = data["session"]
-        slide: Slide = await get_slide_by_id(
-            lesson_id=session.lesson_id,
-            slide_id=session.current_slide_id,
-            db_session=db_session,
-        )
-        if slide.slide_type == SlideType.QUIZ_INPUT_PHRASE:
-            answers = slide.right_answers.split("|")
-            answers_lower = [answer.lower() for answer in answers]
-            almost_right_answers = slide.almost_right_answers.split("|")
-            almost_right_answers_lower = [answer.lower() for answer in almost_right_answers]
-            is_correct = (
-                True
-                if event.text.lower() in answers_lower or event.text.lower() in almost_right_answers_lower
-                else False
-            )
-        else:
-            if event.text in ["continue_button", "show_hint", "/start", "/position", None]:
-                is_correct = None
-            else:
-                is_correct = True
-        json_event = event.model_dump_json(exclude_unset=True)
-        # noinspection PyUnboundLocalVariable
-        session_log = SessionLog(
-            session_id=session.id,
-            slide_id=session.current_slide_id,
-            slide_type=slide.slide_type,
-            data=event.text,
-            is_correct=is_correct,
-            update=json_event,
-        )
-        db_session.add(session_log)
+        # db_session: AsyncSession = data["db_session"]
+        # session: Session = data["session"]
+        # slide: Slide = await get_slide_by_id(
+        #     lesson_id=session.lesson_id,
+        #     slide_id=session.current_slide_id,
+        #     db_session=db_session,
+        # )
+        # if slide.slide_type == SlideType.QUIZ_INPUT_PHRASE:
+        #     answers = slide.right_answers.split("|")
+        #     answers_lower = [answer.lower() for answer in answers]
+        #     almost_right_answers = slide.almost_right_answers.split("|")
+        #     almost_right_answers_lower = [answer.lower() for answer in almost_right_answers]
+        #     is_correct = (
+        #         True
+        #         if event.text.lower() in answers_lower or event.text.lower() in almost_right_answers_lower
+        #         else False
+        #     )
+        # else:
+        #     if event.text in ["continue_button", "show_hint", "/start", "/position", None]:
+        #         is_correct = None
+        #     else:
+        #         is_correct = True
+        # json_event = event.model_dump_json(exclude_unset=True)
+        # # noinspection PyUnboundLocalVariable
+        # session_log = SessionLog(
+        #     session_id=session.id,
+        #     slide_id=session.current_slide_id,
+        #     slide_type=slide.slide_type,
+        #     data=event.text,
+        #     is_correct=is_correct,
+        #     update=json_event,
+        # )
+        # db_session.add(session_log)
         return await handler(event, data)
 
 
@@ -109,32 +104,32 @@ class SessionLogCallbackMiddleware(BaseMiddleware):
         skip_session_logging = get_flag(data, "skip_session_logging")
         if skip_session_logging:
             return await handler(event, data)
-        db_session: AsyncSession = data["db_session"]
-        session: Session = data["session"]
-        answer = getattr(data["callback_data"], "answer", None)
-        slide: Slide = await get_slide_by_id(
-            lesson_id=session.lesson_id,
-            slide_id=session.current_slide_id,
-            db_session=db_session,
-        )
-        if slide.slide_type == SlideType.QUIZ_INPUT_PHRASE:
-            right_answers = slide.right_answers.split("|")
-            almost_right_answers = slide.almost_right_answers.split("|")
-            is_correct = True if answer in right_answers or answer in almost_right_answers else False
-        if answer in ["continue_button", "show_hint", "/start", "/position", None]:
-            is_correct = None
-        else:
-            is_correct = True
-        # is_correct = True if answer == slide.right_answers else False
-        json_event = event.model_dump_json(exclude_unset=True)
-        # noinspection PyUnboundLocalVariable
-        session_log = SessionLog(
-            session_id=session.id,
-            slide_id=session.current_slide_id,
-            slide_type=slide.slide_type,
-            data=answer,
-            is_correct=is_correct,
-            update=json_event,
-        )
-        db_session.add(session_log)
+        # db_session: AsyncSession = data["db_session"]
+        # session: Session = data["session"]
+        # answer = getattr(data["callback_data"], "answer", None)
+        # slide: Slide = await get_slide_by_id(
+        #     lesson_id=session.lesson_id,
+        #     slide_id=session.current_slide_id,
+        #     db_session=db_session,
+        # )
+        # if slide.slide_type == SlideType.QUIZ_INPUT_PHRASE:
+        #     right_answers = slide.right_answers.split("|")
+        #     almost_right_answers = slide.almost_right_answers.split("|")
+        #     is_correct = True if answer in right_answers or answer in almost_right_answers else False
+        # if answer in ["continue_button", "show_hint", "/start", "/position", None]:
+        #     is_correct = None
+        # else:
+        #     is_correct = True
+        # # is_correct = True if answer == slide.right_answers else False
+        # json_event = event.model_dump_json(exclude_unset=True)
+        # # noinspection PyUnboundLocalVariable
+        # session_log = SessionLog(
+        #     session_id=session.id,
+        #     slide_id=session.current_slide_id,
+        #     slide_type=slide.slide_type,
+        #     data=answer,
+        #     is_correct=is_correct,
+        #     update=json_event,
+        # )
+        # db_session.add(session_log)
         return await handler(event, data)
