@@ -25,6 +25,7 @@ class QuizCallbackFactory(CallbackData, prefix="quiz"):
 
 
 class HintCallbackFactory(CallbackData, prefix="hint"):
+    # TODO: убрать неиспользуемые поля
     session_id: int
     lesson_id: int
     slide_id: int

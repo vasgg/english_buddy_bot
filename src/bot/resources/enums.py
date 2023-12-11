@@ -57,7 +57,6 @@ class LessonStartsFrom(Enum):
     BEGIN = "begin"
     EXAM = "exam"
     CONTINUE = "continue"
-    CUSTOM = "custom"
 
 
 class EventType(Enum):
@@ -65,11 +64,6 @@ class EventType(Enum):
     CALLBACK_QUERY = "callback_query"
     HINT = "hint"
     CONTINUE = "continue"
-
-
-class QuestionType(Enum):
-    BASE = "base"
-    EXAM = "exam"
 
 
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:
