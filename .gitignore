@@ -26,3 +26,4 @@ venv.bak/
 *.py[cod]
 *$py.class
 *.so
+*.db
