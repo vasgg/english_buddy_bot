@@ -176,7 +176,6 @@ async def check_input_word(
     slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     if input_word.lower() != slide.right_answers.lower():
         await message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
-
         wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
         if wrong_answers_count >= 3:
             await message.answer(

@@ -71,14 +71,20 @@ class SessionLogMessageMiddleware(BaseMiddleware):
             db_session=db_session,
         )
         if slide.slide_type == SlideType.QUIZ_INPUT_PHRASE:
-            right_answers = slide.right_answers.split("|")
+            answers = slide.right_answers.split("|")
+            answers_lower = [answer.lower() for answer in answers]
             almost_right_answers = slide.almost_right_answers.split("|")
-            is_correct = True if event.text in right_answers or event.text in almost_right_answers else False
+            almost_right_answers_lower = [answer.lower() for answer in almost_right_answers]
+            is_correct = (
+                True
+                if event.text.lower() in answers_lower or event.text.lower() in almost_right_answers_lower
+                else False
+            )
         else:
             if event.text in ["continue_button", "show_hint", "/start", "/position", None]:
                 is_correct = None
             else:
-                is_correct = False
+                is_correct = True
         json_event = event.model_dump_json(exclude_unset=True)
         # noinspection PyUnboundLocalVariable
         session_log = SessionLog(
@@ -119,7 +125,7 @@ class SessionLogCallbackMiddleware(BaseMiddleware):
             if answer in ["continue_button", "show_hint", "/start", "/position", None]:
                 is_correct = None
             else:
-                is_correct = False
+                is_correct = True
         # is_correct = True if answer == slide.right_answers else False
         json_event = event.model_dump_json(exclude_unset=True)
         # noinspection PyUnboundLocalVariable
