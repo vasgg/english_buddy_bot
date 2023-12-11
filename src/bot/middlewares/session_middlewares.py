@@ -121,11 +121,10 @@ class SessionLogCallbackMiddleware(BaseMiddleware):
             right_answers = slide.right_answers.split("|")
             almost_right_answers = slide.almost_right_answers.split("|")
             is_correct = True if answer in right_answers or answer in almost_right_answers else False
+        if answer in ["continue_button", "show_hint", "/start", "/position", None]:
+            is_correct = None
         else:
-            if answer in ["continue_button", "show_hint", "/start", "/position", None]:
-                is_correct = None
-            else:
-                is_correct = True
+            is_correct = True
         # is_correct = True if answer == slide.right_answers else False
         json_event = event.model_dump_json(exclude_unset=True)
         # noinspection PyUnboundLocalVariable
