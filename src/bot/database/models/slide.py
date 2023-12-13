@@ -19,4 +19,4 @@ class Slide(Base):
     almost_right_answer_reply: Mapped[str | None]
     keyboard_type: Mapped[KeyboardType | None]
     keyboard: Mapped[str | None]
-    is_exam_slide: Mapped[bool] = mapped_column(default="0", server_default="0")
+    is_exam_slide: Mapped[bool] = mapped_column(default=False, server_default="0")

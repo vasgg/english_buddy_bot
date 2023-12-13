@@ -6,12 +6,13 @@ from bot.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
     QuizCallbackFactory,
+    RemindersCallbackFactory,
     SlideCallbackFactory,
 )
 from bot.resources.enums import LessonStartsFrom, UserLessonProgress
 
 
-async def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
+def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
     buttons = []
     for lesson in lessons:
         mark = " ✅" if lesson.id in completed_lessons else ""
@@ -148,6 +149,45 @@ def get_hint_keyaboard(session_id: int, slide_id: int, lesson_id: int, right_ans
                         slide_id=slide_id,
                         answer="continue_button",
                         right_answer=right_answer,
+                    ).pack(),
+                )
+            ],
+        ]
+    )
+
+
+def get_notified_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Каждый день",
+                    callback_data=RemindersCallbackFactory(
+                        frequency=1,
+                    ).pack(),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Раз в 3 дня",
+                    callback_data=RemindersCallbackFactory(
+                        frequency=3,
+                    ).pack(),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Раз в неделю",
+                    callback_data=RemindersCallbackFactory(
+                        frequency=7,
+                    ).pack(),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Не получать уведомления",
+                    callback_data=RemindersCallbackFactory(
+                        frequency=0,
                     ).pack(),
                 )
             ],

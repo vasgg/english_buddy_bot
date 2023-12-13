@@ -1,8 +1,9 @@
-from sqlalchemy import Result, select, update
+from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.models.session import Session
 from bot.database.models.user import User
+from bot.keyboards.keyboards import get_notified_keyboard
 
 
 async def add_user_to_db(event, db_session) -> User:
@@ -11,9 +12,16 @@ async def add_user_to_db(event, db_session) -> User:
         first_name=event.from_user.first_name,
         last_name=event.from_user.last_name,
         username=event.from_user.username,
+        paywall_access=False,
+        reminder_freq=None,
     )
     db_session.add(new_user)
     await db_session.flush()
+    await event.bot.send_message(
+        chat_id=event.from_user.id,
+        text="Вы успешно зарегистрированы в боте. Хотите включить автоматические напоминания о занятиях?",
+        reply_markup=get_notified_keyboard(),
+    )
     return new_user
 
 
@@ -43,3 +51,9 @@ async def update_session(
         .values(current_slide_id=current_slide_id)
     )
     await db_session.execute(query)
+
+
+async def toggle_user_paywall_access(user_id: int, db_session: AsyncSession) -> None:
+    await db_session.execute(
+        update(User).filter(User.id == user_id).values(paywall_access=func.not_(User.paywall_access))
+    )

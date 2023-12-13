@@ -56,7 +56,6 @@ async def get_wrong_answers_counter(session_id: int, slide_id: int, db_session: 
     query = select(func.count(SessionLog.id)).filter(
         SessionLog.session_id == session_id,
         SessionLog.slide_id == slide_id,
-        # ~(SessionLog.is_correct.is_(None)),
         ~SessionLog.is_correct,
     )
     result = await db_session.execute(query)
@@ -70,7 +69,10 @@ async def log_quiz_answer(
         case EventType.MESSAGE:
             data = event.text
         case EventType.CALLBACK_QUERY:
-            data = event.data.split(":")[-1]
+            if ":" in event.data:
+                data = event.data.split(":")[-1]
+            else:
+                data = event.data
         case EventType.HINT:
             data = "show_hint"
         case EventType.CONTINUE:

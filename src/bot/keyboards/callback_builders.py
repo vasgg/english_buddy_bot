@@ -31,3 +31,7 @@ class HintCallbackFactory(CallbackData, prefix="hint"):
     slide_id: int
     answer: str
     right_answer: str
+
+
+class RemindersCallbackFactory(CallbackData, prefix="reminder"):
+    frequency: int

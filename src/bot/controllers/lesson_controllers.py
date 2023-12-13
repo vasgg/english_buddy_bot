@@ -20,7 +20,7 @@ from bot.database.models.complete_lesson import CompleteLesson
 from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
 from bot.database.models.user import User
-from bot.keyboards.keyboards import get_furher_button, get_quiz_keyboard
+from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
 from bot.resources.answers import replies
 from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States
 from bot.resources.stickers import big_stickers, small_stickers
@@ -225,6 +225,9 @@ async def lesson_routine(
             )
             hints_shown = await get_hints_shown_counter_in_session(session_id=session_id, db_session=db_session)
             session_starts_from = session.starts_from
+            lessons = await get_lessons(db_session)
+            completed_lessons = await get_completed_lessons(user_id=user.id, db_session=db_session)
+            lesson_picker_kb = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)
             match session_starts_from:
                 case SessionStartsFrom.BEGIN:
                     total_base_questions_in_lesson = await get_all_base_questions_id_in_lesson(
@@ -244,6 +247,7 @@ async def lesson_routine(
                             len(total_exam_questions_in_session),
                             hints_shown,
                         ),
+                        reply_markup=lesson_picker_kb,
                     )
                 case SessionStartsFrom.EXAM:
                     await bot.send_message(
@@ -254,6 +258,7 @@ async def lesson_routine(
                             len(total_exam_questions_in_session),
                             hints_shown,
                         ),
+                        reply_markup=lesson_picker_kb,
                     )
                 case _:
                     assert False, f"Unknown session starts from: {session_starts_from}"

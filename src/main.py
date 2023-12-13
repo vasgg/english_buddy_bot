@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.config import settings
-from bot.handlers.base_handlers import router as base_router
+from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
 from bot.handlers.lesson_handlers import router as lesson_router
 from bot.handlers.session_handlers import router as quiz_router
