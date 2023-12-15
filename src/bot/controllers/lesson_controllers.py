@@ -14,8 +14,8 @@ from bot.controllers.session_controller import (
     get_session,
     update_session_status,
 )
+from bot.controllers.session_controller import update_session
 from bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson, get_slide_by_id
-from bot.controllers.user_controllers import update_session
 from bot.database.models.complete_lesson import CompleteLesson
 from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
@@ -230,6 +230,14 @@ async def lesson_routine(
             lesson_picker_kb = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)
             match session_starts_from:
                 case SessionStartsFrom.BEGIN:
+                    if not lesson.exam_slide_id:
+                        await bot.send_message(
+                            chat_id=user.telegram_id,
+                            text=replies["final_report_without_questions"].format(lesson.title),
+                            reply_markup=lesson_picker_kb,
+                        )
+                        await state.clear()
+                        return
                     total_base_questions_in_lesson = await get_all_base_questions_id_in_lesson(
                         lesson_id=lesson_id, exam_slides_id=all_exam_slides_in_lesson, db_session=db_session
                     )

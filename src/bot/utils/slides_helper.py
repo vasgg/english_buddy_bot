@@ -2,6 +2,8 @@ import asyncio
 
 from bot.controllers.slide_controllers import get_slide_by_position
 from bot.database.db import db
+# noinspection PyUnresolvedReferences
+from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
 from bot.resources.enums import KeyboardType, SlideType
 

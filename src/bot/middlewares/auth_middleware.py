@@ -3,7 +3,7 @@ from typing import Any, Awaitable, Callable, Dict
 from aiogram import BaseMiddleware
 from aiogram.types import Message
 
-from bot.controllers.user_controllers import get_user_from_db
+from bot.controllers.user_controllers import add_user_to_db, get_user_from_db
 
 
 class AuthMiddleware(BaseMiddleware):
@@ -15,5 +15,9 @@ class AuthMiddleware(BaseMiddleware):
     ) -> Any:
         session = data["db_session"]
         user = await get_user_from_db(event, session)
+        data["is_new_user"] = False
+        if not user:
+            user = await add_user_to_db(event, session)
+            data["is_new_user"] = True
         data["user"] = user
         return await handler(event, data)

@@ -76,7 +76,7 @@ async def quiz_callback_processing(
         await log_quiz_answer(
             session=session,
             mode=EventType.CALLBACK_QUERY,
-            event=callback_data,
+            event=callback,
             is_correct=False,
             slide=slide,
             db_session=db_session,
@@ -86,10 +86,8 @@ async def quiz_callback_processing(
             await callback.message.answer(
                 text=replies["3_wrong_answers"].format(wrong_answers_count),
                 reply_markup=get_hint_keyaboard(
-                    session_id=session.id,
                     lesson_id=lesson_id,
                     slide_id=slide_id,
-                    right_answer=slide.right_answers,
                 ),
             )
             return
@@ -142,13 +140,14 @@ async def hint_callback(
     session: Session,
     db_session: AsyncSession,
 ) -> None:
-    answer = callback_data.answer
+    await callback.answer()
     slide: Slide = await get_slide_by_id(
         lesson_id=callback_data.lesson_id, slide_id=callback_data.slide_id, db_session=db_session
     )
-    if answer == "show_hint":
+    right_answer = slide.right_answers if "|" not in slide.right_answers else slide.right_answers.split("|")[0]
+    if callback_data.payload == "show_hint":
         slide_id = slide.next_slide
-        await callback.message.answer(text=replies["right_answer"].format(callback_data.right_answer))
+        await callback.message.answer(text=replies["right_answer"].format(right_answer))
         await log_quiz_answer(
             session=session,
             mode=EventType.HINT,
@@ -164,7 +163,8 @@ async def hint_callback(
     await log_quiz_answer(
         session=session,
         mode=EventType.CONTINUE,
-        event=callback_data,
+        event=callback,
+        # event=callback_data,
         is_correct=None,
         slide=slide,
         db_session=db_session,
@@ -178,7 +178,6 @@ async def hint_callback(
         session=session,
         db_session=db_session,
     )
-    await callback.answer()
 
 
 @router.message(States.INPUT_WORD)
@@ -210,10 +209,8 @@ async def check_input_word(
             await message.answer(
                 text=replies["3_wrong_answers"].format(wrong_answers_count),
                 reply_markup=get_hint_keyaboard(
-                    session_id=session.id,
                     lesson_id=lesson_id,
                     slide_id=slide_id,
-                    right_answer=slide.right_answers,
                 ),
             )
             return
@@ -326,10 +323,8 @@ async def check_input_phrase(
             await message.answer(
                 text=replies["3_wrong_answers"].format(wrong_answers_count),
                 reply_markup=get_hint_keyaboard(
-                    session_id=session.id,
                     lesson_id=lesson_id,
                     slide_id=slide_id,
-                    right_answer=slide.right_answers,
                 ),
             )
             return
