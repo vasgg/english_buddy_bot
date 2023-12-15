@@ -11,7 +11,6 @@ from bot.database.database_connector import DatabaseConnector
 from bot.database.models.user import User
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
 from bot.resources.answers import replies
-from bot.resources.enums import Times
 
 
 async def add_user_to_db(event, db_session) -> User:
@@ -75,14 +74,15 @@ async def update_last_reminded_at(user_id: int, timestamp: datetime, db_session:
 
 async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
     while True:
-        await asyncio.sleep(Times.ONE_HOUR.value)
+        await asyncio.sleep(10)
+        # await asyncio.sleep(Times.ONE_HOUR.value)
         utcnow = datetime.utcnow()
-        if utcnow.hour == Times.UTC_STARTING_MARK.value:
-            async with db_connector.session_factory() as session:
-                for user in await get_all_users_with_reminders(session):
-                    delta = utcnow - user.last_reminded_at
-                    if delta > timedelta(days=user.reminder_freq):
-                        logging.info(f"{'=' * 10} {'reminder sended to' + str(user)}")
-                        await bot.send_message(chat_id=user.telegram_id, text=replies["reminder_text"])
-                        await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
-                        await session.commit()
+        # if utcnow.hour == Times.UTC_STARTING_MARK.value:
+        async with db_connector.session_factory() as session:
+            for user in await get_all_users_with_reminders(session):
+                delta = utcnow - user.last_reminded_at
+                if delta > timedelta(seconds=user.reminder_freq * 10):
+                    logging.info(f"{'=' * 10} {'reminder sended to ' + str(user)}")
+                    await bot.send_message(chat_id=user.telegram_id, text=replies["reminder_text"])
+                    await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
+                    await session.commit()

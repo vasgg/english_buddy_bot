@@ -140,4 +140,5 @@ async def reminders_callback_processing(
     await set_user_reminders(user_id=user.id, reminder_freq=frequency, db_session=db_session)
     await callback.message.answer(text=text)
     await callback.answer()
+    # TODO: вот тут нужен правильный флаг, чтобы после команды не показывать старт меню
     await show_start_menu(user=user, message=callback.message, db_session=db_session)
