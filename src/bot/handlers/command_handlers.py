@@ -75,3 +75,8 @@ async def toggle_paywall_access(message: types.Message, user: User, db_session: 
     await message.answer(
         text="Your current paywall access status: " + ("enabled" if user.paywall_access else "disabled"),
     )
+
+
+@router.message(Command("reminders"))
+async def set_user_reminders(message: types.Message) -> None:
+    await propose_reminder_to_user(message)
