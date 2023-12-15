@@ -13,6 +13,7 @@ from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_key
 from bot.resources.answers import replies
 
 
+
 async def add_user_to_db(event, db_session) -> User:
     new_user = User(
         telegram_id=event.from_user.id,
@@ -86,3 +87,4 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                     await bot.send_message(chat_id=user.telegram_id, text=replies["reminder_text"])
                     await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
                     await session.commit()
+
