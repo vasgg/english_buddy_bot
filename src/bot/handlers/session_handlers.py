@@ -1,17 +1,11 @@
 import asyncio
 
 from aiogram import Bot, Router, types
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import BotCommandScopeChat
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.config import settings
 from bot.controllers.choice_controllers import get_random_answer
 from bot.controllers.session_controller import (
-    get_last_session_with_progress,
-    get_session,
     get_wrong_answers_counter,
     log_quiz_answer,
 )
@@ -22,23 +16,16 @@ from bot.database.models.user import User
 from bot.handlers.lesson_handlers import common_processing
 from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
-from bot.middlewares.session_middlewares import (
-    SessionLogCallbackMiddleware,
-    SessionLogMessageMiddleware,
-    SessionMiddleware,
-)
+from bot.middlewares.session_middlewares import SessionMiddleware
 from bot.resources.answers import replies
-from bot.resources.commands import special_commands
 from bot.resources.enums import AnswerType, EventType, States
 
 router = Router()
 router.message.middleware.register(SessionMiddleware())
 router.callback_query.middleware.register(SessionMiddleware())
-router.message.middleware.register(SessionLogMessageMiddleware())
-router.callback_query.middleware.register(SessionLogCallbackMiddleware())
 
 
-@router.callback_query(SlideCallbackFactory.filter(), flags={"skip_session_logging": "true"})
+@router.callback_query(SlideCallbackFactory.filter())
 async def slide_callback_processing(
     callback: types.CallbackQuery,
     bot: Bot,
@@ -48,8 +35,7 @@ async def slide_callback_processing(
     session: Session,
     db_session: AsyncSession,
 ) -> None:
-    if callback.from_user.id in settings.ADMINS:
-        await callback.bot.set_my_commands(special_commands, scope=BotCommandScopeChat(chat_id=callback.from_user.id))
+    await callback.message.delete_reply_markup()
     lesson_id = callback_data.lesson_id
     next_slide_id = callback_data.next_slide_id
     await common_processing(
@@ -64,7 +50,7 @@ async def slide_callback_processing(
     await callback.answer()
 
 
-@router.callback_query(QuizCallbackFactory.filter(), flags={"skip_session_logging": "true"})
+@router.callback_query(QuizCallbackFactory.filter())
 async def quiz_callback_processing(
     callback: types.CallbackQuery,
     bot: Bot,
@@ -90,7 +76,7 @@ async def quiz_callback_processing(
         await log_quiz_answer(
             session=session,
             mode=EventType.CALLBACK_QUERY,
-            event=callback_data,
+            event=callback,
             is_correct=False,
             slide=slide,
             db_session=db_session,
@@ -100,10 +86,8 @@ async def quiz_callback_processing(
             await callback.message.answer(
                 text=replies["3_wrong_answers"].format(wrong_answers_count),
                 reply_markup=get_hint_keyaboard(
-                    session_id=session.id,
                     lesson_id=lesson_id,
                     slide_id=slide_id,
-                    right_answer=slide.right_answers,
                 ),
             )
             return
@@ -156,13 +140,14 @@ async def hint_callback(
     session: Session,
     db_session: AsyncSession,
 ) -> None:
-    answer = callback_data.answer
+    await callback.answer()
     slide: Slide = await get_slide_by_id(
         lesson_id=callback_data.lesson_id, slide_id=callback_data.slide_id, db_session=db_session
     )
-    if answer == "show_hint":
+    right_answer = slide.right_answers if "|" not in slide.right_answers else slide.right_answers.split("|")[0]
+    if callback_data.payload == "show_hint":
         slide_id = slide.next_slide
-        await callback.message.answer(text=replies["right_answer"].format(callback_data.right_answer))
+        await callback.message.answer(text=replies["right_answer"].format(right_answer))
         await log_quiz_answer(
             session=session,
             mode=EventType.HINT,
@@ -178,7 +163,8 @@ async def hint_callback(
     await log_quiz_answer(
         session=session,
         mode=EventType.CONTINUE,
-        event=callback_data,
+        event=callback,
+        # event=callback_data,
         is_correct=None,
         slide=slide,
         db_session=db_session,
@@ -192,10 +178,9 @@ async def hint_callback(
         session=session,
         db_session=db_session,
     )
-    await callback.answer()
 
 
-@router.message(States.INPUT_WORD, flags={"skip_session_logging": "true"})
+@router.message(States.INPUT_WORD)
 async def check_input_word(
     message: types.Message,
     bot: Bot,
@@ -205,9 +190,6 @@ async def check_input_word(
     db_session: AsyncSession,
 ) -> None:
     input_word = message.text
-    if input_word.startswith("/"):
-        await state.set_state()
-        return
     data = await state.get_data()
     lesson_id = data["quiz_word_lesson_id"]
     slide_id = data["quiz_word_slide_id"]
@@ -227,10 +209,8 @@ async def check_input_word(
             await message.answer(
                 text=replies["3_wrong_answers"].format(wrong_answers_count),
                 reply_markup=get_hint_keyaboard(
-                    session_id=session.id,
                     lesson_id=lesson_id,
                     slide_id=slide_id,
-                    right_answer=slide.right_answers,
                 ),
             )
             return
@@ -272,7 +252,7 @@ async def check_input_word(
         )
 
 
-@router.message(States.INPUT_PHRASE, flags={"skip_session_logging": "true"})
+@router.message(States.INPUT_PHRASE)
 async def check_input_phrase(
     message: types.Message,
     bot: Bot,
@@ -282,9 +262,6 @@ async def check_input_phrase(
     db_session: AsyncSession,
 ) -> None:
     input_phrase = message.text
-    if input_phrase.startswith("/"):
-        await state.set_state()
-        return
     data = await state.get_data()
     lesson_id = data["quiz_phrase_lesson_id"]
     slide_id = data["quiz_phrase_slide_id"]
@@ -346,10 +323,8 @@ async def check_input_phrase(
             await message.answer(
                 text=replies["3_wrong_answers"].format(wrong_answers_count),
                 reply_markup=get_hint_keyaboard(
-                    session_id=session.id,
                     lesson_id=lesson_id,
                     slide_id=slide_id,
-                    right_answer=slide.right_answers,
                 ),
             )
             return
@@ -362,29 +337,3 @@ async def check_input_phrase(
             session=session,
             db_session=db_session,
         )
-
-
-@router.message(Command("position"), flags={"skip_session_logging": "true"})
-async def set_slide_position(message: types.Message, user: User, state: FSMContext, db_session: AsyncSession) -> None:
-    current_session = await get_last_session_with_progress(user_id=user.id, db_session=db_session)
-    if not current_session:
-        await message.answer(text="Please start session first")
-        return
-    await message.answer(text="Please enter target slide id")
-    await state.update_data(custom_session_id=current_session.id)
-    await state.set_state(States.INPUT_CUSTOM_SLIDE_ID)
-
-
-@router.message(States.INPUT_CUSTOM_SLIDE_ID, flags={"skip_session_logging": "true"})
-async def set_slide_position(message: types.Message, state: FSMContext, db_session: AsyncSession) -> None:
-    data = await state.get_data()
-    session = await get_session(data["custom_session_id"], db_session)
-    try:
-        new_slide_id = int(message.text)
-        session.current_slide_id = new_slide_id
-        await db_session.flush()
-        await message.answer(text=f"Slide position set to {new_slide_id}. Press /start and proceed your session.")
-    except ValueError:
-        await message.answer(text="Please provide correct slide id (integer)")
-    except IntegrityError:
-        await message.answer(text="Cant set slide position. Provided slide id does not exist")

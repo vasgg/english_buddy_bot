@@ -56,7 +56,6 @@ async def get_wrong_answers_counter(session_id: int, slide_id: int, db_session: 
     query = select(func.count(SessionLog.id)).filter(
         SessionLog.session_id == session_id,
         SessionLog.slide_id == slide_id,
-        # ~(SessionLog.is_correct.is_(None)),
         ~SessionLog.is_correct,
     )
     result = await db_session.execute(query)
@@ -70,7 +69,10 @@ async def log_quiz_answer(
         case EventType.MESSAGE:
             data = event.text
         case EventType.CALLBACK_QUERY:
-            data = event.data.split(":")[-1]
+            if ":" in event.data:
+                data = event.data.split(":")[-1]
+            else:
+                data = event.data
         case EventType.HINT:
             data = "show_hint"
         case EventType.CONTINUE:
@@ -116,3 +118,22 @@ async def count_errors_in_session(session_id, slides_set: set[int], db_session: 
     query = select(func.count()).select_from(subquery)
     result = await db_session.execute(query)
     return result.scalar()
+
+
+async def update_session(
+    user_id: int,
+    lesson_id: int,
+    current_slide_id: int,
+    db_session: AsyncSession,
+    session_id: int,
+) -> None:
+    query = (
+        update(Session)
+        .filter(
+            Session.user_id == user_id,
+            Session.lesson_id == lesson_id,
+            Session.id == session_id,
+        )
+        .values(current_slide_id=current_slide_id)
+    )
+    await db_session.execute(query)

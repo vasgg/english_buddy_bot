@@ -7,6 +7,7 @@ default_commands = [
 special_commands = [
     types.BotCommand(command="/start", description="start bot"),
     types.BotCommand(command="/position", description="set slide position"),
+    types.BotCommand(command="/paywall", description="toggle paywall access"),
 ]
 
 
