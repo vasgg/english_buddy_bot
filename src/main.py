@@ -5,6 +5,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from bot.config import settings
+from bot.controllers.user_controllers import check_user_reminders
+from bot.database.db import db
 from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
 from bot.handlers.lesson_handlers import router as lesson_router
@@ -35,7 +37,7 @@ async def main():
     dispatcher.startup.register(on_startup_notify)
     dispatcher.shutdown.register(on_shutdown_notify)
     dispatcher.include_routers(base_router, errors_router, lesson_router, quiz_router)
-
+    task = asyncio.create_task(check_user_reminders(bot=bot, db_connector=db))
     await dispatcher.start_polling(bot)
 
 

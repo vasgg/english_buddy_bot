@@ -6,12 +6,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
-from bot.controllers.lesson_controllers import get_completed_lessons, get_lessons
 from bot.controllers.session_controller import get_last_session_with_progress, get_session
-from bot.controllers.user_controllers import toggle_user_paywall_access
+from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu, toggle_user_paywall_access
 from bot.database.models.user import User
 from bot.handlers.lesson_handlers import common_processing
-from bot.keyboards.keyboards import get_lesson_picker_keyboard
 from bot.resources.commands import special_commands
 from bot.resources.enums import States
 
@@ -19,17 +17,16 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def start_message(message: types.Message, user: User, db_session: AsyncSession, state: FSMContext) -> None:
+async def start_message(
+    message: types.Message, user: User, is_new_user: bool, db_session: AsyncSession, state: FSMContext
+) -> None:
     if message.from_user.id in settings.ADMINS:
         await message.bot.set_my_commands(special_commands, scope=BotCommandScopeChat(chat_id=message.from_user.id))
     await state.clear()
-    lessons = await get_lessons(db_session)
-    completed_lessons = await get_completed_lessons(user_id=user.id, db_session=db_session)
-    # TODO: перенести текста в базу
-    await message.answer(
-        text="<b>Вас приветствует <i>поли-бот</i>!</b>\n",
-        reply_markup=get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons),
-    )
+    if is_new_user:
+        await propose_reminder_to_user(message)
+        return
+    await show_start_menu(user=user, message=message, db_session=db_session)
 
 
 @router.message(Command("position"))

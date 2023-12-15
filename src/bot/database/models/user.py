@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,7 +14,8 @@ class User(Base):
     last_name: Mapped[str | None]
     username: Mapped[str | None] = mapped_column(String(32))
     paywall_access: Mapped[bool] = mapped_column(default=False, server_default="0")
-    reminder_freq: Mapped[int | None] = mapped_column(default=None)
+    reminder_freq: Mapped[int | None]
+    last_reminded_at: Mapped[datetime]
 
     def __str__(self):
         return (

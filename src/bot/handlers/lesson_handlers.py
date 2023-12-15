@@ -3,13 +3,14 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.lesson_controllers import get_lesson, lesson_routine
-from bot.controllers.session_controller import get_current_session, update_session_status
-from bot.controllers.user_controllers import update_session
+from bot.controllers.session_controller import get_current_session, update_session, update_session_status
+from bot.controllers.user_controllers import set_user_reminders, show_start_menu
 from bot.database.models.session import Session
 from bot.database.models.user import User
 from bot.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
+    RemindersCallbackFactory,
 )
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
 from bot.resources.answers import replies
@@ -52,7 +53,7 @@ async def lesson_callback_processing(
     await callback.message.delete()
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson(lesson_id=callback_data.lesson_id, db_session=db_session)
-    if lesson.is_paid:
+    if lesson.is_paid and user.paywall_access is False:
         await callback.message.answer(text=replies["paywall_message"])
         return
     if session:
@@ -65,10 +66,17 @@ async def lesson_callback_processing(
             ),
         )
     else:
-        await callback.message.answer(
-            text="Вы можете начать урок сначала, или сразу перейти к экзамену.",
-            reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS, lesson=lesson),
-        )
+        if lesson.exam_slide_id:
+            await callback.message.answer(
+                text="Вы можете начать урок сначала, или сразу перейти к экзамену.",
+                reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS, lesson=lesson),
+            )
+        else:
+            await callback.message.answer(
+                text="В этом уроке нет экзамена, его можно пройти только сначала.",
+                reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS, lesson=lesson),
+            )
+
     await callback.answer()
 
 
@@ -106,3 +114,30 @@ async def lesson_start_from_callback_processing(
     await common_processing(bot, user, lesson_id, slide_id, session, state, db_session)
     await state.update_data(session_id=session.id)
     await callback.answer()
+
+
+@router.callback_query(RemindersCallbackFactory.filter())
+async def reminders_callback_processing(
+    callback: types.CallbackQuery,
+    callback_data: RemindersCallbackFactory,
+    user: User,
+    db_session: AsyncSession,
+) -> None:
+    await callback.message.delete()
+    frequency = callback_data.frequency
+    if frequency > 0:
+        match frequency:
+            case 1:
+                text = replies["set_reminder_message"].format("каждый день")
+            case 3:
+                text = replies["set_reminder_message"].format("каждые 3 дня")
+            case 7:
+                text = replies["set_reminder_message"].format("каждую неделю")
+            case _:
+                assert False, "unexpected frequency"
+    else:
+        text = replies["unset_reminder_message"]
+    await set_user_reminders(user_id=user.id, reminder_freq=frequency, db_session=db_session)
+    await callback.message.answer(text=text)
+    await callback.answer()
+    await show_start_menu(user=user, message=callback.message, db_session=db_session)
