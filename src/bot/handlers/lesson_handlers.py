@@ -2,6 +2,7 @@ from aiogram import Bot, Router, types
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from bot.controllers.answer_controllers import get_text_by_prompt
 from bot.controllers.lesson_controllers import get_lesson, lesson_routine
 from bot.controllers.session_controller import get_current_session, update_session, update_session_status
 from bot.controllers.user_controllers import set_user_reminders, show_start_menu
@@ -13,7 +14,6 @@ from bot.keyboards.callback_builders import (
     RemindersCallbackFactory,
 )
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
-from bot.resources.answers import replies
 from bot.resources.enums import (
     LessonStartsFrom,
     SessionStatus,
@@ -54,11 +54,11 @@ async def lesson_callback_processing(
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson(lesson_id=callback_data.lesson_id, db_session=db_session)
     if lesson.is_paid and user.paywall_access is False:
-        await callback.message.answer(text=replies["paywall_message"])
+        await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
         return
     if session:
         await callback.message.answer(
-            text="Вы можете продолжить урок, или начать его сначала.",
+            text=await get_text_by_prompt(prompt='starts_from_with_progress', db_session=db_session),
             reply_markup=await get_lesson_progress_keyboard(
                 mode=UserLessonProgress.IN_PROGRESS,
                 lesson=lesson,
@@ -68,12 +68,12 @@ async def lesson_callback_processing(
     else:
         if lesson.exam_slide_id:
             await callback.message.answer(
-                text="Вы можете начать урок сначала, или сразу перейти к экзамену.",
+                text=await get_text_by_prompt(prompt='starts_from_with_exam', db_session=db_session),
                 reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS, lesson=lesson),
             )
         else:
             await callback.message.answer(
-                text="В этом уроке нет экзамена, его можно пройти только сначала.",
+                text=await get_text_by_prompt(prompt='starts_from_without_exam', db_session=db_session),
                 reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS, lesson=lesson),
             )
 
@@ -109,7 +109,7 @@ async def lesson_start_from_callback_processing(
         case LessonStartsFrom.CONTINUE:
             pass
         case _:
-            assert False, "invalid attr"
+            assert False, 'invalid attr'
 
     await common_processing(bot, user, lesson_id, slide_id, session, state, db_session)
     await state.update_data(session_id=session.id)
@@ -125,20 +125,21 @@ async def reminders_callback_processing(
 ) -> None:
     await callback.message.delete()
     frequency = callback_data.frequency
+    text = await get_text_by_prompt(prompt='set_reminder_message', db_session=db_session)
     if frequency > 0:
         match frequency:
             case 1:
-                text = replies["set_reminder_message"].format("каждый день")
+                message = text.format('каждый день')
             case 3:
-                text = replies["set_reminder_message"].format("каждые 3 дня")
+                message = text.format('каждые 3 дня')
             case 7:
-                text = replies["set_reminder_message"].format("каждую неделю")
+                message = text.format('каждую неделю')
             case _:
-                assert False, "unexpected frequency"
+                assert False, 'unexpected frequency'
     else:
-        text = replies["unset_reminder_message"]
+        message = get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
     await set_user_reminders(user_id=user.id, reminder_freq=frequency, db_session=db_session)
-    await callback.message.answer(text=text)
+    await callback.message.answer(text=message)
     await callback.answer()
     # TODO: вот тут нужен правильный флаг, чтобы после команды не показывать старт меню
     await show_start_menu(user=user, message=callback.message, db_session=db_session)

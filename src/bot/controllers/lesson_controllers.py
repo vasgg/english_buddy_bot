@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import Result, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.choice_controllers import get_random_sticker_id
+from bot.controllers.answer_controllers import get_random_sticker_id, get_text_by_prompt
 from bot.controllers.session_controller import (
     count_errors_in_session,
     get_all_questions_in_session,
@@ -21,9 +21,7 @@ from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
 from bot.database.models.user import User
 from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
-from bot.resources.answers import replies
-from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States
-from bot.resources.stickers import big_stickers, small_stickers
+from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
 
 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -101,11 +99,11 @@ async def lesson_routine(
                         markup = get_furher_button(current_lesson=lesson_id, next_slide=slide.next_slide)
                         await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=markup)
                     case _:
-                        assert False, f"Unknown keyboard type: {slide.keyboard_type}"
+                        assert False, f'Unknown keyboard type: {slide.keyboard_type}'
 
         case SlideType.IMAGE:
             image_file = slide.picture
-            path = f"src/bot/resources/images/lesson{lesson_id}/{image_file}"
+            path = f'src/bot/resources/images/lesson{lesson_id}/{image_file}'
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
@@ -130,11 +128,11 @@ async def lesson_routine(
                             reply_markup=markup,
                         )
                     case _:
-                        assert False, f"Unknown keyboard type: {slide.keyboard_type}"
+                        assert False, f'Unknown keyboard type: {slide.keyboard_type}'
         case SlideType.SMALL_STICKER:
             await bot.send_sticker(
                 chat_id=user.telegram_id,
-                sticker=get_random_sticker_id(collection=small_stickers),
+                sticker=await get_random_sticker_id(mode=StickerType.SMALL, db_session=db_session),
             )
             await lesson_routine(
                 bot=bot,
@@ -148,7 +146,7 @@ async def lesson_routine(
         case SlideType.BIG_STICKER:
             await bot.send_sticker(
                 chat_id=user.telegram_id,
-                sticker=get_random_sticker_id(collection=big_stickers),
+                sticker=await get_random_sticker_id(mode=StickerType.BIG, db_session=db_session),
             )
             await lesson_routine(
                 bot=bot,
@@ -179,7 +177,7 @@ async def lesson_routine(
         case SlideType.QUIZ_OPTIONS:
             text = slide.text
             answer = slide.right_answers
-            options = sample(population=slide.keyboard.split("|"), k=3)
+            options = sample(population=slide.keyboard.split('|'), k=3)
             markup = get_quiz_keyboard(words=options, answer=answer, lesson_id=lesson_id, slide_id=slide.id)
             msg = await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=markup)
             await state.update_data(quiz_options_msg_id=msg.message_id)
@@ -233,7 +231,11 @@ async def lesson_routine(
                     if not lesson.exam_slide_id:
                         await bot.send_message(
                             chat_id=user.telegram_id,
-                            text=replies["final_report_without_questions"].format(lesson.title),
+                            text=(
+                                await get_text_by_prompt(
+                                    prompt='final_report_without_questions', db_session=db_session
+                                )
+                            ).format(lesson.title),
                             reply_markup=lesson_picker_kb,
                         )
                         await state.clear()
@@ -247,7 +249,9 @@ async def lesson_routine(
                     )
                     await bot.send_message(
                         chat_id=user.telegram_id,
-                        text=replies["final_report_from_begin"].format(
+                        text=(
+                            await get_text_by_prompt(prompt='final_report_from_begin', db_session=db_session)
+                        ).format(
                             lesson.title,
                             len(total_base_questions_in_session) - total_base_questions_errors,
                             len(total_base_questions_in_session),
@@ -260,7 +264,7 @@ async def lesson_routine(
                 case SessionStartsFrom.EXAM:
                     await bot.send_message(
                         chat_id=user.telegram_id,
-                        text=replies["final_report_from_exam"].format(
+                        text=(await get_text_by_prompt(prompt='final_report_from_exam', db_session=db_session)).format(
                             lesson.title,
                             len(total_exam_questions_in_session) - total_exam_questions_errors,
                             len(total_exam_questions_in_session),
@@ -269,8 +273,8 @@ async def lesson_routine(
                         reply_markup=lesson_picker_kb,
                     )
                 case _:
-                    assert False, f"Unknown session starts from: {session_starts_from}"
+                    assert False, f'Unknown session starts from: {session_starts_from}'
             await state.clear()
             return
         case _:
-            assert False, f"Unknown slide type: {slide.slide_type}"
+            assert False, f'Unknown slide type: {slide.slide_type}'
