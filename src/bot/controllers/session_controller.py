@@ -69,16 +69,16 @@ async def log_quiz_answer(
         case EventType.MESSAGE:
             data = event.text
         case EventType.CALLBACK_QUERY:
-            if ":" in event.data:
-                data = event.data.split(":")[-1]
+            if ':' in event.data:
+                data = event.data.split(':')[-1]
             else:
                 data = event.data
         case EventType.HINT:
-            data = "show_hint"
+            data = 'show_hint'
         case EventType.CONTINUE:
-            data = "continue"
+            data = 'continue'
         case _:
-            assert False, f"Unknown event type: {mode}"
+            assert False, f'Unknown event type: {mode}'
     json_event = event.model_dump_json(exclude_unset=True)
     session_log = SessionLog(
         session_id=session.id,
@@ -102,7 +102,7 @@ async def get_all_questions_in_session(session_id: int, db_session: AsyncSession
 
 async def get_hints_shown_counter_in_session(session_id: int, db_session: AsyncSession) -> int:
     query = select(func.count(SessionLog.id)).filter(
-        SessionLog.session_id == session_id, SessionLog.data == "show_hint"
+        SessionLog.session_id == session_id, SessionLog.data == 'show_hint'
     )
     result = await db_session.execute(query)
     return result.scalar()

@@ -28,7 +28,3 @@ async def get_slide_by_position(lesson_id: int, position: int, db_session: Async
     result = await db_session.execute(query)
     slide = result.scalar()
     return slide
-
-
-async def set_progress_position(lesson_id: int, position: int, db_session: AsyncSession) -> None:
-    ...
