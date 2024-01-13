@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.controllers.answer_controllers import get_text_by_prompt
 from bot.controllers.lesson_controllers import get_lesson, lesson_routine
 from bot.controllers.session_controller import get_current_session, update_session, update_session_status
+from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import set_user_reminders, show_start_menu
 from bot.database.models.session import Session
 from bot.database.models.user import User
@@ -32,15 +33,23 @@ async def common_processing(
     session: Session,
     state: FSMContext,
     db_session: AsyncSession,
+    no_increment: bool = False,
 ) -> None:
+    if session.current_step == 1:
+        current_step = 1
+    else:
+        current_step = session.current_step + 1 if not no_increment else session.current_step
     await update_session(
         user.id,
         lesson_id,
         current_slide_id=slide_id,
+        current_step=current_step,
         session_id=session.id,
         db_session=db_session,
     )
-    await lesson_routine(bot, user, lesson_id, slide_id, state, session.id, db_session)
+    await lesson_routine(
+        bot, user, lesson_id, slide_id, current_step, session.total_slides, state, session.id, db_session
+    )
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
@@ -94,8 +103,9 @@ async def lesson_start_from_callback_processing(
     slide_id = callback_data.slide_id
     attr = callback_data.attr
     session = await get_current_session(user.id, lesson_id, db_session)
+    lesson = await get_lesson(lesson_id, db_session)
     match attr:
-        case LessonStartsFrom.BEGIN | LessonStartsFrom.EXAM:
+        case LessonStartsFrom.BEGIN:
             if session:
                 await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
             session = Session(
@@ -103,6 +113,23 @@ async def lesson_start_from_callback_processing(
                 lesson_id=lesson_id,
                 current_slide_id=slide_id,
                 starts_from=lesson_to_session(attr),
+                total_slides=lesson.total_slides,
+            )
+            db_session.add(session)
+            await db_session.flush()
+        case LessonStartsFrom.EXAM:
+            if session:
+                await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
+            steps = await get_steps_to_current_slide(
+                first_slide_id=lesson.first_slide_id, target_slide_id=lesson.exam_slide_id, db_session=db_session
+            )
+            total_slides = lesson.total_slides - steps
+            session = Session(
+                user_id=user.id,
+                lesson_id=lesson_id,
+                current_slide_id=slide_id,
+                starts_from=lesson_to_session(attr),
+                total_slides=total_slides,
             )
             db_session.add(session)
             await db_session.flush()

@@ -124,6 +124,7 @@ async def update_session(
     user_id: int,
     lesson_id: int,
     current_slide_id: int,
+    current_step: int,
     db_session: AsyncSession,
     session_id: int,
 ) -> None:
@@ -134,6 +135,6 @@ async def update_session(
             Session.lesson_id == lesson_id,
             Session.id == session_id,
         )
-        .values(current_slide_id=current_slide_id)
+        .values(current_slide_id=current_slide_id, current_step=current_step)
     )
     await db_session.execute(query)

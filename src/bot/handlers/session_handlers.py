@@ -64,7 +64,7 @@ async def quiz_callback_processing(
     answer = callback_data.answer
     slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     data = await state.get_data()
-    if "wrong_answer" in answer:
+    if 'wrong_answer' in answer:
         try:
             await callback.bot.edit_message_reply_markup(
                 chat_id=callback.from_user.id, message_id=data['quiz_options_msg_id']
@@ -100,6 +100,7 @@ async def quiz_callback_processing(
             state=state,
             session=session,
             db_session=db_session,
+            no_increment=True,
         )
     else:
         try:
@@ -160,6 +161,16 @@ async def hint_callback(
             db_session=db_session,
         )
         await asyncio.sleep(2)
+        await common_processing(
+            bot=bot,
+            user=user,
+            lesson_id=callback_data.lesson_id,
+            slide_id=slide_id,
+            state=state,
+            session=session,
+            db_session=db_session,
+        )
+        return
     else:
         slide_id = callback_data.slide_id
     await callback.message.edit_reply_markup()
@@ -180,6 +191,7 @@ async def hint_callback(
         state=state,
         session=session,
         db_session=db_session,
+        no_increment=True,
     )
 
 
@@ -227,6 +239,7 @@ async def check_input_word(
             state=state,
             session=session,
             db_session=db_session,
+            no_increment=True,
         )
     else:
         try:
@@ -343,4 +356,5 @@ async def check_input_phrase(
             state=state,
             session=session,
             db_session=db_session,
+            no_increment=True,
         )

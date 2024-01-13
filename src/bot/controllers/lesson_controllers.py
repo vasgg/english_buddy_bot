@@ -27,8 +27,7 @@ from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
     query = select(Lesson).filter(Lesson.id == lesson_id)
     result: Result = await db_session.execute(query)
-    lesson = result.scalar()
-    return lesson
+    return result.scalar()
 
 
 async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
@@ -64,21 +63,25 @@ async def lesson_routine(
     user: User,
     lesson_id: int,
     slide_id: int,
+    current_step: int,
+    total_slides: int,
     state: FSMContext,
     session_id: int,
     db_session: AsyncSession,
 ) -> None:
+    progress = f'<i>{current_step}/{total_slides}</i>\n\n'
     slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     await update_session(
         user_id=user.id,
         lesson_id=lesson_id,
         current_slide_id=slide.id,
+        current_step=current_step,
         session_id=session_id,
         db_session=db_session,
     )
     match slide.slide_type:
         case SlideType.TEXT:
-            text = slide.text
+            text = progress + slide.text
             if not slide.keyboard_type:
                 await bot.send_message(chat_id=user.telegram_id, text=text)
                 if slide.delay:
@@ -89,6 +92,8 @@ async def lesson_routine(
                     user=user,
                     lesson_id=lesson_id,
                     slide_id=slide.next_slide,
+                    current_step=current_step + 1,
+                    total_slides=total_slides,
                     state=state,
                     session_id=session_id,
                     db_session=db_session,
@@ -114,6 +119,8 @@ async def lesson_routine(
                     user=user,
                     lesson_id=lesson_id,
                     slide_id=slide.next_slide,
+                    current_step=current_step + 1,
+                    total_slides=total_slides,
                     state=state,
                     session_id=session_id,
                     db_session=db_session,
@@ -139,6 +146,8 @@ async def lesson_routine(
                 user=user,
                 lesson_id=lesson_id,
                 slide_id=slide.next_slide,
+                current_step=current_step + 1,
+                total_slides=total_slides,
                 state=state,
                 session_id=session_id,
                 db_session=db_session,
@@ -153,6 +162,8 @@ async def lesson_routine(
                 user=user,
                 lesson_id=lesson_id,
                 slide_id=slide.next_slide,
+                current_step=current_step + 1,
+                total_slides=total_slides,
                 state=state,
                 session_id=session_id,
                 db_session=db_session,
@@ -170,12 +181,14 @@ async def lesson_routine(
                 user=user,
                 lesson_id=lesson_id,
                 slide_id=slide.next_slide,
+                current_step=current_step + 1,
+                total_slides=total_slides,
                 state=state,
                 session_id=session_id,
                 db_session=db_session,
             )
         case SlideType.QUIZ_OPTIONS:
-            text = slide.text
+            text = progress + slide.text
             answer = slide.right_answers
             options = sample(population=slide.keyboard.split('|'), k=3)
             markup = get_quiz_keyboard(words=options, answer=answer, lesson_id=lesson_id, slide_id=slide.id)
@@ -191,7 +204,7 @@ async def lesson_routine(
             )
             await state.set_state(States.INPUT_WORD)
         case SlideType.QUIZ_INPUT_PHRASE:
-            text = slide.text
+            text = progress + slide.text
             msg = await bot.send_message(chat_id=user.telegram_id, text=text)
             await state.update_data(
                 quiz_phrase_msg_id=msg.message_id,
@@ -200,7 +213,7 @@ async def lesson_routine(
             )
             await state.set_state(States.INPUT_PHRASE)
         case SlideType.FINAL_SLIDE:
-            text = slide.text
+            text = progress + slide.text
             lesson = await get_lesson(lesson_id=lesson_id, db_session=db_session)
             session = await get_session(session_id=session_id, db_session=db_session)
             await bot.send_message(chat_id=user.telegram_id, text=text)

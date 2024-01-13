@@ -28,3 +28,16 @@ async def get_slide_by_position(lesson_id: int, position: int, db_session: Async
     result = await db_session.execute(query)
     slide = result.scalar()
     return slide
+
+
+async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, db_session: AsyncSession) -> int:
+    current_slide_id = first_slide_id
+    steps = 0
+
+    while current_slide_id is not None:
+        if current_slide_id == target_slide_id:
+            return steps
+        result = await db_session.execute(select(Slide).filter(Slide.id == current_slide_id))
+        current_slide = result.scalar_one()
+        current_slide_id = current_slide.next_slide
+        steps += 1
