@@ -100,7 +100,7 @@ async def quiz_callback_processing(
             state=state,
             session=session,
             db_session=db_session,
-            no_increment=True,
+            skip_step_increment=True,
         )
     else:
         try:
@@ -191,7 +191,7 @@ async def hint_callback(
         state=state,
         session=session,
         db_session=db_session,
-        no_increment=True,
+        skip_step_increment=True,
     )
 
 
@@ -239,7 +239,7 @@ async def check_input_word(
             state=state,
             session=session,
             db_session=db_session,
-            no_increment=True,
+            skip_step_increment=True,
         )
     else:
         try:
@@ -356,5 +356,5 @@ async def check_input_phrase(
             state=state,
             session=session,
             db_session=db_session,
-            no_increment=True,
+            skip_step_increment=True,
         )

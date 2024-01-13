@@ -33,12 +33,12 @@ async def common_processing(
     session: Session,
     state: FSMContext,
     db_session: AsyncSession,
-    no_increment: bool = False,
+    skip_step_increment: bool = False,
 ) -> None:
     if session.current_step == 1:
         current_step = 1
     else:
-        current_step = session.current_step + 1 if not no_increment else session.current_step
+        current_step = session.current_step + 1 if not skip_step_increment else session.current_step
     await update_session(
         user.id,
         lesson_id,
