@@ -4,7 +4,7 @@ from aiogram import Bot, Router, types
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.choice_controllers import get_random_answer
+from bot.controllers.answer_controllers import get_random_answer, get_text_by_prompt
 from bot.controllers.session_controller import (
     get_wrong_answers_counter,
     log_quiz_answer,
@@ -17,7 +17,6 @@ from bot.handlers.lesson_handlers import common_processing
 from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
 from bot.middlewares.session_middlewares import SessionMiddleware
-from bot.resources.answers import replies
 from bot.resources.enums import AnswerType, EventType, States
 
 router = Router()
@@ -65,13 +64,13 @@ async def quiz_callback_processing(
     answer = callback_data.answer
     slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     data = await state.get_data()
-    if "wrong_answer" in answer:
+    if 'wrong_answer' in answer:
         try:
             await callback.bot.edit_message_reply_markup(
-                chat_id=callback.from_user.id, message_id=data["quiz_options_msg_id"]
+                chat_id=callback.from_user.id, message_id=data['quiz_options_msg_id']
             )
         except KeyError:
-            print("something went wrong")
+            print('something went wrong')
         await callback.message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
         await log_quiz_answer(
             session=session,
@@ -84,7 +83,9 @@ async def quiz_callback_processing(
         wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
         if wrong_answers_count >= 3:
             await callback.message.answer(
-                text=replies["3_wrong_answers"].format(wrong_answers_count),
+                text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)).format(
+                    wrong_answers_count
+                ),
                 reply_markup=get_hint_keyaboard(
                     lesson_id=lesson_id,
                     slide_id=slide_id,
@@ -99,16 +100,17 @@ async def quiz_callback_processing(
             state=state,
             session=session,
             db_session=db_session,
+            skip_step_increment=True,
         )
     else:
         try:
             await callback.bot.edit_message_text(
                 chat_id=callback.from_user.id,
-                message_id=data["quiz_options_msg_id"],
-                text=slide.text.replace("…", f"<u>{slide.right_answers}</u>"),
+                message_id=data['quiz_options_msg_id'],
+                text=slide.text.replace('…', f'<u>{slide.right_answers}</u>'),
             )
         except KeyError:
-            print("something went wrong")
+            print('something went wrong')
         await callback.message.answer(text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session))
         await log_quiz_answer(
             session=session,
@@ -144,10 +146,12 @@ async def hint_callback(
     slide: Slide = await get_slide_by_id(
         lesson_id=callback_data.lesson_id, slide_id=callback_data.slide_id, db_session=db_session
     )
-    right_answer = slide.right_answers if "|" not in slide.right_answers else slide.right_answers.split("|")[0]
-    if callback_data.payload == "show_hint":
+    right_answer = slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0]
+    if callback_data.payload == 'show_hint':
         slide_id = slide.next_slide
-        await callback.message.answer(text=replies["right_answer"].format(right_answer))
+        await callback.message.answer(
+            text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(right_answer)
+        )
         await log_quiz_answer(
             session=session,
             mode=EventType.HINT,
@@ -157,6 +161,16 @@ async def hint_callback(
             db_session=db_session,
         )
         await asyncio.sleep(2)
+        await common_processing(
+            bot=bot,
+            user=user,
+            lesson_id=callback_data.lesson_id,
+            slide_id=slide_id,
+            state=state,
+            session=session,
+            db_session=db_session,
+        )
+        return
     else:
         slide_id = callback_data.slide_id
     await callback.message.edit_reply_markup()
@@ -177,6 +191,7 @@ async def hint_callback(
         state=state,
         session=session,
         db_session=db_session,
+        skip_step_increment=True,
     )
 
 
@@ -191,8 +206,8 @@ async def check_input_word(
 ) -> None:
     input_word = message.text
     data = await state.get_data()
-    lesson_id = data["quiz_word_lesson_id"]
-    slide_id = data["quiz_word_slide_id"]
+    lesson_id = data['quiz_word_lesson_id']
+    slide_id = data['quiz_word_slide_id']
     slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     if input_word.lower() != slide.right_answers.lower():
         await message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
@@ -207,7 +222,9 @@ async def check_input_word(
         wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
         if wrong_answers_count >= 3:
             await message.answer(
-                text=replies["3_wrong_answers"].format(wrong_answers_count),
+                text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)).format(
+                    wrong_answers_count
+                ),
                 reply_markup=get_hint_keyaboard(
                     lesson_id=lesson_id,
                     slide_id=slide_id,
@@ -222,6 +239,7 @@ async def check_input_word(
             state=state,
             session=session,
             db_session=db_session,
+            skip_step_increment=True,
         )
     else:
         try:
@@ -321,7 +339,9 @@ async def check_input_phrase(
         wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
         if wrong_answers_count >= 3:
             await message.answer(
-                text=replies["3_wrong_answers"].format(wrong_answers_count),
+                text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)).format(
+                    wrong_answers_count
+                ),
                 reply_markup=get_hint_keyaboard(
                     lesson_id=lesson_id,
                     slide_id=slide_id,
@@ -336,4 +356,5 @@ async def check_input_phrase(
             state=state,
             session=session,
             db_session=db_session,
+            skip_step_increment=True,
         )

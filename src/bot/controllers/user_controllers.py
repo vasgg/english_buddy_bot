@@ -6,12 +6,12 @@ from aiogram import Bot, types
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
+from bot.controllers.answer_controllers import get_text_by_prompt
 from bot.controllers.lesson_controllers import get_completed_lessons, get_lessons
 from bot.database.database_connector import DatabaseConnector
 from bot.database.models.user import User
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
-from bot.resources.answers import replies
-
 
 
 async def add_user_to_db(event, db_session) -> User:
@@ -46,9 +46,9 @@ async def set_user_reminders(user_id: int, reminder_freq: int, db_session: Async
     await db_session.execute(update(User).filter(User.id == user_id).values(reminder_freq=reminder_freq))
 
 
-async def propose_reminder_to_user(message: types.Message) -> None:
+async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
     await message.answer(
-        text=replies["registration_message"],
+        text=await get_text_by_prompt(prompt='registration_message', db_session=db_session),
         reply_markup=get_notified_keyboard(),
     )
 
@@ -56,9 +56,8 @@ async def propose_reminder_to_user(message: types.Message) -> None:
 async def show_start_menu(user: User, message: types.Message, db_session: AsyncSession) -> None:
     lessons = await get_lessons(db_session)
     completed_lessons = await get_completed_lessons(user_id=user.id, db_session=db_session)
-    # TODO: перенести текста в базу
     await message.answer(
-        text="<b>Вас приветствует <i>поли-бот</i>!</b>\n",
+        text=await get_text_by_prompt(prompt='start_message', db_session=db_session),
         reply_markup=get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons),
     )
 
@@ -84,7 +83,11 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                 delta = utcnow - user.last_reminded_at
                 if delta > timedelta(seconds=user.reminder_freq * 10):
                     logging.info(f"{'=' * 10} {'reminder sended to ' + str(user)}")
-                    await bot.send_message(chat_id=user.telegram_id, text=replies["reminder_text"])
+
+                    await bot.send_message(
+                        chat_id=user.telegram_id,
+                        text=await get_text_by_prompt(prompt='reminder_text', db_session=session),
+                    )
                     await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
                     await session.commit()
 

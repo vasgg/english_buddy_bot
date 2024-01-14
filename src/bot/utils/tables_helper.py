@@ -22,6 +22,12 @@ import bot.database.models.session_log
 import bot.database.models.slide
 
 # noinspection PyUnresolvedReferences
+import bot.database.models.sticker
+
+# noinspection PyUnresolvedReferences
+import bot.database.models.text
+
+# noinspection PyUnresolvedReferences
 import bot.database.models.user
 
 
@@ -31,7 +37,7 @@ async def create_or_drop_db(engine: AsyncEngine):
         # await conn.run_sync(Base.metadata.drop_all)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     from bot.database.db import db
 
     asyncio.run(create_or_drop_db(db.engine))

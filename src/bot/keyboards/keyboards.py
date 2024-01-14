@@ -15,11 +15,11 @@ from bot.resources.enums import LessonStartsFrom, UserLessonProgress
 def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
     buttons = []
     for lesson in lessons:
-        mark = " ✅" if lesson.id in completed_lessons else ""
+        mark = ' ✅' if lesson.id in completed_lessons else ''
         buttons.append(
             [
                 InlineKeyboardButton(
-                    text=f"{lesson.title}{mark}",
+                    text=f'{lesson.title}{mark}',
                     callback_data=LessonsCallbackFactory(lesson_id=lesson.id).pack(),
                 )
             ]
@@ -57,7 +57,7 @@ def get_quiz_keyboard(words: list[str], answer: str, lesson_id: int, slide_id: i
                     InlineKeyboardButton(
                         text=word,
                         callback_data=QuizCallbackFactory(
-                            answer=f"wrong_answer|{word}",
+                            answer=f'wrong_answer|{word}',
                             lesson_id=lesson_id,
                             slide_id=slide_id,
                         ).pack(),
@@ -76,7 +76,7 @@ async def get_lesson_progress_keyboard(
                 buttons = [
                     [
                         InlineKeyboardButton(
-                            text="Начать урок сначала",
+                            text='Начать урок сначала',
                             callback_data=LessonStartsFromCallbackFactory(
                                 lesson_id=lesson.id,
                                 slide_id=lesson.first_slide_id,
@@ -86,7 +86,7 @@ async def get_lesson_progress_keyboard(
                     ],
                     [
                         InlineKeyboardButton(
-                            text="Начать с экзамена",
+                            text='Начать с экзамена',
                             callback_data=LessonStartsFromCallbackFactory(
                                 lesson_id=lesson.id,
                                 slide_id=lesson.exam_slide_id,
@@ -99,7 +99,7 @@ async def get_lesson_progress_keyboard(
                 buttons = [
                     [
                         InlineKeyboardButton(
-                            text="Начать урок сначала",
+                            text='Начать урок сначала',
                             callback_data=LessonStartsFromCallbackFactory(
                                 lesson_id=lesson.id,
                                 slide_id=lesson.first_slide_id,
@@ -113,7 +113,7 @@ async def get_lesson_progress_keyboard(
             buttons = [
                 [
                     InlineKeyboardButton(
-                        text="Начать урок сначала",
+                        text='Начать урок сначала',
                         callback_data=LessonStartsFromCallbackFactory(
                             lesson_id=lesson.id,
                             slide_id=lesson.first_slide_id,
@@ -123,7 +123,7 @@ async def get_lesson_progress_keyboard(
                 ],
                 [
                     InlineKeyboardButton(
-                        text="Продолжить урок",
+                        text='Продолжить урок',
                         callback_data=LessonStartsFromCallbackFactory(
                             lesson_id=lesson.id,
                             slide_id=current_slide_id,
@@ -133,7 +133,7 @@ async def get_lesson_progress_keyboard(
                 ],
             ]
         case _:
-            assert False, f"Unknown mode: {mode}"
+            assert False, f'Unknown mode: {mode}'
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -142,21 +142,21 @@ def get_hint_keyaboard(slide_id: int, lesson_id: int) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Подсказка",
+                    text='Подсказка',
                     callback_data=HintCallbackFactory(
                         lesson_id=lesson_id,
                         slide_id=slide_id,
-                        payload="show_hint",
+                        payload='show_hint',
                     ).pack(),
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Продолжить",
+                    text='Продолжить',
                     callback_data=HintCallbackFactory(
                         lesson_id=lesson_id,
                         slide_id=slide_id,
-                        payload="continue",
+                        payload='continue',
                     ).pack(),
                 )
             ],
@@ -169,7 +169,7 @@ def get_notified_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Каждый день",
+                    text='Каждый день',
                     callback_data=RemindersCallbackFactory(
                         frequency=1,
                     ).pack(),
@@ -177,7 +177,7 @@ def get_notified_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(
-                    text="Раз в 3 дня",
+                    text='Раз в 3 дня',
                     callback_data=RemindersCallbackFactory(
                         frequency=3,
                     ).pack(),
@@ -185,7 +185,7 @@ def get_notified_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(
-                    text="Раз в неделю",
+                    text='Раз в неделю',
                     callback_data=RemindersCallbackFactory(
                         frequency=7,
                     ).pack(),
@@ -193,7 +193,7 @@ def get_notified_keyboard() -> InlineKeyboardMarkup:
             ],
             [
                 InlineKeyboardButton(
-                    text="Не получать уведомления",
+                    text='Не получать уведомления',
                     callback_data=RemindersCallbackFactory(
                         frequency=0,
                     ).pack(),

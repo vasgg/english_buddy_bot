@@ -24,7 +24,7 @@ async def main():
         format="%(asctime)s: " "%(filename)s: " "%(levelname)s: " "%(funcName)s(): " "%(lineno)d:\t" "%(message)s",
     )
 
-    bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode="HTML")
+    bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
     # TODO: change to persistent storage
     storage = MemoryStorage()
     dispatcher = Dispatcher(storage=storage)
@@ -45,5 +45,5 @@ def run_main():
     asyncio.run(main())
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run_main()

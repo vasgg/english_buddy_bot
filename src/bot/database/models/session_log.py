@@ -9,10 +9,10 @@ from bot.resources.enums import SlideType
 
 
 class SessionLog(Base):
-    __tablename__ = "session_logs"
+    __tablename__ = 'session_logs'
 
-    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"))
-    slide_id: Mapped[int] = mapped_column(ForeignKey("slides.id"))
+    session_id: Mapped[int] = mapped_column(ForeignKey('sessions.id', ondelete='CASCADE'))
+    slide_id: Mapped[int] = mapped_column(ForeignKey('slides.id'))
     slide_type: Mapped[SlideType]
     data: Mapped[str | None]
     is_correct: Mapped[bool | None]

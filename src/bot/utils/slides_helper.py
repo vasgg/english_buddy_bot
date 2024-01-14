@@ -2,6 +2,7 @@ import asyncio
 
 from bot.controllers.slide_controllers import get_slide_by_position
 from bot.database.db import db
+
 # noinspection PyUnresolvedReferences
 from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
@@ -99,7 +100,7 @@ async def add_new_slide_to_lesson(
                 text=text,
             )
         case _:
-            assert False, f"Unknown slide type: {slide_type}"
+            assert False, f'Unknown slide type: {slide_type}'
 
     async with db.session_factory.begin() as db_session:
         db_session.add(new_slide)
@@ -114,9 +115,9 @@ async def add_new_slide_to_lesson(
         await db_session.commit()
 
 
-if __name__ == "__main__":
-    _text2 = """На этом всё, этот урок без экзаменов.
+if __name__ == '__main__':
+    _text2 = '''На этом всё, этот урок без экзаменов.
     
-    Спасибо за внимание..."""
+    Спасибо за внимание...'''
 
     asyncio.run(add_new_slide_to_lesson(lesson_id=2, slide_type=SlideType.FINAL_SLIDE, text=_text2))
