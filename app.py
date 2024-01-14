@@ -11,7 +11,7 @@ from bot.database.models.slide import Slide
 from bot.database.models.text import Text
 
 app = FastAPI()
-templates = Jinja2Templates(directory="src/API/templates")
+templates = Jinja2Templates(directory='src/API/templates')
 
 
 @app.get('/', response_class=HTMLResponse)
