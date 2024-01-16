@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Slide info</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Slide info</h2>
+    <table class="table">
+        <tr>
+            <th>Lesson ID</th>
+            <td>{{ lesson_id }}</td>
+        </tr>
+        <tr>
+            <th>Slide ID</th>
+            <td>{{ slide.id }}</td>
+        </tr>
+        <tr>
+            <th>Next slide ID</th>
+            <td>{{ slide.next_slide }}</td>
+        </tr>
+        <tr>
+            <th>Slide type</th>
+            <td>{{ slide.slide_type }}</td>
+        </tr>
+
+        {% if slide.slide_type.value == 'text' %}
+        <tr>
+            <th>Text</th>
+            <td>{{ slide.text }}</td>
+        </tr>
+        <tr>
+            <th>Delay</th>
+            <td>{{ slide.delay }}</td>
+        </tr>
+        <tr>
+            <th>Keyboard type</th>
+            <td>{{ slide.keyboard_type }}</td>
+        </tr>
+        {% elif slide.slide_type.value == 'image' %}
+        <tr>
+            <th>Image</th>
+            <td>{{ slide.picture }}</td>
+        </tr>
+        <tr>
+            <th>Delay</th>
+            <td>{{ slide.delay }}</td>
+        </tr>
+        <tr>
+            <th>Keyboard type</th>
+            <td>{{ slide.keyboard_type }}</td>
+        </tr>
+        {% elif slide.slide_type.value == 'pin_dict' %}
+        <tr>
+            <th>Text</th>
+            <td>{{ slide.text }}</td>
+        </tr>
+        {% elif slide.slide_type.value == 'quiz_options' %}
+        <tr>
+            <th>Text</th>
+            <td>{{slide.text }}</td>
+        </tr>
+        <tr>
+            <th>Right answer</th>
+            <td>{{ slide.right_answers }}</td>
+        </tr>
+        <tr>
+            <th>Keyboard</th>
+            <td>{{ slide.keyboard }}</td>
+        </tr>
+        <tr>
+            <th>Is exam slide</th>
+            <td>{{ slide.is_exam_slide }}
+            </td>
+        </tr>
+        {% elif slide.slide_type.value == 'quiz_input_word' %}
+        <tr>
+            <th>Text</th>
+            <td>{{ slide.text }}</td>
+        </tr>
+        <tr>
+            <th>Right answer</th>
+            <td>{{ slide.right_answers }}</td>
+        </tr>
+        <tr>
+            <th>Is exam slide</th>
+            <td>{{ slide.is_exam_slide }}</td>
+        </tr>
+        {% elif slide.slide_type.value == 'quiz_input_phrase' %}
+        <tr>
+            <th>Text</th>
+            <td>{{ slide.text }}</td>
+        </tr>
+        <tr>
+            <th>Right answers</th>
+            <td>{{ slide.right_answers }}</td>
+        </tr>
+        <tr>
+            <th>Almost right answers</th>
+            <td>{{ slide.almost_right_answers }}</td>
+        </tr>
+        <tr>
+            <th>Almost right answers reply</th>
+            <td>{{ slide.almost_right_answers_reply }}</td>
+        </tr>
+        <tr>
+            <th>Is exam slide</th>
+            <td>{{ slide.is_exam_slide }}</td>
+        </tr>
+        {% elif slide.slide_type == 'SlideType.FINAL_SLIDE' %}
+        <tr>
+            <th>Text</th>
+            <td>{{ slide.text }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>
