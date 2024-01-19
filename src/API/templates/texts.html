@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Texts</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         /* Стилизация таблицы */
         table {
@@ -85,10 +87,26 @@
     </div>
 </form>
 <script>
+    // Функция для автоматической настройки высоты textarea
+    function autoResizeTextarea() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    }
+
+    // Применение функции ко всем элементам textarea при загрузке страницы
+    window.addEventListener('load', function() {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            autoResizeTextarea.call(textarea);
+            textarea.addEventListener('input', autoResizeTextarea);
+        });
+    });
+</script>
+<script>
     document.getElementById('editTextsForm').onsubmit = async function(e) {
         e.preventDefault(); // Предотвращаем стандартную отправку формы
         let formData = new FormData(this);
-        let response = await fetch('/save-texts', {
+        let response = await fetch('/texts', {
             method: 'POST',
             body: formData
         });

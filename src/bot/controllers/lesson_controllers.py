@@ -21,9 +21,7 @@ from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
 from bot.database.models.user import User
 from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
-
 from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
-
 
 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -110,7 +108,7 @@ async def lesson_routine(
 
         case SlideType.IMAGE:
             image_file = slide.picture
-            path = f'src/bot/resources/images/lesson{lesson_id}/{image_file}'
+            path = f'src/API/static/images/lesson{lesson_id}/{image_file}'
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
@@ -246,13 +244,11 @@ async def lesson_routine(
                     if not lesson.exam_slide_id:
                         await bot.send_message(
                             chat_id=user.telegram_id,
-
                             text=(
                                 await get_text_by_prompt(
                                     prompt='final_report_without_questions', db_session=db_session
                                 )
                             ).format(lesson.title),
-
                             reply_markup=lesson_picker_kb,
                         )
                         await state.clear()

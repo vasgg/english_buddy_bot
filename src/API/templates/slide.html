@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Slide info</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Slide info</h2>
+    <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post">
+        <table class="table">
+            <tr>
+                <th>Slide ID</th>
+                <td><input type="text" class="form-control" name="slide_id" value="{{ slide.id }}" readonly></td>
+            </tr>
+            <tr>
+                <th>Next slide ID</th>
+                <td><input type="text" class="form-control" name="next_slide" value="{{ slide.next_slide }}"></td>
+            </tr>
+            <tr>
+                <th>Slide type</th>
+                <td><input type="text" class="form-control" name="slide_type" value="{{ slide.slide_type }}" readonly></td>
+            </tr>
+
+            {% if slide.slide_type.value == 'text' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+
+            </tr>
+            <tr>
+                <th>Delay</th>
+                <td><input type="number" class="form-control" name="delay" value="{{ slide.delay }}"></td>
+            </tr>
+            <tr>
+                <th>Keyboard type</th>
+                <td><input type="text" class="form-control" name="keyboard_type" value="{{ slide.keyboard_type }}"></td>
+            </tr>
+            {% elif slide.slide_type.value == 'image' %}
+            <tr>
+                <th>Image name</th>
+                <td><input type="text" class="form-control" name="picture" value="{{ slide.picture }}"></td>
+            </tr>
+            <tr>
+                <th>Image</th>
+                <td><img src="/static/images/lesson{{ slide.lesson_id }}/{{ slide.picture }}" alt="{{ slide.picture }}"></td>
+            </tr>
+            <tr>
+                <th>Delay</th>
+                <td><input type="number" class="form-control" name="delay" value="{{ slide.delay }}"></td>
+            </tr>
+            <tr>
+                <th>Keyboard type</th>
+                <td><input type="text" class="form-control" name="keyboard_type" value="{{ slide.keyboard_type }}"></td>
+            </tr>
+            {% elif slide.slide_type.value == 'pin_dict' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+            </tr>
+            {% elif slide.slide_type.value == 'quiz_options' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+            </tr>
+            <tr>
+                <th>Right answer</th>
+                <td><input type="text" class="form-control" name="right_answers" value="{{ slide.right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Keyboard</th>
+                <td><input type="text" class="form-control" name="keyboard" value="{{ slide.keyboard }}"></td>
+            </tr>
+            <tr>
+                <th>Is exam slide</th>
+                <td><input type="checkbox" name="is_exam_slide" value="true" {{ 'checked' if slide.is_exam_slide else '' }}></td>
+            </tr>
+            {% elif slide.slide_type.value == 'quiz_input_word' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+
+            </tr>
+            <tr>
+                <th>Right answer</th>
+                <td><input type="text" class="form-control" name="right_answers" value="{{ slide.right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Is exam slide</th>
+                <td><input type="checkbox" name="is_exam_slide" value="true" {{ 'checked' if slide.is_exam_slide else '' }}></td>
+            </tr>
+            {% elif slide.slide_type.value == 'quiz_input_phrase' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+
+            </tr>
+            <tr>
+                <th>Right answers</th>
+                <td><input type="text" class="form-control" name="right_answers" value="{{ slide.right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Almost right answers</th>
+                <td><input type="text" class="form-control" name="almost_right_answers" value="{{ slide.almost_right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Almost right answers reply</th>
+                <td><textarea class="form-control" name="almost_right_answer_reply">{{ slide.almost_right_answer_reply }}</textarea></td>
+            </tr>
+            <tr>
+                <th>Is exam slide</th>
+                <td><input type="checkbox" name="is_exam_slide" value="true" {{ 'checked' if slide.is_exam_slide else '' }}></td>
+            </tr>
+            {% elif slide.slide_type.value == 'final_slide' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text" rows="4">{{ slide.text }}</textarea></td>
+                <!--                <td><input type="text" class="form-control" name="text" value="{{ slide.text }}"></td>-->
+            </tr>
+            {% endif %}
+        </table>
+        <div class="button-container">
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+        </div>
+    </form>
+
+</div>
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+    // Функция для автоматической настройки высоты textarea
+    function autoResizeTextarea() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    }
+
+    // Применение функции ко всем элементам textarea при загрузке страницы
+    window.addEventListener('load', function() {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            autoResizeTextarea.call(textarea);
+            textarea.addEventListener('input', autoResizeTextarea);
+        });
+    });
+</script>
+<script>
+    document.getElementById('editSlideForm').onsubmit = async function(e) {
+        e.preventDefault(); // Предотвращаем стандартную отправку формы
+        let formData = new FormData(this);
+        let response = await fetch('/slides/{{ slide.id }}', {
+            method: 'POST',
+            body: formData
+        });
+        let result = await response.json();
+        if (response.ok) {
+            alert(result.message); // Показываем сообщение об успехе
+            window.location.reload(); // Перезагружаем страницу
+        } else {
+            alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
+        }
+    };
+</script>
+</body>
+</html>
