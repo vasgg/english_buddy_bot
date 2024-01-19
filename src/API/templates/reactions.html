@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Reactions</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Редактирование реакций</h1>
+
+    <form id="editReactionsForm" action="/reactions" method="post">
+        <div class="row">
+            <div class="col-6">
+                <h2>RIGHT</h2>
+                <!-- Правильные реакции -->
+                {% for reaction in right %}
+                <input type="text" class="form-control mb-2" name="{{ reaction.id }}" value="{{ reaction.text }}">
+                {% endfor %}
+            </div>
+            <div class="col-6">
+                <h2>WRONG</h2>
+                <!-- Неправильные реакции -->
+                {% for reaction in wrong %}
+                <input type="text" class="form-control mb-2" name="{{ reaction.id }}" value="{{ reaction.text }}">
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    document.getElementById('editReactionsForm').onsubmit = async function(e) {
+        e.preventDefault(); // Предотвращаем стандартную отправку формы
+        let formData = new FormData(this);
+        let response = await fetch('/reactions', {
+            method: 'POST',
+            body: formData
+        });
+        let result = await response.json();
+        if (response.ok) {
+            alert(result.message); // Показываем сообщение
+            window.location.reload(); // Перезагружаем страницу
+        } else {
+            alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
+        }
+    };
+</script>
+</body>
+</html>
