@@ -76,11 +76,6 @@ class Times(Enum):
     ONE_HOUR = 3600
 
 
-class Times(Enum):
-    UTC_STARTING_MARK = 14
-    ONE_HOUR = 3600
-
-
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:
     match lesson_starts_from:
         case LessonStartsFrom.BEGIN:
