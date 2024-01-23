@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Reactions</title>
+    <title>Редактирование реакций</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -10,30 +10,48 @@
     <h1 class="mb-4 text-center">Редактирование реакций</h1>
 
     <form id="editReactionsForm" action="/reactions" method="post">
-        <div class="row">
-            <div class="col-6">
-                <h2>RIGHT</h2>
-                <!-- Правильные реакции -->
-                {% for reaction in right %}
-                <input type="text" class="form-control mb-2" name="{{ reaction.id }}" value="{{ reaction.text }}">
-                {% endfor %}
-            </div>
-            <div class="col-6">
-                <h2>WRONG</h2>
-                <!-- Неправильные реакции -->
-                {% for reaction in wrong %}
-                <input type="text" class="form-control mb-2" name="{{ reaction.id }}" value="{{ reaction.text }}">
-                {% endfor %}
+        <h2>RIGHT</h2>
+        <!-- Правильные реакции -->
+        {% for reaction in right %}
+        <div class="input-group mb-2">
+            <input type="text" class="form-control" name="{{ reaction.id }}" value="{{ reaction.text }}">
+            <div class="input-group-append">
+                <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">Удалить</button>
             </div>
         </div>
-        <div class="row mt-3">
-            <div class="col-12 text-center">
-                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+        {% endfor %}
+
+        <h2>WRONG</h2>
+        <!-- Неправильные реакции -->
+        {% for reaction in wrong %}
+        <div class="input-group mb-2">
+            <input type="text" class="form-control" name="{{ reaction.id }}" value="{{ reaction.text }}">
+            <div class="input-group-append">
+                <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">Удалить</button>
             </div>
+        </div>
+        {% endfor %}
+
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            <button type="button" class="btn btn-success" onclick="addReaction()">Добавить реакцию</button>
         </div>
     </form>
 </div>
+
 <script>
+    function confirmDeletion(reactionId) {
+        if (confirm('Вы уверены, что хотите удалить эту реакцию?')) {
+            // Отправить запрос на сервер для удаления реакции
+            // Нужно реализовать на сервере маршрут для обработки этого запроса
+        }
+    }
+
+    function addReaction() {
+        // Логика для добавления новой реакции
+        // Это может включать добавление нового поля ввода или открытие модального окна для ввода новой реакции
+    }
+
     document.getElementById('editReactionsForm').onsubmit = async function(e) {
         e.preventDefault(); // Предотвращаем стандартную отправку формы
         let formData = new FormData(this);
