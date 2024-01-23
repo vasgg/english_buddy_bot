@@ -2,8 +2,6 @@ import asyncio
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-# noinspection PyUnresolvedReferences
-import bot.database.models.answer
 from bot.database.models.base import Base
 
 # noinspection PyUnresolvedReferences
@@ -11,6 +9,9 @@ import bot.database.models.complete_lesson
 
 # noinspection PyUnresolvedReferences
 import bot.database.models.lesson
+
+# noinspection PyUnresolvedReferences
+import bot.database.models.reaction
 
 # noinspection PyUnresolvedReferences
 import bot.database.models.session

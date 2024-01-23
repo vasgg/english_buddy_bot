@@ -42,7 +42,7 @@ class SessionStartsFrom(Enum):
     EXAM = 'exam'
 
 
-class AnswerType(Enum):
+class ReactionType(Enum):
     RIGHT = 'right'
     WRONG = 'wrong'
 

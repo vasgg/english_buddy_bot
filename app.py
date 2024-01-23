@@ -6,14 +6,14 @@ from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from bot.database.db import db
-from bot.database.models.answer import Answer
 from bot.database.models.lesson import Lesson
+from bot.database.models.reaction import Reaction
 from bot.database.models.slide import Slide
 from bot.database.models.text import Text
-from bot.resources.enums import KeyboardType, SlideType
+from bot.resources.enums import KeyboardType, ReactionType, SlideType
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/API/static"), name="static")
@@ -57,31 +57,58 @@ async def save_texts(request: Request):
 @app.get("/reactions", response_class=HTMLResponse)
 async def read_answers(request: Request):
     async with db.session_factory.begin() as db_session:
-        result = await db_session.execute(select(Answer))
+        result = await db_session.execute(select(Reaction))
         data = result.scalars().all()
-    right = [reaction for reaction in data if reaction.answer_type.value == 'right']
-    wrong = [reaction for reaction in data if reaction.answer_type.value == 'wrong']
+    right = [reaction for reaction in data if reaction.type.value == 'right']
+    wrong = [reaction for reaction in data if reaction.type.value == 'wrong']
     return templates.TemplateResponse(request=request, name="reactions.html", context={'right': right, 'wrong': wrong})
 
 
 @app.post("/reactions")
-async def write_answers(request: Request):
-    try:
-        async with db.session_factory.begin() as db_session:
-            form_data = await request.form()
-            for id_, value in form_data.items():
-                logging.info(f"Updating reaction for id: {id_}")
-                db_reaction = await db_session.execute(select(Answer).where(Answer.id == id_))
-                db_reaction = db_reaction.scalar_one_or_none()
-                if db_reaction:
-                    db_reaction.text = value
+async def save_reactions(request: Request):
+    form_data = await request.form()
+    reactions_to_update = []
+    new_reactions = []
+    async with db.session_factory.begin() as db_session:
+        for key, value in form_data.items():
+            if '_new' in key:
+                reaction_type = key.replace("_new", "").lower()
+                new_reaction = Reaction(text=value, type=ReactionType(reaction_type))
+                db_session.add(new_reaction)
+            else:
+                reaction_id = int(key.split("_")[1])
+                reaction_type = key.split("_")[0]
+                query = await db_session.execute(select(Reaction).filter(Reaction.id == reaction_id))
+                reaction = query.scalar_one_or_none()
+
+                if reaction:
+                    reaction.text = value
+                    reaction.type = ReactionType(reaction_type)
+                    reactions_to_update.append(reaction)
                 else:
-                    raise HTTPException(status_code=404, detail=f"Reaction with prompt '{id_}' not found")
-            await db_session.commit()
-        return {"message": "Reactions updated successfully"}
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+                    raise HTTPException(status_code=404, detail=f"Reaction with id {reaction_id} not found")
+
+        db_session.add_all(reactions_to_update)
+
+        for new_reaction in new_reactions:
+            db_reaction = Reaction(text=new_reaction.text, type=new_reaction.type)
+            db_session.add(db_reaction)
+
+        await db_session.commit()
+    return {"message": "Reactions saved successfully"}
+
+
+@app.delete("/reactions/{reaction_id}")
+async def delete_reaction(reaction_id: int):
+    async with db.session_factory.begin() as db_session:
+        reaction = await db_session.execute(select(Reaction).filter(Reaction.id == reaction_id))
+        reaction = reaction.scalar_one_or_none()
+        if not reaction:
+            raise HTTPException(status_code=404, detail="Reaction not found")
+        query = delete(Reaction).filter(Reaction.id == reaction_id)
+        await db_session.execute(query)
+        db_session.commit()
+    return {"message": "Reaction deleted successfully"}
 
 
 @app.get("/lessons")
