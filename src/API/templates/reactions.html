@@ -10,25 +10,38 @@
     <h1 class="mb-4 text-center">Редактирование реакций</h1>
 
     <form id="editReactionsForm" action="/reactions" method="post">
-        <h2>RIGHT</h2>
-        <!-- Правильные реакции -->
-        {% for reaction in right %}
-        <div class="input-group mb-2">
-            <input type="text" class="form-control" name="{{ reaction.id }}" value="{{ reaction.text }}">
-            <div class="input-group-append">
-                <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">Удалить</button>
-            </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>RIGHT</h2>
+            <button type="button" class="btn btn-success mb-2" onclick="addReaction('right')">+</button>
         </div>
-        {% endfor %}
-
-        <h2>WRONG</h2>
-        <!-- Неправильные реакции -->
-        {% for reaction in wrong %}
-        <div class="input-group mb-2">
-            <input type="text" class="form-control" name="{{ reaction.id }}" value="{{ reaction.text }}">
-            <div class="input-group-append">
-                <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">Удалить</button>
+        <div id="right-reactions">
+            {% for reaction in right %}
+            <div class="input-group mb-2">
+                <input type="text" class="form-control" name="right_{{ reaction.id }}" value="{{ reaction.text }}">
+                <div class="input-group-append">
+                    <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">-</button>
+                </div>
             </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>WRONG</h2>
+            <button type="button" class="btn btn-success mb-2" onclick="addReaction('wrong')">+</button>
+        </div>
+        <div id="wrong-reactions">
+            {% for reaction in wrong %}
+            <div class="input-group mb-2">
+                <input type="text" class="form-control" name="wrong_{{ reaction.id }}" value="{{ reaction.text }}">
+                <div class="input-group-append">
+                    <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">-</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
         </div>
         {% endfor %}
 
@@ -42,14 +55,48 @@
 <script>
     function confirmDeletion(reactionId) {
         if (confirm('Вы уверены, что хотите удалить эту реакцию?')) {
-            // Отправить запрос на сервер для удаления реакции
-            // Нужно реализовать на сервере маршрут для обработки этого запроса
-        }
+        fetch(`/reactions/${reactionId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            window.location.reload(); // Перезагружаем страницу для отображения изменений
+        })
+        .catch(error => {
+            alert('Ошибка при удалении: ' + error);
+        });
     }
+}
 
-    function addReaction() {
-        // Логика для добавления новой реакции
-        // Это может включать добавление нового поля ввода или открытие модального окна для ввода новой реакции
+    function addReaction(type) {
+        // Получаем контейнер для правильных или неправильных реакций
+        const container = document.getElementById(`${type}-reactions`);
+
+        // Создаем новый элемент input
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group mb-2';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control';
+        input.name = `${type}_new`; // Важно установить уникальное имя для нового поля
+
+        const inputGroupAppend = document.createElement('div');
+        inputGroupAppend.className = 'input-group-append';
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'btn btn-danger';
+        deleteButton.type = 'button';
+        deleteButton.textContent = '-';
+        deleteButton.onclick = function() {
+            // Определить логику для удаления элемента из DOM
+        };
+
+        inputGroupAppend.appendChild(deleteButton);
+        inputGroup.appendChild(input);
+        inputGroup.appendChild(inputGroupAppend);
+        container.appendChild(inputGroup);
     }
 
     document.getElementById('editReactionsForm').onsubmit = async function(e) {
@@ -73,3 +120,4 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html>
+

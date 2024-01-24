@@ -1,14 +1,14 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.models.answer import Answer
+from bot.database.models.reaction import Reaction
 from bot.database.models.sticker import Sticker
 from bot.database.models.text import Text
-from bot.resources.enums import AnswerType, StickerType
+from bot.resources.enums import ReactionType, StickerType
 
 
-async def get_random_answer(mode: AnswerType, db_session: AsyncSession) -> str:
-    query = select(Answer.text).filter(Answer.answer_type == mode).order_by(func.random()).limit(1)
+async def get_random_answer(mode: ReactionType, db_session: AsyncSession) -> str:
+    query = select(Reaction.text).filter(Reaction.type == mode).order_by(func.random()).limit(1)
     result = await db_session.execute(query)
     return result.scalar()
 

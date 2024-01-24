@@ -17,7 +17,7 @@ from bot.handlers.lesson_handlers import common_processing
 from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
 from bot.middlewares.session_middlewares import SessionMiddleware
-from bot.resources.enums import AnswerType, EventType, States
+from bot.resources.enums import EventType, ReactionType, States
 
 router = Router()
 router.message.middleware.register(SessionMiddleware())
@@ -71,7 +71,7 @@ async def quiz_callback_processing(
             )
         except KeyError:
             print('something went wrong')
-        await callback.message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
+        await callback.message.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
         await log_quiz_answer(
             session=session,
             mode=EventType.CALLBACK_QUERY,
@@ -111,7 +111,7 @@ async def quiz_callback_processing(
             )
         except KeyError:
             print('something went wrong')
-        await callback.message.answer(text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session))
+        await callback.message.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
         await log_quiz_answer(
             session=session,
             mode=EventType.CALLBACK_QUERY,
@@ -210,7 +210,7 @@ async def check_input_word(
     slide_id = data['quiz_word_slide_id']
     slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
     if input_word.lower() != slide.right_answers.lower():
-        await message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
+        await message.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
         await log_quiz_answer(
             session=session,
             mode=EventType.MESSAGE,
@@ -250,7 +250,7 @@ async def check_input_word(
             )
         except KeyError:
             print("something went wrong")
-        await message.answer(text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session))
+        await message.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
         await log_quiz_answer(
             session=session,
             mode=EventType.MESSAGE,
@@ -289,7 +289,7 @@ async def check_input_phrase(
     almost_right_answers = slide.almost_right_answers.split("|")
     almost_right_answers_lower = [answer.lower() for answer in almost_right_answers]
     if input_phrase.lower() in answers_lower:
-        await message.answer(text=await get_random_answer(mode=AnswerType.RIGHT, db_session=db_session))
+        await message.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
         await log_quiz_answer(
             session=session,
             mode=EventType.MESSAGE,
@@ -327,7 +327,7 @@ async def check_input_phrase(
             db_session=db_session,
         )
     else:
-        await message.answer(text=await get_random_answer(mode=AnswerType.WRONG, db_session=db_session))
+        await message.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
         await log_quiz_answer(
             session=session,
             mode=EventType.MESSAGE,
