@@ -14,29 +14,48 @@ function confirmDeletion(reactionId) {
     }
 }
 
+
+function randomInteger(min, max) {
+    // случайное число от min до (max+1)
+    let rand = min + Math.random() * (max + 1 - min);
+    return Math.floor(rand);
+}
+
 function addReaction(type) {
+
+    const randomNum = randomInteger(1000, 9000)
+    console.log('randomNum', randomNum)
     // Получаем контейнер для правильных или неправильных реакций
     const container = document.getElementById(`${type}-reactions`);
 
-    // Создаем новый элемент input
+    // Создаем новый элемент div
     const inputGroup = document.createElement('div');
-    inputGroup.className = 'input-group mb-2';
+    inputGroup.className = 'reactions-input-wrapper mb-2';
 
+    // Создаем новый элемент input
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'form-control';
-    input.name = `${type}_new`; // Важно установить уникальное имя для нового поля
+    input.name = `${type}_${randomNum}_new`; // Важно установить уникальное имя для нового поля
 
+    // Создаем новый div для кнопки
     const inputGroupAppend = document.createElement('div');
     inputGroupAppend.className = 'input-group-append';
 
+    // Создаем новый элемент кнопку для удаления
     const deleteButton = document.createElement('button');
-    deleteButton.className = 'btn btn-danger';
+    deleteButton.className = 'btn btn-danger btn-square';
     deleteButton.type = 'button';
     deleteButton.textContent = '-';
-    deleteButton.onclick = function() {
-        // Определить логику для удаления элемента из DOM
+
+    // Логика для удаления элемента из DOM
+    deleteButton.onclick = function(e) {
+        const target = e.target;
+        const parent = target.parentElement.parentElement
+
+        parent.remove()
     };
+
 
     inputGroupAppend.appendChild(deleteButton);
     inputGroup.appendChild(input);
@@ -44,37 +63,6 @@ function addReaction(type) {
     container.appendChild(inputGroup);
 }
 
-document.getElementById('editReactionsForm').onsubmit = async function(e) {
-    e.preventDefault(); // Предотвращаем стандартную отправку формы
-    let formData = new FormData(this);
-    let response = await fetch('/reactions', {
-        method: 'POST',
-        body: formData
-    });
-    let result = await response.json();
-    if (response.ok) {
-        alert(result.message); // Показываем сообщение
-        window.location.reload(); // Перезагружаем страницу
-    } else {
-        alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
-    }
-};
-
-document.getElementById('editTextsForm').onsubmit = async function(e) {
-    e.preventDefault(); // Предотвращаем стандартную отправку формы
-    let formData = new FormData(this);
-    let response = await fetch('/texts', {
-        method: 'POST',
-        body: formData
-    });
-    let result = await response.json();
-    if (response.ok) {
-        alert(result.message); // Показываем сообщение
-        window.location.reload(); // Перезагружаем страницу
-    } else {
-        alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
-    }
-};
 
 // Функция для автоматической настройки высоты textarea
 function autoResizeTextarea() {
@@ -82,11 +70,50 @@ function autoResizeTextarea() {
     this.style.height = (this.scrollHeight) + 'px';
 }
 
-// Применение функции ко всем элементам textarea при загрузке страницы
-window.addEventListener('load', function() {
+document.addEventListener("DOMContentLoaded", () => {
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
         autoResizeTextarea.call(textarea);
         textarea.addEventListener('input', autoResizeTextarea);
     });
+
+    document.getElementById('editTextsForm').onsubmit = async function(e) {
+        e.preventDefault(); // Предотвращаем стандартную отправку формы
+        console.log('e =>', e)
+
+        let formData = new FormData(this);
+
+        try {
+            let response = await fetch('/texts', {
+                method: 'POST',
+                body: formData
+            });
+            let result = await response.json();
+
+            if (response.ok) {
+                alert(result.message); // Показываем сообщение
+            } else {
+                alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
+            }
+
+        } catch (e) {
+            alert("Сервер не отвечает"); // Показываем ошибку
+        }
+    };
+
+    document.getElementById('editReactionsForm').onsubmit = async function(e) {
+        e.preventDefault(); // Предотвращаем стандартную отправку формы
+        let formData = new FormData(this);
+        let response = await fetch('/reactions', {
+            method: 'POST',
+            body: formData
+        });
+        let result = await response.json();
+        if (response.ok) {
+            alert(result.message); // Показываем сообщение
+            window.location.reload(); // Перезагружаем страницу
+        } else {
+            alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
+        }
+    };
 });
