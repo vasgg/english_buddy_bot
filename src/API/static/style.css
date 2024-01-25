@@ -1,102 +1,99 @@
-.button-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.button {
-    margin: 10px;
-}
 body {
   display: flex;
 }
 
-#sidebar {
+.sidebar {
   /* Высота сайдбара должна быть равна высоте видимой области */
-  height: 100vh;
+  /*height: 100vh;*/
   /* Ширина сайдбара */
   width: 300px;
   /* Зафиксируем сайдбар, чтобы он оставался на месте при прокрутке */
-  position: fixed;
+  /*position: fixed;*/
   /* Сайдбар будет слева */
-  left: 0;
+  /*left: 0;*/
   /* Отступ сверху */
-  top: 0;
+  /*top: 0;*/
   /* Фон сайдбара */
   background-color: #f8f9fa;
 }
 
+.sidebar__button-wrapper {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.content {
+    /* Чтобы контент не налезал на сайдбар */
+    /*margin-left: 300px;*/
+    /* Остальной контент занимает всё доступное пространство */
+    flex-grow: 1;
+    padding: 1rem;
+}
+
+.content__button-wrapper {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/*!*h3 {*!*/
+/*!*    margin-bottom: 0;*!*/
+/*!*}*!*/
+
+/*table {*/
+/*    margin-bottom: 20px;*/
+/*}*/
+
+#editTextsForm {
+    margin-top: 20px;
+}
+
+.reactions-form-title {
+    margin-top: 20px;
+}
+
+
+/* Стилизация кнопок в сайдбаре */
+.btn {
+    display: flex; /* Кнопки будут блочными элементами */
+    align-content: center;
+    justify-content: center;
+    /*width: 100%; !* Ширина кнопок будет равна ширине сайдбара *!*/
+    text-align: center; /* Текст в кнопках будет выровнен по левому краю */
+    height: 44px;
+}
+
+.btn a {
+    color: white;
+    text-decoration: none;
+}
+
 #content {
   /* Чтобы контент не налезал на сайдбар */
-  margin-left: 300px;
+  /*margin-left: 300px;*/
   /* Остальной контент занимает всё доступное пространство */
   flex-grow: 1;
   padding: 1rem;
 }
 
-/* Стилизация кнопок в сайдбаре */
-.btn {
-  display: block; /* Кнопки будут блочными элементами */
-  width: 95%; /* Ширина кнопок будет равна ширине сайдбара */
-  text-align: center; /* Текст в кнопках будет выровнен по левому краю */
-}
-/* Стилизация таблицы */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    overflow: hidden;
-    border-radius: 8px;
-}
-th, td {
-    border-bottom: 1px solid #ddd;
-    padding: 12px 15px;
-    text-align: left;
-    vertical-align: middle;
-}
-th {
-    background-color: #007bff;
-    color: white;
-    font-size: 16px;
-}
-tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-/* Явное указание ширины столбцов */
-th, td {
-    width: 50%;
-}
-
-/* Стили текстового поля */
-textarea {
-    width: 100%;
-    resize: vertical;
-    border: 1px solid #ddd;
-    padding: 8px;
-    border-radius: 4px;
-}
-
-/* Стили для кнопки и контейнера кнопки */
-.button-container {
+.reactions-input-wrapper {
     display: flex;
-    justify-content: center;
-    margin-top: 20px;
+    align-items: center;
+    gap: 10px;
 }
-.btn-primary {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: background-color 0.3s;
+
+.btn-square {
+    height: 38px;
+    width: 38px;
 }
-.btn-primary:hover {
-    background-color: #0056b3;
+
+.reactions-form-title {
+    margin-bottom: 10px;
 }
+
 
 /* Стилизация таблицы */
 table {
@@ -136,24 +133,44 @@ textarea {
     border-radius: 4px;
 }
 
-/* Стили для кнопки и контейнера кнопки */
-.button-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
+/* Стилизация таблицы */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    overflow: hidden;
+    border-radius: 8px;
 }
-.btn-primary {
+th, td {
+    border-bottom: 1px solid #ddd;
+    padding: 12px 15px;
+    text-align: left;
+    vertical-align: middle;
+}
+th {
     background-color: #007bff;
     color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
     font-size: 16px;
-    transition: background-color 0.3s;
 }
-.btn-primary:hover {
-    background-color: #0056b3;
+tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
+
+/* Явное указание ширины столбцов */
+th, td {
+    width: 50%;
+}
+
+/* Стили текстового поля */
+textarea {
+    width: 100%;
+    resize: vertical;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+}
+
 
 .edit-button {
     margin-left: 10px;

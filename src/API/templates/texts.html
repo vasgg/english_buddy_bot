@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Texts{% endblock %}
 {% block content %}
-<h4>Редактирование текстов</h4>
+<h3>Редактирование текстов</h3>
 
-<form id="editTextsForm" action="/save-texts" method="post">
+<form id="editTextsForm" >
     <table>
         <tr>
             <th>Описание</th>
@@ -18,8 +18,8 @@
         </tr>
         {% endfor %}
     </table>
-    <div class="button-container">
-        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+    <div class="content__button-wrapper">
+        <button id="save" type="submit" class="btn btn-primary">Сохранить изменения</button>
     </div>
 </form>
 {% endblock %}

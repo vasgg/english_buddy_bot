@@ -2,39 +2,39 @@
 {% block title %}Реакции{% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <h4 class="mb-4 text-left">Редактирование реакций</h4>
+    <h3 class="text-left">Редактирование реакций</h3>
     <form id="editReactionsForm" action="/reactions" method="post">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="reactions-form-title d-flex justify-content-between align-items-center">
             <h4>RIGHT</h4>
-            <button type="button" class="btn btn-success btn-sm mb-2 float-right" onclick="addReaction('right')">+</button>
+            <button type="button" class="btn btn-success btn-square" onclick="addReaction('right')">+</button>
             <!--            <button type="button" class="btn btn-success mb-2" onclick="addReaction('right')">+</button>-->
         </div>
         <div id="right-reactions">
             {% for reaction in right %}
-            <div class="input-group mb-2">
-                <input type="text" class="form-control" name="right_{{ reaction.id }}" value="{{ reaction.text }}">
+            <div class=" reactions-input-wrapper mb-2">
+                <input type="text" class="form-control " name="right_{{ reaction.id }}" value="{{ reaction.text }}">
                 <div class="input-group-append">
-                    <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">-</button>
+                    <button class="btn btn-danger btn-square" type="button" onclick="confirmDeletion({{ reaction.id }})">-</button>
                 </div>
             </div>
             {% endfor %}
         </div>
 
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="reactions-form-title d-flex justify-content-between align-items-center">
             <h4>WRONG</h4>
-            <button type="button" class="btn btn-success btn-sm mb-2 float-right" onclick="addReaction('wrong')">+</button>
+            <button type="button" class="btn btn-success btn-square" onclick="addReaction('wrong')">+</button>
         </div>
         <div id="wrong-reactions">
             {% for reaction in wrong %}
-            <div class="input-group mb-2">
+            <div class="reactions-input-wrapper mb-2">
                 <input type="text" class="form-control" name="wrong_{{ reaction.id }}" value="{{ reaction.text }}">
                 <div class="input-group-append">
-                    <button class="btn btn-danger" type="button" onclick="confirmDeletion({{ reaction.id }})">-</button>
+                    <button class="btn btn-danger btn-square" type="button" onclick="confirmDeletion({{ reaction.id }})">-</button>
                 </div>
             </div>
             {% endfor %}
         </div>
-        <div class="text-center mt-3">
+        <div class="content__button-wrapper">
             <button type="submit" class="btn btn-primary">Сохранить изменения</button>
         </div>
     </form>
