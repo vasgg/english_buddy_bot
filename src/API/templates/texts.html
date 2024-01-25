@@ -1,71 +1,7 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Texts</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        /* Стилизация таблицы */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            background-color: white;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-        th, td {
-            border-bottom: 1px solid #ddd;
-            padding: 12px 15px;
-            text-align: left;
-            vertical-align: middle;
-        }
-        th {
-            background-color: #007bff;
-            color: white;
-            font-size: 16px;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        /* Явное указание ширины столбцов */
-        th, td {
-            width: 50%;
-        }
-
-        /* Стили текстового поля */
-        textarea {
-            width: 100%;
-            resize: vertical;
-            border: 1px solid #ddd;
-            padding: 8px;
-            border-radius: 4px;
-        }
-
-        /* Стили для кнопки и контейнера кнопки */
-        .button-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-<h1>Редактирование текстов</h1>
+{% extends "base.html" %}
+{% block title %}Texts{% endblock %}
+{% block content %}
+<h4>Редактирование текстов</h4>
 
 <form id="editTextsForm" action="/save-texts" method="post">
     <table>
@@ -86,38 +22,4 @@
         <button type="submit" class="btn btn-primary">Сохранить изменения</button>
     </div>
 </form>
-<script>
-    // Функция для автоматической настройки высоты textarea
-    function autoResizeTextarea() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    }
-
-    // Применение функции ко всем элементам textarea при загрузке страницы
-    window.addEventListener('load', function() {
-        const textareas = document.querySelectorAll('textarea');
-        textareas.forEach(textarea => {
-            autoResizeTextarea.call(textarea);
-            textarea.addEventListener('input', autoResizeTextarea);
-        });
-    });
-</script>
-<script>
-    document.getElementById('editTextsForm').onsubmit = async function(e) {
-        e.preventDefault(); // Предотвращаем стандартную отправку формы
-        let formData = new FormData(this);
-        let response = await fetch('/texts', {
-            method: 'POST',
-            body: formData
-        });
-        let result = await response.json();
-        if (response.ok) {
-            alert(result.message); // Показываем сообщение
-            window.location.reload(); // Перезагружаем страницу
-        } else {
-            alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
-        }
-    };
-</script>
-</body>
-</html>
+{% endblock %}

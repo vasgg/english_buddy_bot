@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Form, HTTPException, Request
@@ -21,9 +20,9 @@ templates = Jinja2Templates(directory='src/API/templates')
 
 
 @app.get('/', response_class=HTMLResponse)
-async def read_root():
-    html_content = Path('src/API/templates/index.html').read_text()
-    return HTMLResponse(content=html_content)
+async def get_home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+    # return HTMLResponse(content=html_content)
 
 
 @app.get("/texts", response_class=HTMLResponse)
