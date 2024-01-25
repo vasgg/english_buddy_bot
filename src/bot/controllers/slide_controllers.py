@@ -41,3 +41,11 @@ async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, 
         current_slide = result.scalar_one()
         current_slide_id = current_slide.next_slide
         steps += 1
+
+
+async def set_new_slide_image(slide_id: int, image_name: str, db_session: AsyncSession):
+    stmt = select(Slide).filter(Slide.id == slide_id)
+    result = await db_session.execute(stmt)
+    slide = result.scalar_one()
+    slide.picture = image_name
+    await db_session.commit()

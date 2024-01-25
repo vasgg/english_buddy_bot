@@ -8,7 +8,7 @@
 <body>
 <div class="container mt-4">
     <h2>Slide info</h2>
-    <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post">
+    <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post" enctype="multipart/form-data">
         <table class="table">
             <tr>
                 <th>Slide ID</th>
@@ -45,6 +45,11 @@
             <tr>
                 <th>Image</th>
                 <td><img src="/static/images/lesson{{ slide.lesson_id }}/{{ slide.picture }}" alt="{{ slide.picture }}"></td>
+            </tr>
+            <tr>
+            <tr>
+                <th>Upload New Image</th>
+                <td><input type="file" class="form-control-file" name="new_picture"></td>
             </tr>
             <tr>
                 <th>Delay</th>

@@ -1,12 +1,14 @@
 import logging
+import shutil
 from typing import Optional
 
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import delete, select
 
+from bot.controllers.slide_controllers import set_new_slide_image
 from bot.database.db import db
 from bot.database.models.lesson import Lesson
 from bot.database.models.reaction import Reaction
@@ -203,6 +205,17 @@ async def update_slide(
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/update-slide/{slide_id}")
+async def update_slide(slide: Slide, new_picture: UploadFile = File(None)):
+    if new_picture:
+        destination = f"static/images/lesson{slide.lesson_id}/{new_picture.filename}"
+        with open(destination, "wb") as buffer:
+            shutil.copyfileobj(new_picture.file, buffer)
+    async with db.session_factory.begin() as db_session:
+        await set_new_slide_image(slide.id, new_picture.filename, db_session)
+    return {"message": "Slide updated successfully"}
 
 
 @app.post("/update-lesson/{lesson_id}")
