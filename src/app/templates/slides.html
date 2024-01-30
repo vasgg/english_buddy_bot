@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Slides{% endblock %}
+{% block content %}
+<script>
+    function confirmSlideDeletion(slideId) {
+        if (confirm('Вы уверены, что хотите удалить этот слайд?')) {
+        fetch(`/slides/${slideId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            window.location.reload(); // Перезагружаем страницу для отображения изменений
+        })
+        .catch(error => {
+            alert('Ошибка при удалении: ' + error);
+        });
+    }
+    }
+    function editSlide(slideId) {
+    window.location.href = `/slides/${slideId}`;
+    }
+
+    function saveSlideOrder() {
+    let slides = [];
+    let rows = document.querySelectorAll("#slidesTable tr");
+
+    rows.forEach((row, index) => {
+        let slideId = row.getAttribute('data-slide-id');
+        let lessonId = row.getAttribute('data-lesson-id');
+        let nextSlideId = index < rows.length - 1 ? rows[index + 1].getAttribute('data-slide-id') : null;
+
+        slides.push({ lesson_id: lessonId, slide_id: slideId, next_slide: nextSlideId });
+    });
+
+    fetch('/save-slide-order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ slides: slides })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert("Order saved successfully");
+        // Перезагрузка страницы для отображения нового порядка
+        location.reload();
+    })
+    .catch(error => {
+        console.error("Could not save slide order:", error);
+        alert("Error saving order: " + error);
+    });
+    }
+    // Функция для добавления нового слайда
+    function addNewSlide(slideId) {
+        console.log("Adding new slide after slide ID:", slideId); // Для отладки
+        fetch('/add-slide', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ slide_id: slideId })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data.message);
+            // Здесь можно добавить логику для обновления интерфейса
+            // Например, можно перезагрузить страницу, чтобы отобразить новый слайд
+            location.reload();
+        })
+        .catch(error => {
+            console.error("Could not add new slide:", error);
+            console.log(slideId, error);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Перемещение слайдов вверх
+        document.querySelectorAll('.move-up').forEach(button => {
+            button.addEventListener('click', function() {
+                let row = this.parentNode.parentNode;
+                if (row.previousElementSibling) {
+                    row.parentNode.insertBefore(row, row.previousElementSibling);
+                }
+            });
+        });
+
+        // Перемещение слайдов вниз
+        document.querySelectorAll('.move-down').forEach(button => {
+            button.addEventListener('click', function() {
+                let row = this.parentNode.parentNode;
+                if (row.nextElementSibling) {
+                    row.parentNode.insertBefore(row.nextElementSibling, row);
+                }
+            });
+        });
+
+        // Добавление нового слайда
+        document.querySelectorAll('.add-slide').forEach(button => {
+            button.addEventListener('click', function() {
+                let currentSlideId = this.getAttribute('data-slide-id');
+                addNewSlide(currentSlideId);
+            });
+        });
+    });
+
+
+</script>
+
+<div class="container mt-4">
+    <h2>{{ lesson.title }}</h2>
+    <p></p>
+    <table class="slides-table" id="slidesTable">
+        {% for slide in slides %}
+        <tr data-slide-id="{{ slide.id }}" data-lesson-id="{{ slide.lesson_id }}">
+            {% if slide.slide_type.value == 'text' %}
+            <td>🖋️</td>
+            <td>{{ slide.text }}</td>
+            <td>{{ slide.keyboard_type | default('', true) }}</td>
+            {% elif slide.slide_type.value == 'image' %}
+            <td>🖼️</td>
+            <td>{{ slide.picture }}</td>
+            <td>{{ slide.keyboard_type | default('', true) }}</td>
+            {% elif slide.slide_type.value == 'pin_dict' %}
+            <td>📎</td>
+            <td>{{ slide.text }}</td>
+            <td></td>
+            {% elif slide.slide_type.value == 'small_sticker' %}
+            <td>🧨</td>
+            <td>{{ slide.slide_type.value }}</td>
+            <td></td>
+            {% elif slide.slide_type.value == 'big_sticker' %}
+            <td>💣</td>
+            <td>{{ slide.slide_type.value }}</td>
+            <td></td>
+            {% elif slide.slide_type.value == 'quiz_options' %}
+            <td>🧩</td>
+            <td>{{ slide.text }}</td>
+            <td>{{ slide.keyboard }}</td>
+            {% elif slide.slide_type.value == 'quiz_input_word' %}
+            <td>🗨️</td>
+            <td>{{ slide.text }}</td>
+            <td>{{ slide.right_answers }}</td>
+            {% elif slide.slide_type.value == 'quiz_input_phrase' %}
+            <td>💬</td>
+            <td>{{ slide.text }}</td>
+            <td>{{ slide.right_answers }}</td>
+            {% elif slide.slide_type.value == 'final_slide' %}
+            <td>🎉</td>
+            <td>{{ slide.text }}</td>
+            <td></td>
+            {% endif %}
+            <td>
+                <button class="edit-button" onclick="editSlide({{ slide.id }})">✏️</button>
+            </td>
+            <td>
+                <button class="move-up" {% if loop.first %}disabled{% endif %}>∆</button>
+            </td>
+            <td>
+                <button class="move-down" {% if loop.last %}disabled{% endif %}>∇</button>
+            </td>
+            <td>
+                <button class="add-slide" data-slide-id="{{ slide.next_slide }}">+</button>
+            </td>
+            <td>
+                <button class="delete-slide" onclick="confirmSlideDeletion({{ slide.id }})">−</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+{% endblock %}
+{% block sidebar_content %}
+<div class="sidebar__button-wrapper">
+    <button class="btn btn-primary" onclick="saveSlideOrder()">Сохранить</button>
+</div>
+{% endblock %}

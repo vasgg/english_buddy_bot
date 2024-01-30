@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import delete, select
 
-from src.app.shemas import CreateNewSlideAfter, SlideOrderUpdateRequest
+from src.app.shemas import CreateNewSlideBellow, SlideOrderUpdateRequest
 from src.bot.controllers.lesson_controllers import update_lesson_first_slide
 from src.bot.controllers.slide_controllers import (
     get_all_slides_from_lesson_by_order,
@@ -143,7 +143,7 @@ async def get_slides(request: Request, lesson_id: int):
 
 
 @slides_router.post("/add-slide")
-async def add_slide(slide_data: CreateNewSlideAfter):
+async def add_slide(slide_data: CreateNewSlideBellow):
     async with db.session_factory.begin() as transaction:
         try:
             slide = await get_slide_by_id(slide_data.slide_id, transaction)
