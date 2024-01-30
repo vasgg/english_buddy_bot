@@ -17,9 +17,13 @@
         </li>
         {% endfor %}
     </ul>
-    <div class="text-center mt-3">
-        <a href="/add-lesson" class="btn btn-primary">Добавить урок</a>
-    </div>
-</div>{% endblock %}
-
+</div>
+{% endblock %}
+{% block sidebar_content %}
+<div class="sidebar__button-wrapper">
+    <button class="btn btn-primary ">
+        <a href="/add-lesson">Добавить урок</a>
+    </button>
+</div>
+{% endblock %}
 

@@ -7,7 +7,6 @@
         <div class="reactions-form-title d-flex justify-content-between align-items-center">
             <h4>RIGHT</h4>
             <button type="button" class="btn btn-success btn-square" onclick="addReaction('right')">+</button>
-            <!--            <button type="button" class="btn btn-success mb-2" onclick="addReaction('right')">+</button>-->
         </div>
         <div id="right-reactions">
             {% for reaction in right %}
@@ -40,3 +39,11 @@
     </form>
 </div>
 {% endblock %}
+{% block sidebar_content %}
+<div class="sidebar__button-wrapper">
+    <button class="btn btn-primary ">
+        <a type="submit">Сохранить</a>
+    </button>
+</div>
+{% endblock %}
+

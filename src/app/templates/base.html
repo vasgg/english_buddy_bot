@@ -4,25 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 <div id="sidebar" class="sidebar">
     <div class="sidebar__button-wrapper">
         <button class="btn btn-primary ">
-            <a href="/texts" >Редактирование текстов </a>
+            <a href="/texts">Редактирование текстов </a>
         </button>
         <button class="btn btn-primary ">
-            <a href="/reactions" >Редактирование реакций</a>
+            <a href="/reactions">Редактирование реакций</a>
         </button>
         <button class="btn btn-primary ">
-            <a href="/lessons" >Список уроков</a>
+            <a href="/lessons">Список уроков</a>
         </button>
     </div>
-    <!-- Сайдбар с кнопками -->
-
-    <!-- Другие кнопки -->
+    {% block sidebar_content %}{% endblock %}
 </div>
 <div id="content" class="content">
     {% block content %}{% endblock %}

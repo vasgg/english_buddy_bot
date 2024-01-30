@@ -3,12 +3,12 @@ body {
 }
 
 .sidebar {
-  /* Высота сайдбара должна быть равна высоте видимой области */
-  /*height: 100vh;*/
+
+  height: 100vh;
   /* Ширина сайдбара */
-  width: 300px;
+  width: 320px;
   /* Зафиксируем сайдбар, чтобы он оставался на месте при прокрутке */
-  /*position: fixed;*/
+  position: fixed;
   /* Сайдбар будет слева */
   /*left: 0;*/
   /* Отступ сверху */
@@ -26,7 +26,7 @@ body {
 
 .content {
     /* Чтобы контент не налезал на сайдбар */
-    /*margin-left: 300px;*/
+    margin-left: 320px;
     /* Остальной контент занимает всё доступное пространство */
     flex-grow: 1;
     padding: 1rem;
@@ -38,14 +38,6 @@ body {
     align-items: center;
     justify-content: center;
 }
-
-/*!*h3 {*!*/
-/*!*    margin-bottom: 0;*!*/
-/*!*}*!*/
-
-/*table {*/
-/*    margin-bottom: 20px;*/
-/*}*/
 
 #editTextsForm {
     margin-top: 20px;
@@ -63,7 +55,7 @@ body {
     justify-content: center;
     /*width: 100%; !* Ширина кнопок будет равна ширине сайдбара *!*/
     text-align: center; /* Текст в кнопках будет выровнен по левому краю */
-    height: 44px;
+      /* height: 44px; */
 }
 
 .btn a {
@@ -88,6 +80,8 @@ body {
 .btn-square {
     height: 38px;
     width: 38px;
+    align-items: center;
+    justify-content: center;
 }
 
 .reactions-form-title {
@@ -174,4 +168,57 @@ textarea {
 
 .edit-button {
     margin-left: 10px;
+}
+
+.compact-table {
+    font-size: 12px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.compact-table th, .compact-table td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    text-align: left;
+}
+
+.compact-table th {
+    background-color: #f2f2f2;
+}
+
+.compact-table button {
+    background: none; /* Убирает фоновый цвет */
+    border: none; /* Убирает границы */
+    padding: 0; /* Убирает отступы */
+    margin: 0; /* Убирает внешние отступы */
+    cursor: pointer; /* Меняет курсор при наведении на кнопку */
+    font-size: 10px; /* Размер шрифта для эмодзи */
+}
+
+.slides-table {
+    font-size: 14px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.slides-table th, .sliodes-table td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    text-align: left;
+}
+
+.slides-table th {
+    background-color: #f2f2f2;
+}
+
+.slides-table button {
+    background: none; /* Убирает фоновый цвет */
+    border: none; /* Убирает границы */
+    padding: 0; /* Убирает отступы */
+    margin: 0; /* Убирает внешние отступы */
+    cursor: pointer; /* Меняет курсор при наведении на кнопку */
+    font-size: 12px; /* Размер шрифта для эмодзи */
+}
+.slides-table td:first-child, .slides-table th:first-child {
+    width: 50px; /* или любая другая ширина, которая вам нужна */
 }

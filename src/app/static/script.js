@@ -1,3 +1,25 @@
+function addNewSlide(slideId) {
+    fetch('/add-slide', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ slide_id: slideId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data.message);
+        // Обновление интерфейса после добавления слайда
+    })
+    .catch(error => {
+        console.error("Could not add new slide:", error);
+    });
+
 function confirmDeletion(reactionId) {
         if (confirm('Вы уверены, что хотите удалить эту реакцию?')) {
         fetch(`/reactions/${reactionId}`, {
@@ -14,6 +36,11 @@ function confirmDeletion(reactionId) {
     }
 }
 
+// Функция для автоматической настройки высоты textarea
+function autoResizeTextarea() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+}
 
 function randomInteger(min, max) {
     // случайное число от min до (max+1)
@@ -64,11 +91,7 @@ function addReaction(type) {
 }
 
 
-// Функция для автоматической настройки высоты textarea
-function autoResizeTextarea() {
-    this.style.height = 'auto';
-    this.style.height = (this.scrollHeight) + 'px';
-}
+
 
 document.addEventListener("DOMContentLoaded", () => {
     const textareas = document.querySelectorAll('textarea');
@@ -116,4 +139,19 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
         }
     };
-});
+
+document.getElementById('editLessonForm').onsubmit = async function(e) {
+    e.preventDefault(); // Предотвращаем стандартную отправку формы
+    let formData = new FormData(this);
+    let response = await fetch('/edit-lesson/{{ lesson.id }}', {
+        method: 'POST',
+        body: formData
+    });
+    let result = await response.json();
+    if (response.ok) {
+        alert(result.message); // Показываем сообщение
+        // Опционально: добавьте логику для обновления страницы или перехода на другую страницу
+    } else {
+        alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
+    }
+};

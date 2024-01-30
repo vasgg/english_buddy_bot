@@ -1,8 +1,8 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from bot.database.models.base import Base
-from bot.resources.enums import KeyboardType, SlideType
+from src.bot.database.models.base import Base
+from src.bot.resources.enums import KeyboardType, SlideType
 
 
 class Slide(Base):

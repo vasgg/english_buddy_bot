@@ -62,7 +62,7 @@ async def quiz_callback_processing(
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
     answer = callback_data.answer
-    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
     data = await state.get_data()
     if 'wrong_answer' in answer:
         try:
@@ -143,9 +143,7 @@ async def hint_callback(
     db_session: AsyncSession,
 ) -> None:
     await callback.answer()
-    slide: Slide = await get_slide_by_id(
-        lesson_id=callback_data.lesson_id, slide_id=callback_data.slide_id, db_session=db_session
-    )
+    slide: Slide = await get_slide_by_id(slide_id=callback_data.slide_id, db_session=db_session)
     right_answer = slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0]
     if callback_data.payload == 'show_hint':
         slide_id = slide.next_slide
@@ -208,7 +206,7 @@ async def check_input_word(
     data = await state.get_data()
     lesson_id = data['quiz_word_lesson_id']
     slide_id = data['quiz_word_slide_id']
-    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
     if input_word.lower() != slide.right_answers.lower():
         await message.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
         await log_quiz_answer(
@@ -283,7 +281,7 @@ async def check_input_phrase(
     data = await state.get_data()
     lesson_id = data["quiz_phrase_lesson_id"]
     slide_id = data["quiz_phrase_slide_id"]
-    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
     answers = slide.right_answers.split("|")
     answers_lower = [answer.lower() for answer in answers]
     almost_right_answers = slide.almost_right_answers.split("|")

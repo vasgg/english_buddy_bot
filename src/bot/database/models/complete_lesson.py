@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from bot.database.models.base import Base
+from src.bot.database.models.base import Base
 
 
 class CompleteLesson(Base):
