@@ -1,9 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Texts{% endblock %}
 {% block content %}
-<h3>Редактирование текстов</h3>
+<script>
+    // Функция для автоматической настройки высоты textarea
+    function autoResizeTextarea() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    }
 
-<form id="editTextsForm" >
+    // Применение функции ко всем элементам textarea при загрузке страницы
+    window.addEventListener('load', function() {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            autoResizeTextarea.call(textarea);
+            textarea.addEventListener('input', autoResizeTextarea);
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('save').addEventListener('click', async function(e) {
+            e.preventDefault(); // Prevent standard form submission
+            let formData = new FormData(document.getElementById('editTextsForm'));
+            console.log("Form data being sent:", formData);
+
+            try {
+                let response = await fetch('/texts', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                let result = await response.json();
+                console.log("Server response:", result);
+                alert(result.message); // Display the message
+            } catch (error) {
+                console.error("Error during form submission:", error);
+                alert("Error saving: " + error); // Display the error
+            }
+        });
+    });
+</script>
+<h3>Редактирование текстов</h3>
+<form id="editTextsForm">
     <table>
         <tr>
             <th>Описание</th>
@@ -18,8 +56,10 @@
         </tr>
         {% endfor %}
     </table>
-    <div class="content__button-wrapper">
-        <button id="save" type="submit" class="btn btn-primary">Сохранить изменения</button>
-    </div>
 </form>
+{% endblock %}
+{% block sidebar_content %}
+<div class="sidebar__button-wrapper">
+    <button id="save" class="btn btn-primary" onclick="submitForm()">Сохранить изменения</button>
+</div>
 {% endblock %}
