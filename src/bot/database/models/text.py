@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.bot.database.models.base import Base
+from bot.database.models.base import Base
 
 
 class Text(Base):

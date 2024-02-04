@@ -1,8 +1,8 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.bot.database.models.base import Base
-from src.bot.resources.enums import LessonLevel
+from bot.database.models.base import Base
+from bot.resources.enums import LessonLevel
 
 
 class Lesson(Base):
