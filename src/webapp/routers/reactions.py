@@ -8,7 +8,7 @@ from bot.database.models.reaction import Reaction
 from bot.resources.enums import ReactionType
 
 reactions_router = APIRouter()
-templates = Jinja2Templates(directory='src/app/templates')
+templates = Jinja2Templates(directory='src/webapp/templates')
 
 
 @reactions_router.get("/reactions", response_class=HTMLResponse)

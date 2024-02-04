@@ -8,7 +8,7 @@ from bot.database.db import db
 from bot.database.models.lesson import Lesson
 
 lessons_router = APIRouter()
-templates = Jinja2Templates(directory='src/app/templates')
+templates = Jinja2Templates(directory='src/webapp/templates')
 
 
 @lessons_router.get("/lessons")

@@ -9,7 +9,7 @@ from bot.database.db import db
 from bot.database.models.text import Text
 
 texts_router = APIRouter()
-templates = Jinja2Templates(directory='src/app/templates')
+templates = Jinja2Templates(directory='src/webapp/templates')
 
 
 @texts_router.get("/texts", response_class=HTMLResponse)
