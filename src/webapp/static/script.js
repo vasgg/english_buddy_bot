@@ -146,7 +146,7 @@ function selectSlideType(slideType) {
     .then(data => {
         console.log(data.message);
         window.location.reload();
-        alert(data.message);
+//        alert(data.message);
 
         // Действия после успешного добавления, например, обновление интерфейса
     })
