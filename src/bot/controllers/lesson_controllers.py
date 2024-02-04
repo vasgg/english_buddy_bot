@@ -1,9 +1,10 @@
 import asyncio
+import os
 from random import sample
 
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import Result, select
+from sqlalchemy import Result, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.answer_controllers import get_random_sticker_id, get_text_by_prompt
@@ -70,7 +71,7 @@ async def lesson_routine(
     db_session: AsyncSession,
 ) -> None:
     progress = f'<i>{current_step}/{total_slides}</i>\n\n'
-    slide: Slide = await get_slide_by_id(lesson_id=lesson_id, slide_id=slide_id, db_session=db_session)
+    slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
     await update_session(
         user_id=user.id,
         lesson_id=lesson_id,
@@ -108,7 +109,8 @@ async def lesson_routine(
 
         case SlideType.IMAGE:
             image_file = slide.picture
-            path = f'src/API/static/images/lesson{lesson_id}/{image_file}'
+            print(os.getcwd())
+            path = f'src/webapp/static/images/lesson{lesson_id}/{image_file}'
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
@@ -291,3 +293,11 @@ async def lesson_routine(
             return
         case _:
             assert False, f'Unknown slide type: {slide.slide_type}'
+
+
+async def update_lesson_first_slide(lesson_id: int, first_slide_id: int, db_session):
+    await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(first_slide_id=first_slide_id))
+
+
+async def update_lesson_exam_slide(lesson_id: int, exam_slide_id: int, db_session):
+    await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(exam_slide_id=exam_slide_id))

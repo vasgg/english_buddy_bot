@@ -15,6 +15,7 @@ def set_sqlite_pragma(dbapi_connection, _):
 
 class Base(DeclarativeBase):
     __abstract__ = True
+    __table_args__ = {'extend_existing': True}
     type_annotation_map = {dict[str, Any]: JSON}
 
     id: Mapped[int] = mapped_column(primary_key=True)

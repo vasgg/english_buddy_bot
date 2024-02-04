@@ -1,6 +1,11 @@
-from sqlalchemy import select
+import logging
+import os
+
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from bot.config import settings
+from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
 from bot.resources.enums import SlideType
 
@@ -16,15 +21,15 @@ async def get_all_base_questions_id_in_lesson(
     return {row for row in result.scalars().all()} if result else {}
 
 
-async def get_slide_by_id(lesson_id: int, slide_id: int, db_session: AsyncSession) -> Slide:
-    query = select(Slide).filter(Slide.lesson_id == lesson_id, Slide.id == slide_id)
+async def get_slide_by_id(slide_id: int, db_session: AsyncSession) -> Slide:
+    query = select(Slide).filter(Slide.id == slide_id)
     result = await db_session.execute(query)
     slide = result.scalar()
     return slide
 
 
-async def get_slide_by_position(lesson_id: int, position: int, db_session: AsyncSession) -> Slide:
-    query = select(Slide).filter(Slide.lesson_id == lesson_id, Slide.next_slide == position)
+async def get_slide_by_position(position: int, db_session: AsyncSession) -> Slide:
+    query = select(Slide).filter(Slide.next_slide == position)
     result = await db_session.execute(query)
     slide = result.scalar()
     return slide
@@ -41,3 +46,51 @@ async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, 
         current_slide = result.scalar_one()
         current_slide_id = current_slide.next_slide
         steps += 1
+
+
+async def set_new_slide_image(slide_id: int, image_name: str, db_session: AsyncSession):
+    stmt = select(Slide).filter(Slide.id == slide_id)
+    result = await db_session.execute(stmt)
+    slide = result.scalar_one()
+    slide.picture = image_name
+    await db_session.commit()
+
+
+async def update_slides_order(slide_id: int, next_slide: int | None, db_session: AsyncSession):
+    await db_session.execute(update(Slide).where(Slide.id == slide_id).values(next_slide=next_slide))
+
+
+async def reset_next_slide_for_all_slides_in_lesson(lesson_id: int, db_session):
+    await db_session.execute(update(Slide).where(Slide.lesson_id == lesson_id).values(next_slide=None))
+
+
+async def get_all_slides_from_lesson_by_order(lesson_id, db_session):
+    slides_query = await db_session.execute(select(Slide).where(Slide.lesson_id == lesson_id))
+    slides = slides_query.scalars().all()
+    slides_dict = {slide.id: slide for slide in slides}
+    ordered_slides = []
+    first_slide_query = await db_session.execute(select(Lesson.first_slide_id).where(Lesson.id == lesson_id))
+    current_slide = first_slide_query.scalar()
+    while current_slide:
+        current_slide = slides_dict.get(current_slide)
+        if current_slide:
+            ordered_slides.append(current_slide)
+            current_slide = current_slide.next_slide
+        else:
+            break
+    return ordered_slides
+
+
+def allowed_image_file_to_upload(filename):
+    check = filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats
+    logging.info(f"File {filename} is allowed to upload: {check}")
+    return check
+
+
+def get_image_files_list(lesson_id: int) -> list[str]:
+    directory = f'src/webapp/static/images/lesson{lesson_id}'
+    files = []
+    for filename in os.listdir(directory):
+        if filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
+            files.append(filename)
+    return files

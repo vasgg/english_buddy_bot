@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Редактирование слайда{% endblock %}
+{% block content %}
+<body>
+<div class="container mt-4">
+    <h2>
+        {% if slide.slide_type.value == 'text' %} 🖋️
+        {% elif slide.slide_type.value == 'image' %} 🖼️
+        {% elif slide.slide_type.value == 'pin_dict' %} 📎
+        {% elif slide.slide_type.value == 'small_sticker' %} 🧨
+        {% elif slide.slide_type.value == 'big_sticker' %} 💣
+        {% elif slide.slide_type.value == 'quiz_options' %} 🧩
+        {% elif slide.slide_type.value == 'quiz_input_word' %} 🗨️
+        {% elif slide.slide_type.value == 'quiz_input_phrase' %} 💬
+        {% elif slide.slide_type.value == 'final_slide' %} 🎉
+        {% endif %}
+        lesson {{ lesson.id }} / {{ lesson.title.lower() }} / slide {{ slide.id }}</h2>
+    <p></p>
+    <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post" enctype="multipart/form-data">
+        <table class="table">
+            <tr>
+                <th>Slide ID</th>
+                <td><input type="text" class="form-control" name="slide_id" value="{{ slide.id }}" readonly></td>
+            </tr>
+            <tr>
+                <th>Next slide ID</th>
+                <td><input type="text" class="form-control" name="next_slide" value="{{ slide.next_slide }}"></td>
+            </tr>
+            <tr>
+                <th>Slide type</th>
+                <td><input type="text" class="form-control" name="slide_type" value="{{ slide.slide_type }}" readonly></td>
+            </tr>
+
+            {% if slide.slide_type.value == 'text' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+            </tr>
+            <tr>
+                <th>Keyboard type</th>
+                <td>
+                    <select class="form-control" name="keyboard_type">
+                        <option value="" {{
+                        'selected' if slide.keyboard_type.value == None else '' }}>None</option>
+                        <option value="further" {{
+                        'selected' if slide.keyboard_type.value == 'further' else '' }}>further</option>
+                        <option value="quiz" {{
+                        'selected' if slide.keyboard_type.value == 'quiz' else '' }}>quiz</option>
+                    </select>
+                </td>
+            </tr>
+            {% elif slide.slide_type.value == 'image' %}
+            <tr>
+                <th>Image name</th>
+                <td>
+                    <select class="form-control" name="picture">
+                        {% for file in files %}
+                        <option value="{{ file }}" {{ 'selected' if file == slide.picture else '' }}>{{ file }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>Image</th>
+                <td><img src="/static/images/lesson{{ slide.lesson_id }}/{{ slide.picture }}" alt="{{ slide.picture }}"></td>
+            </tr>
+            <tr>
+            <tr>
+                <th>Upload New Image</th>
+                <td><input type="file" class="form-control-file" name="new_picture" accept="image/png, image/jpeg, image/gif, image/heic"></td>
+            </tr>
+            <tr>
+                <th>Delay</th>
+                <td><input type="number" class="form-control" name="delay" value="{{ slide.delay }}"></td>
+            </tr>
+            <tr>
+                <th>Keyboard type</th>
+                <td>
+                    <select class="form-control" name="keyboard_type">
+                        <option value="" {{
+                        'selected' if slide.keyboard_type.value == None else '' }}>None</option>
+                        <option value="further" {{
+                        'selected' if slide.keyboard_type.value == 'further' else '' }}>further</option>
+                        <option value="quiz" {{
+                        'selected' if slide.keyboard_type.value == 'quiz' else '' }}>quiz</option>
+                    </select>
+                </td>
+            </tr>
+            {% elif slide.slide_type.value == 'pin_dict' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+            </tr>
+            {% elif slide.slide_type.value == 'quiz_options' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+            </tr>
+            <tr>
+                <th>Right answer</th>
+                <td><input type="text" class="form-control" name="right_answers" value="{{ slide.right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Keyboard</th>
+                <td><input type="text" class="form-control" name="keyboard" value="{{ slide.keyboard }}"></td>
+            </tr>
+            <tr>
+                <th>Is exam slide</th>
+                <td><input type="checkbox" name="is_exam_slide" value="true" {{ 'checked' if slide.is_exam_slide else '' }}></td>
+            </tr>
+            {% elif slide.slide_type.value == 'quiz_input_word' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+
+            </tr>
+            <tr>
+                <th>Right answer</th>
+                <td><input type="text" class="form-control" name="right_answers" value="{{ slide.right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Is exam slide</th>
+                <td><input type="checkbox" name="is_exam_slide" value="true" {{ 'checked' if slide.is_exam_slide else '' }}></td>
+            </tr>
+            {% elif slide.slide_type.value == 'quiz_input_phrase' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
+
+            </tr>
+            <tr>
+                <th>Right answers</th>
+                <td><input type="text" class="form-control" name="right_answers" value="{{ slide.right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Almost right answers</th>
+                <td><input type="text" class="form-control" name="almost_right_answers" value="{{ slide.almost_right_answers }}"></td>
+            </tr>
+            <tr>
+                <th>Almost right answers reply</th>
+                <td><textarea class="form-control" name="almost_right_answer_reply">{{ slide.almost_right_answer_reply }}</textarea></td>
+            </tr>
+            <tr>
+                <th>Is exam slide</th>
+                <td><input type="checkbox" name="is_exam_slide" value="true" {{ 'checked' if slide.is_exam_slide else '' }}></td>
+            </tr>
+            {% elif slide.slide_type.value == 'final_slide' %}
+            <tr>
+                <th>Text</th>
+                <td><textarea class="form-control" name="text" rows="4">{{ slide.text }}</textarea></td>
+                <!--                <td><input type="text" class="form-control" name="text" value="{{ slide.text }}"></td>-->
+            </tr>
+            {% endif %}
+        </table>
+
+    </form>
+
+</div>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+    // Функция для автоматической настройки высоты textarea
+    function autoResizeTextarea() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    }
+
+    // Применение функции ко всем элементам textarea при загрузке страницы
+    window.addEventListener('load', function() {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            autoResizeTextarea.call(textarea);
+            textarea.addEventListener('input', autoResizeTextarea);
+        });
+    });
+</script>
+<!--<script>-->
+
+<!--    document.addEventListener('DOMContentLoaded', (event) => {-->
+<!--        document.getElementById('editSlideForm').onsubmit = async function(e) {-->
+<!--        e.preventDefault(); // Предотвращаем стандартную отправку формы-->
+<!--        let formData = new FormData(this);-->
+<!--        try {-->
+<!--            let response = await fetch('/slides/{{ slide.id }}', {-->
+<!--                method: 'POST',-->
+<!--                body: formData-->
+<!--            });-->
+<!--            if (response.ok) {-->
+<!--                let result = await response.json();-->
+<!--                alert(result.message); // Показываем сообщение об успехе-->
+<!--                window.location.reload(); // Перезагружаем страницу-->
+<!--            } else {-->
+<!--                // Если сервер вернул ошибку (например, 404 или 500)-->
+<!--                let error = await response.json();-->
+<!--                alert("Ошибка при сохранении: " + error.detail); // Показываем ошибку-->
+<!--            }-->
+<!--        } catch (error) {-->
+<!--            // Обработка сетевых ошибок и прочих проблем с запросом-->
+<!--            console.error('Ошибка при выполнении запроса:', error);-->
+<!--            alert("Ошибка сети или сервер не доступен.");-->
+<!--        }-->
+<!--    };-->
+<!--    };-->
+<!--});-->
+<!--</script>-->
+</body>
+{% endblock %}
+{% block sidebar_content %}
+<div class=sidebar__button-wrapper">
+
+</div>
+<div class="sidebar__button-wrapper">
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%; text-align: center;">
+                <button class="btn btn-primary" {% if not previous_slide %}disabled{% endif %}>
+                    <a href="/slides/{{ previous_slide.id }}/">←</a>
+                </button>
+            </td>
+            <td style="width: 50%; text-align: center;">
+                <button class="btn btn-primary" {% if slide.slide_type.value=='final_slide' %}disabled{% endif %}>
+                    <a href="/slides/{{ slide.next_slide }}/">→</a>
+                </button>
+            </td>
+        </tr>
+
+
+    </table>
+    <button class="btn btn-primary" onclick="document.getElementById('editSlideForm').submit()">Сохранить</button>
+
+    <!--    <button class="btn btn-primary" onclick="editSlideForm()">Сохранить</button>-->
+
+</div>
+<!--<div class="sidebar__button-wrapper">-->
+<!--    <div class="button-row">-->
+<!--        <button class="btn btn-primary">⇨</button>-->
+<!--        <button class="btn btn-primary">⇦</button>-->
+<!--    </div>-->
+
+<!--</div>-->
+{% endblock %}
+

@@ -106,9 +106,7 @@ async def add_new_slide_to_lesson(
         db_session.add(new_slide)
         # await db_session.flush()
         if position:
-            old_slide_on_position = await get_slide_by_position(
-                lesson_id=lesson_id, position=position, db_session=db_session
-            )
+            old_slide_on_position = await get_slide_by_position(position=position, db_session=db_session)
             next_slide_id = old_slide_on_position.next_slide
             old_slide_on_position.next_slide = new_slide.id
             new_slide.next_slide = next_slide_id
