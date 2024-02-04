@@ -2,34 +2,34 @@ import asyncio
 
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from src.bot.database.models.base import Base
+from bot.database.models.base import Base
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.complete_lesson
+import bot.database.models.complete_lesson
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.lesson
+import bot.database.models.lesson
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.reaction
+import bot.database.models.reaction
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.session
+import bot.database.models.session
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.session_log
+import bot.database.models.session_log
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.slide
+import bot.database.models.slide
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.sticker
+import bot.database.models.sticker
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.text
+import bot.database.models.text
 
 # noinspection PyUnresolvedReferences
-import src.bot.database.models.user
+import bot.database.models.user
 
 
 async def create_or_drop_db(engine: AsyncEngine):

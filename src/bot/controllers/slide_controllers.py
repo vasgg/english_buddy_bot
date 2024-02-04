@@ -1,10 +1,13 @@
 import logging
+import os
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.bot.database.models.slide import Slide
-from src.bot.resources.enums import SlideType
+from bot.config import settings
+from bot.database.models.lesson import Lesson
+from bot.database.models.slide import Slide
+from bot.resources.enums import SlideType
 
 
 async def get_all_base_questions_id_in_lesson(
@@ -57,14 +60,37 @@ async def update_slides_order(slide_id: int, next_slide: int | None, db_session:
     await db_session.execute(update(Slide).where(Slide.id == slide_id).values(next_slide=next_slide))
 
 
-async def reset_next_slide_for_all_slides(lesson_id: int, db_session):
+async def reset_next_slide_for_all_slides_in_lesson(lesson_id: int, db_session):
     await db_session.execute(update(Slide).where(Slide.lesson_id == lesson_id).values(next_slide=None))
 
 
 async def get_all_slides_from_lesson_by_order(lesson_id, db_session):
-    result = await db_session.execute(select(Slide).where(Slide.lesson_id == lesson_id).group_by(Slide.next_slide))
-    slides = result.scalars().all()
-    for slide in slides:
-        logging.info(slide.id, slide.next_slide)
-    sorted_slides = slides[1:] + [slides[0]]
-    return sorted_slides
+    slides_query = await db_session.execute(select(Slide).where(Slide.lesson_id == lesson_id))
+    slides = slides_query.scalars().all()
+    slides_dict = {slide.id: slide for slide in slides}
+    ordered_slides = []
+    first_slide_query = await db_session.execute(select(Lesson.first_slide_id).where(Lesson.id == lesson_id))
+    current_slide = first_slide_query.scalar()
+    while current_slide:
+        current_slide = slides_dict.get(current_slide)
+        if current_slide:
+            ordered_slides.append(current_slide)
+            current_slide = current_slide.next_slide
+        else:
+            break
+    return ordered_slides
+
+
+def allowed_image_file_to_upload(filename):
+    check = filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats
+    logging.info(f"File {filename} is allowed to upload: {check}")
+    return check
+
+
+def get_image_files_list(lesson_id: int) -> list[str]:
+    directory = f'src/webapp/static/images/lesson{lesson_id}'
+    files = []
+    for filename in os.listdir(directory):
+        if filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
+            files.append(filename)
+    return files

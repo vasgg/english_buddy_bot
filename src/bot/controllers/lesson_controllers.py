@@ -1,4 +1,5 @@
 import asyncio
+import os
 from random import sample
 
 from aiogram import Bot, types
@@ -14,14 +15,14 @@ from bot.controllers.session_controller import (
     get_session,
     update_session_status,
 )
-from src.bot.controllers.session_controller import update_session
-from src.bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson, get_slide_by_id
-from src.bot.database.models.complete_lesson import CompleteLesson
-from src.bot.database.models.lesson import Lesson
-from src.bot.database.models.slide import Slide
-from src.bot.database.models.user import User
-from src.bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
-from src.bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
+from bot.controllers.session_controller import update_session
+from bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson, get_slide_by_id
+from bot.database.models.complete_lesson import CompleteLesson
+from bot.database.models.lesson import Lesson
+from bot.database.models.slide import Slide
+from bot.database.models.user import User
+from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
+from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
 
 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -108,7 +109,8 @@ async def lesson_routine(
 
         case SlideType.IMAGE:
             image_file = slide.picture
-            path = f'src/app/static/images/lesson{lesson_id}/{image_file}'
+            print(os.getcwd())
+            path = f'src/webapp/static/images/lesson{lesson_id}/{image_file}'
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
@@ -295,3 +297,7 @@ async def lesson_routine(
 
 async def update_lesson_first_slide(lesson_id: int, first_slide_id: int, db_session):
     await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(first_slide_id=first_slide_id))
+
+
+async def update_lesson_exam_slide(lesson_id: int, exam_slide_id: int, db_session):
+    await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(exam_slide_id=exam_slide_id))
