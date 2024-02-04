@@ -1,3 +1,7 @@
+// slides.html "+" button
+
+let currentSlideId = null; // Глобальная переменная для хранения ID текущего слайда
+
 // reactions.html
 function randomInteger(min, max) {
     let rand = min + Math.random() * (max + 1 - min);
@@ -115,7 +119,6 @@ function addLessonButton() {
 
 
 // slides.html "+" button
-let currentSlideId = null; // Глобальная переменная для хранения ID текущего слайда
 
 function showModalWithSlideId(slideId) {
     currentSlideId = slideId; // Запоминаем ID слайда
@@ -154,7 +157,7 @@ function selectSlideType(slideType) {
 // slides.html "-" button
 function confirmSlideDeletion(slideId) {
     // Показываем диалоговое окно для подтверждения
-    if (confirm("Вы уверены, что хотите удалить этот слайд?")) {
+    if (confirm(`Вы уверены, что хотите удалить слайд ID ${slideId}?`)) {
         // Пользователь подтвердил удаление, отправляем запрос на сервер
         fetch(`/slides/${slideId}`, {
             method: 'DELETE',
@@ -168,7 +171,7 @@ function confirmSlideDeletion(slideId) {
         })
         .then(data => {
             // Отображаем сообщение об успешном удалении
-            alert("Слайд был успешно удален.");
+            alert(`Слайд ${slideId} был успешно удален.`);
             // Обновляем страницу, чтобы отразить изменения
             window.location.reload();
         })

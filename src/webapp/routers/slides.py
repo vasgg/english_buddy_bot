@@ -78,7 +78,7 @@ async def delete_slide(slide_id: int):
             await transaction.rollback()
             logging.error(f"An error occurred during slide deletion id{slide_id}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
-    return {"message": "Slide deleted successfully"}
+    return {"message": f"Slide {slide_id} deleted successfully"}
 
 
 @slides_router.post("/slides/{slide_id}")
@@ -150,7 +150,7 @@ async def update_slide(
                 else:
                     return {'message': 'Invalid file type'}
             await db_session.commit()
-        return {'message': 'Slide updated successfully'}
+        return {'message': f'Slide updated successfully.Slide ID: {slide.id}'}
     except Exception as e:
         traceback.print_exc()
         logging.error(f"An error occurred: {e}")
@@ -212,4 +212,4 @@ async def save_slides_order(order_data: SlideOrderUpdateRequest):
         except Exception as e:
             await transaction.rollback()
             raise HTTPException(status_code=500, detail=str(e))
-    return {"message": "Order updated successfully"}
+    return {"message": "Slides order updated successfully"}
