@@ -3,7 +3,19 @@
 {% block content %}
 <body>
 <div class="container mt-4">
-    <h2>Slide info</h2>
+    <h2>
+        {% if slide.slide_type.value == 'text' %} 🖋️
+        {% elif slide.slide_type.value == 'image' %} 🖼️
+        {% elif slide.slide_type.value == 'pin_dict' %} 📎
+        {% elif slide.slide_type.value == 'small_sticker' %} 🧨
+        {% elif slide.slide_type.value == 'big_sticker' %} 💣
+        {% elif slide.slide_type.value == 'quiz_options' %} 🧩
+        {% elif slide.slide_type.value == 'quiz_input_word' %} 🗨️
+        {% elif slide.slide_type.value == 'quiz_input_phrase' %} 💬
+        {% elif slide.slide_type.value == 'final_slide' %} 🎉
+        {% endif %}
+        lesson {{ lesson.id }} / {{ lesson.title.lower() }} / slide {{ slide.id }}</h2>
+    <p></p>
     <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post" enctype="multipart/form-data">
         <table class="table">
             <tr>
@@ -23,20 +35,30 @@
             <tr>
                 <th>Text</th>
                 <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
-
-            </tr>
-            <tr>
-                <th>Delay</th>
-                <td><input type="number" class="form-control" name="delay" value="{{ slide.delay }}"></td>
             </tr>
             <tr>
                 <th>Keyboard type</th>
-                <td><input type="text" class="form-control" name="keyboard_type" value="{{ slide.keyboard_type }}"></td>
+                <td>
+                    <select class="form-control" name="keyboard_type">
+                        <option value="" {{
+                        'selected' if slide.keyboard_type.value == None else '' }}>None</option>
+                        <option value="further" {{
+                        'selected' if slide.keyboard_type.value == 'further' else '' }}>further</option>
+                        <option value="quiz" {{
+                        'selected' if slide.keyboard_type.value == 'quiz' else '' }}>quiz</option>
+                    </select>
+                </td>
             </tr>
             {% elif slide.slide_type.value == 'image' %}
             <tr>
                 <th>Image name</th>
-                <td><input type="text" class="form-control" name="picture" value="{{ slide.picture }}"></td>
+                <td>
+                    <select class="form-control" name="picture">
+                        {% for file in files %}
+                        <option value="{{ file }}" {{ 'selected' if file == slide.picture else '' }}>{{ file }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
             </tr>
             <tr>
                 <th>Image</th>
@@ -45,7 +67,7 @@
             <tr>
             <tr>
                 <th>Upload New Image</th>
-                <td><input type="file" class="form-control-file" name="new_picture"></td>
+                <td><input type="file" class="form-control-file" name="new_picture" accept="image/png, image/jpeg, image/gif, image/heic"></td>
             </tr>
             <tr>
                 <th>Delay</th>
@@ -53,7 +75,16 @@
             </tr>
             <tr>
                 <th>Keyboard type</th>
-                <td><input type="text" class="form-control" name="keyboard_type" value="{{ slide.keyboard_type }}"></td>
+                <td>
+                    <select class="form-control" name="keyboard_type">
+                        <option value="" {{
+                        'selected' if slide.keyboard_type.value == None else '' }}>None</option>
+                        <option value="further" {{
+                        'selected' if slide.keyboard_type.value == 'further' else '' }}>further</option>
+                        <option value="quiz" {{
+                        'selected' if slide.keyboard_type.value == 'quiz' else '' }}>quiz</option>
+                    </select>
+                </td>
             </tr>
             {% elif slide.slide_type.value == 'pin_dict' %}
             <tr>
@@ -121,14 +152,10 @@
             </tr>
             {% endif %}
         </table>
-<!--        <div class="button-container">-->
-<!--            <button type="submit" class="btn btn-primary">Сохранить изменения</button>-->
-<!--        </div>-->
+
     </form>
 
 </div>
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <script>
     // Функция для автоматической настройки высоты textarea
@@ -146,28 +173,69 @@
         });
     });
 </script>
-<script>
-    document.getElementById('editSlideForm').onsubmit = async function(e) {
-        e.preventDefault(); // Предотвращаем стандартную отправку формы
-        let formData = new FormData(this);
-        let response = await fetch('/slides/{{ slide.id }}', {
-            method: 'POST',
-            body: formData
-        });
-        let result = await response.json();
-        if (response.ok) {
-            alert(result.message); // Показываем сообщение об успехе
-            window.location.reload(); // Перезагружаем страницу
-        } else {
-            alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
-        }
-    };
-</script>
+<!--<script>-->
+
+<!--    document.addEventListener('DOMContentLoaded', (event) => {-->
+<!--        document.getElementById('editSlideForm').onsubmit = async function(e) {-->
+<!--        e.preventDefault(); // Предотвращаем стандартную отправку формы-->
+<!--        let formData = new FormData(this);-->
+<!--        try {-->
+<!--            let response = await fetch('/slides/{{ slide.id }}', {-->
+<!--                method: 'POST',-->
+<!--                body: formData-->
+<!--            });-->
+<!--            if (response.ok) {-->
+<!--                let result = await response.json();-->
+<!--                alert(result.message); // Показываем сообщение об успехе-->
+<!--                window.location.reload(); // Перезагружаем страницу-->
+<!--            } else {-->
+<!--                // Если сервер вернул ошибку (например, 404 или 500)-->
+<!--                let error = await response.json();-->
+<!--                alert("Ошибка при сохранении: " + error.detail); // Показываем ошибку-->
+<!--            }-->
+<!--        } catch (error) {-->
+<!--            // Обработка сетевых ошибок и прочих проблем с запросом-->
+<!--            console.error('Ошибка при выполнении запроса:', error);-->
+<!--            alert("Ошибка сети или сервер не доступен.");-->
+<!--        }-->
+<!--    };-->
+<!--    };-->
+<!--});-->
+<!--</script>-->
 </body>
 {% endblock %}
 {% block sidebar_content %}
-<div class="sidebar__button-wrapper">
-    <button class="btn btn-primary" onclick="saveSlideOrder()">Сохранить</button>
+<div class=sidebar__button-wrapper">
+
 </div>
+<div class="sidebar__button-wrapper">
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%; text-align: center;">
+                <button class="btn btn-primary" {% if not previous_slide %}disabled{% endif %}>
+                    <a href="/slides/{{ previous_slide.id }}/">←</a>
+                </button>
+            </td>
+            <td style="width: 50%; text-align: center;">
+                <button class="btn btn-primary" {% if slide.slide_type.value=='final_slide' %}disabled{% endif %}>
+                    <a href="/slides/{{ slide.next_slide }}/">→</a>
+                </button>
+            </td>
+        </tr>
+
+
+    </table>
+    <button class="btn btn-primary" onclick="document.getElementById('editSlideForm').submit()">Сохранить</button>
+
+    <!--    <button class="btn btn-primary" onclick="editSlideForm()">Сохранить</button>-->
+
+</div>
+<!--<div class="sidebar__button-wrapper">-->
+<!--    <div class="button-row">-->
+<!--        <button class="btn btn-primary">⇨</button>-->
+<!--        <button class="btn btn-primary">⇦</button>-->
+<!--    </div>-->
+
+<!--</div>-->
 {% endblock %}
 
