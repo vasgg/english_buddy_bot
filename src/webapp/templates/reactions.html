@@ -128,13 +128,39 @@
     </form>
 </div>
 
+
+
 {% endblock %}
 {% block sidebar_content %}
 <div class="sidebar__button-wrapper">
     <!--    <button class="btn btn-primary">-->
     <!--        <span>Сохранить изменения</span>-->
     <!--    </button>-->
-    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+    <button id="save" type="submit" class="btn btn-primary">Сохранить изменения</button>
 
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('save').addEventListener('click', async function(e) {
+      e.preventDefault(); // Prevent standard form submission
+      let formData = new FormData(document.getElementById('editReactionsForm'));
+      console.log("Form data being sent:", formData);
+
+      try {
+        let response = await fetch('/reactions', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        let result = await response.json();
+        console.log("Server response:", result);
+        alert(result.message); // Display the message
+      } catch (error) {
+        console.error("Error during form submission:", error);
+        alert("Error saving: " + error); // Display the error
+      }
+    });
+  });
+</script>
 {% endblock %}

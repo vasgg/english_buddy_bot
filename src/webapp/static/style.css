@@ -39,6 +39,17 @@ body {
     justify-content: center;
 }
 
+.sidebar__arrow-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar__arrow-buttons button {
+    /*аналог width 100%*/
+    flex-grow: 1;
+}
+
 #editTextsForm {
     margin-top: 20px;
 }

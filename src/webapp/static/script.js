@@ -51,29 +51,34 @@ function addReaction(type) {
 }
 
     // slides.html save slides order
-document.getElementById('saveOrderBtn').addEventListener('click', function() {
-    const slides = document.querySelectorAll('#slidesTable tr');
-    const orderData = Array.from(slides).map(slide => ({
-        slide_id: parseInt(slide.getAttribute('data-slide-id'), 10),
-        lesson_id: parseInt(slide.getAttribute('data-lesson-id'), 10),
-        next_slide_id: slide.nextElementSibling ? parseInt(slide.nextElementSibling.getAttribute('data-slide-id'), 10) : null
-    }));
+const saveOrderBtn = document.getElementById('saveOrderBtn')
+if (saveOrderBtn) {
+    document.getElementById('saveOrderBtn').addEventListener('click', function() {
+        const slides = document.querySelectorAll('#slidesTable tr');
+        const orderData = Array.from(slides).map(slide => ({
+            slide_id: parseInt(slide.getAttribute('data-slide-id'), 10),
+            lesson_id: parseInt(slide.getAttribute('data-lesson-id'), 10),
+            next_slide_id: slide.nextElementSibling ? parseInt(slide.nextElementSibling.getAttribute('data-slide-id'), 10) : null
+        }));
 
-    fetch('/save-slides-order', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({slides: orderData})
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error saving slide order.');
+        fetch('/save-slides-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({slides: orderData})
+        })
+          .then(response => response.json())
+          .then(data => {
+              alert(data.message);
+              window.location.reload();
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              alert('Error saving slide order.');
+          });
     });
-});
+}
+
+
 
 
 // reactions.html "-" button
@@ -116,6 +121,18 @@ function lessonListButton() {
 function addLessonButton() {
     window.location.href = `/add-lesson/`;
 }
+
+const SwitchSlideButtons = document.querySelectorAll('.SwitchSlideButton')
+if (SwitchSlideButtons.length) {
+    SwitchSlideButtons.forEach(button => {
+        button.addEventListener(('click'), () => {
+            const dataParam = button.getAttribute("data-link-slide");
+            window.location.href = `/slides/${dataParam}`;
+        })
+    })
+}
+
+
 
 
 // slides.html "+" button
@@ -229,6 +246,7 @@ function autoResizeTextarea() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
 }
+
 
 
 document.addEventListener("DOMContentLoaded", () => {

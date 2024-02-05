@@ -209,22 +209,15 @@
 
 </div>
 <div class="sidebar__button-wrapper">
-    <table style="width: 100%;">
-        <tr>
-            <td style="width: 50%; text-align: center;">
-                <button class="btn btn-primary" {% if not previous_slide %}disabled{% endif %}>
-                    <a href="/slides/{{ previous_slide.id }}/">←</a>
-                </button>
-            </td>
-            <td style="width: 50%; text-align: center;">
-                <button class="btn btn-primary" {% if slide.slide_type.value=='final_slide' %}disabled{% endif %}>
-                    <a href="/slides/{{ slide.next_slide }}/">→</a>
-                </button>
-            </td>
-        </tr>
+    <div class="sidebar__arrow-buttons">
+        <button  class="btn btn-primary SwitchSlideButton" {% if not previous_slide %}disabled{% endif %} data-link-slide="{{previous_slide.id}}">
+            ←
+        </button>
+        <button class="btn btn-primary SwitchSlideButton" {% if slide.slide_type.value=='final_slide' %}disabled{% endif %} data-link-slide="{{slide.next_slide}}">
+            →
+        </button>
+    </div>
 
-
-    </table>
     <button class="btn btn-primary" onclick="document.getElementById('editSlideForm').submit()">Сохранить</button>
 
     <!--    <button class="btn btn-primary" onclick="editSlideForm()">Сохранить</button>-->
