@@ -7,7 +7,14 @@ class Settings(BaseSettings):
     ADMINS: list[int]
     DB_NAME: str
     db_echo: bool = True
-    allowed_image_formats: list[str] = ['png', 'jpg', 'jpeg', 'heic', 'gif', 'webp']
+    allowed_MIME_types_to_upload: list[str] = [
+        'image/png',
+        'image/jpeg',
+        'image/gif',
+        'image/heic',
+        'image/tiff',
+        'image/webp',
+    ]
 
     @property
     def aiosqlite_db_url(self) -> str:
