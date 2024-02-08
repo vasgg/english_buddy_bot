@@ -1,11 +1,12 @@
 import logging
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from bot.database.db import db
 from bot.database.models.lesson import Lesson
+from webapp.shemas import LessonData
 
 lessons_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')
@@ -19,41 +20,41 @@ async def show_lessons(request: Request):
     return templates.TemplateResponse(request=request, name="lessons.html", context={'lessons': data})
 
 
-@lessons_router.get("/edit-lesson/{lesson_id}")
-async def edit_lesson(lesson_id: int, request: Request):
+@lessons_router.get("/lesson/{lesson_id}")
+async def show_edit_lesson_page(lesson_id: int, request: Request):
     async with db.session_factory.begin() as db_session:
-        result = await db_session.execute(select(Lesson).where(Lesson.id == lesson_id))
-        data = result.scalars().first()
-    if data is None:
+        data = await db_session.execute(select(Lesson).where(Lesson.id == lesson_id))
+        lesson = data.scalars().first()
+        lessons_count = await db_session.scalar(select(func.count()).select_from(Lesson))
+
+    if lesson is None:
         raise HTTPException(status_code=404, detail="Lesson not found")
-    return templates.TemplateResponse("lesson.html", {"request": request, "lesson": data})
+    return templates.TemplateResponse(
+        "lesson.html", {"request": request, "lesson": lesson, "lessons_count": lessons_count}
+    )
 
 
-@lessons_router.post("/edit-lesson/{lesson_id}")
-async def update_lesson(
-    lesson_id: int,
-    first_slide_id: str = Form(...),
-    exam_slide_id: str = Form(...),
-    is_paid: bool = Form(...),
-    total_slides: int = Form(...),
-):
+@lessons_router.post("/lesson/{lesson_id}")
+async def update_lesson(lesson_data: LessonData):
     try:
         async with db.session_factory.begin() as db_session:
-            stmt = select(Lesson).where(Lesson.id == lesson_id)
+            stmt = select(Lesson).where(Lesson.id == lesson_data.id)
             result = await db_session.execute(stmt)
             lesson = result.scalar_one_or_none()
 
             if not lesson:
                 raise HTTPException(status_code=404, detail="Lesson not found")
 
-            lesson.first_slide_id = first_slide_id
-            lesson.exam_slide_id = exam_slide_id
-            lesson.is_paid = is_paid
-            lesson.total_slides = total_slides
+            lesson.title = lesson_data.title
+            lesson.first_slide_id = lesson_data.first_slide_id
+            if not lesson_data.exam_slide_id:
+                lesson.exam_slide_id = None
+            lesson.is_paid = lesson_data.is_paid
+            lesson.total_slides = lesson_data.total_slides
 
             await db_session.commit()
 
-            return {"message": "Lesson updated successfully"}
+            return {"message": f'Lesson "{lesson_data.title}" updated successfully'}
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")

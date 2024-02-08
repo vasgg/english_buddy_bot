@@ -1,6 +1,7 @@
 import logging
 import os
 
+from fastapi import File
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -81,16 +82,17 @@ async def get_all_slides_from_lesson_by_order(lesson_id, db_session):
     return ordered_slides
 
 
-def allowed_image_file_to_upload(filename):
-    check = filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats
-    logging.info(f"File {filename} is allowed to upload: {check}")
+def allowed_image_file_to_upload(file: File) -> bool:
+    check = file.content_type in settings.allowed_MIME_types_to_upload
+    logging.info(f"File {file.filename} is allowed to upload: {check}")
     return check
 
 
 def get_image_files_list(lesson_id: int) -> list[str]:
-    directory = f'src/webapp/static/images/lesson{lesson_id}'
+    directory = f'src/webapp/static/images/lesson_{lesson_id}'
+    allowed_image_formats = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
     files = []
     for filename in os.listdir(directory):
-        if filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
+        if filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
             files.append(filename)
     return files

@@ -110,7 +110,7 @@ async def lesson_routine(
         case SlideType.IMAGE:
             image_file = slide.picture
             print(os.getcwd())
-            path = f'src/webapp/static/images/lesson{lesson_id}/{image_file}'
+            path = f'src/webapp/static/images/lesson_{lesson_id}/{image_file}'
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
