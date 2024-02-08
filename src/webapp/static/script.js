@@ -129,6 +129,10 @@ function confirmDeletion(reactionId) {
 function editSlide(slideId) {
     window.location.href = `/slides/${slideId}`;
 }
+// lessons.html "✏️" button
+function editLesson(lessonId) {
+    window.location.href = `/lesson/${lessonId}`;
+}
 
 // base.html "Редактирование текстов" button
 function editTextsButton() {
@@ -189,7 +193,11 @@ function selectSlideType(slideType) {
     .then(response => response.json())
     .then(data => {
         console.log(data.message);
-        window.location.reload();
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+            }
+//        window.location.reload();
+//        window.location.href = `/slides/${slideId}`;
     })
     .catch(error => {
         console.error('Ошибка при добавлении нового слайда:', error);
@@ -199,6 +207,31 @@ function selectSlideType(slideType) {
 // slides.html "-" button
 function confirmSlideDeletion(slideId) {
     if (confirm(`Вы уверены, что хотите удалить слайд ID ${slideId}?`)) {
+        fetch(`/slides/${slideId}`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Проблема при попытке удаления слайда.');
+        })
+        .then(data => {
+            alert(`Слайд ${slideId} был успешно удален.`);
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert("Ошибка при удалении слайда.");
+        });
+    } else {
+        console.log("Удаление отменено.");
+    }
+}
+
+// lessons.html "-" button
+function confirmLessonDeletion(lessonId) {
+    if (confirm(`Вы уверены, что хотите удалить урок ID ${lessonId}?`)) {
         fetch(`/slides/${slideId}`, {
             method: 'DELETE',
         })
@@ -235,6 +268,47 @@ function moveSlideDown(button) {
         slideRow.parentNode.insertBefore(slideRow.nextElementSibling, slideRow);
     }
 }
+// lessons.html "∆" and "∇" button
+function moveLessonUp(button) {
+    const lessonRow = button.closest('tr');
+    if (lessonRow.previousElementSibling) {
+        lessonRow.parentNode.insertBefore(lessonRow, lessonRow.previousElementSibling);
+    }
+}
+
+function moveLessonDown(button) {
+    const lessonRow = button.closest('tr');
+    if (lessonRow.nextElementSibling) {
+        lessonRow.parentNode.insertBefore(lessonRow.nextElementSibling, lessonRow);
+    }
+}
+// lessons.html save lessons order
+function saveLessonsOrder() {
+    const lessonsData = Array.from(document.querySelectorAll('#lessonsTable tr[data-lesson-id]')).map((row, index) => ({
+        lesson_id: row.getAttribute('data-lesson-id'),
+        lesson_index: index + 1,
+    }));
+
+    fetch('/save-lessons-order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lessons: lessonsData }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        alert('Порядок уроков успешно сохранён!');
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при сохранении порядка уроков.');
+    });
+}
+
+
+
 // slides.html save slides order
 function saveSlideOrder() {
     const slides = document.querySelectorAll('#slidesTable tr');
