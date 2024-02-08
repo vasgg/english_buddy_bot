@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Редактирование слайда{% endblock %}
 {% block content %}
-<body>
+
 <div class="container mt-4">
-    <h2>
+    <h2>Редактирование слайда</h2>
+
+    <h4>
+        lesson {{ lesson.id }} / {{ lesson.title.lower() }} / slide {{ slide.id }}
         {% if slide.slide_type.value == 'text' %} 🖋️
         {% elif slide.slide_type.value == 'image' %} 🖼️
         {% elif slide.slide_type.value == 'pin_dict' %} 📎
@@ -13,14 +16,14 @@
         {% elif slide.slide_type.value == 'quiz_input_word' %} 🗨️
         {% elif slide.slide_type.value == 'quiz_input_phrase' %} 💬
         {% elif slide.slide_type.value == 'final_slide' %} 🎉
-        {% endif %}
-        lesson {{ lesson.id }} / {{ lesson.title.lower() }} / slide {{ slide.id }}</h2>
+        {% endif %}</h4>
     <p></p>
     <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post" enctype="multipart/form-data">
+        <!--    <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post" enctype="multipart/form-data">-->
         <table class="table">
             <tr>
                 <th>Slide ID</th>
-                <td><input type="text" class="form-control" name="slide_id" value="{{ slide.id }}" readonly></td>
+                <td><input type="text" class="form-control" data-slideId="{{ slide.id }}" name="slide_id" value="{{ slide.id }}" readonly></td>
             </tr>
             <tr>
                 <th>Next slide ID</th>
@@ -53,7 +56,7 @@
             <tr>
                 <th>Image name</th>
                 <td>
-                    <select class="form-control" name="picture">
+                    <select class="form-control" name="picture" onchange="updateImagePreview(this)">
                         {% for file in files %}
                         <option value="{{ file }}" {{ 'selected' if file == slide.picture else '' }}>{{ file }}</option>
                         {% endfor %}
@@ -62,12 +65,15 @@
             </tr>
             <tr>
                 <th>Image</th>
-                <td><img src="/static/images/lesson{{ slide.lesson_id }}/{{ slide.picture }}" alt="{{ slide.picture }}"></td>
+                <td><img id="selectedImage" src="/static/images/lesson_{{ slide.lesson_id }}/{{ slide.picture }}" alt="{{ slide.picture }}"></td>
+                <!--                <td><img src="/static/images/lesson_{{ slide.lesson_id }}/{{ slide.picture }}" alt="{{ slide.picture }}"></td>-->
             </tr>
             <tr>
             <tr>
                 <th>Upload New Image</th>
-                <td><input type="file" class="form-control-file" name="new_picture" accept="image/png, image/jpeg, image/gif, image/heic"></td>
+                <td><input type="file" class="form-control-file" name="new_picture" accept="image/png, image/jpeg, image/gif, image/heic" ,
+                    "image/tiff", 'image/webp'>
+                </td>
             </tr>
             <tr>
                 <th>Delay</th>
@@ -156,53 +162,7 @@
     </form>
 
 </div>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-<script>
-    // Функция для автоматической настройки высоты textarea
-    function autoResizeTextarea() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    }
 
-    // Применение функции ко всем элементам textarea при загрузке страницы
-    window.addEventListener('load', function() {
-        const textareas = document.querySelectorAll('textarea');
-        textareas.forEach(textarea => {
-            autoResizeTextarea.call(textarea);
-            textarea.addEventListener('input', autoResizeTextarea);
-        });
-    });
-</script>
-<!--<script>-->
-
-<!--    document.addEventListener('DOMContentLoaded', (event) => {-->
-<!--        document.getElementById('editSlideForm').onsubmit = async function(e) {-->
-<!--        e.preventDefault(); // Предотвращаем стандартную отправку формы-->
-<!--        let formData = new FormData(this);-->
-<!--        try {-->
-<!--            let response = await fetch('/slides/{{ slide.id }}', {-->
-<!--                method: 'POST',-->
-<!--                body: formData-->
-<!--            });-->
-<!--            if (response.ok) {-->
-<!--                let result = await response.json();-->
-<!--                alert(result.message); // Показываем сообщение об успехе-->
-<!--                window.location.reload(); // Перезагружаем страницу-->
-<!--            } else {-->
-<!--                // Если сервер вернул ошибку (например, 404 или 500)-->
-<!--                let error = await response.json();-->
-<!--                alert("Ошибка при сохранении: " + error.detail); // Показываем ошибку-->
-<!--            }-->
-<!--        } catch (error) {-->
-<!--            // Обработка сетевых ошибок и прочих проблем с запросом-->
-<!--            console.error('Ошибка при выполнении запроса:', error);-->
-<!--            alert("Ошибка сети или сервер не доступен.");-->
-<!--        }-->
-<!--    };-->
-<!--    };-->
-<!--});-->
-<!--</script>-->
-</body>
 {% endblock %}
 {% block sidebar_content %}
 <div class=sidebar__button-wrapper">
@@ -210,25 +170,25 @@
 </div>
 <div class="sidebar__button-wrapper">
     <div class="sidebar__arrow-buttons">
-        <button  class="btn btn-primary SwitchSlideButton" {% if not previous_slide %}disabled{% endif %} data-link-slide="{{previous_slide.id}}">
+        <button class="btn btn-primary SwitchSlideButton" {% if not previous_slide %}disabled{% endif %} data-link-slide="{{previous_slide.id}}">
             ←
         </button>
-        <button class="btn btn-primary SwitchSlideButton" {% if slide.slide_type.value=='final_slide' %}disabled{% endif %} data-link-slide="{{slide.next_slide}}">
+        <button class="btn btn-primary SwitchSlideButton" {% if slide.slide_type.value=='final_slide' %}disabled{% endif %}
+                data-link-slide="{{slide.next_slide}}">
             →
         </button>
     </div>
 
-    <button class="btn btn-primary" onclick="document.getElementById('editSlideForm').submit()">Сохранить</button>
-
-    <!--    <button class="btn btn-primary" onclick="editSlideForm()">Сохранить</button>-->
+    <button type="button" class="btn btn-success" onclick="saveSlide({{ slide.id }})">Сохранить</button>
 
 </div>
-<!--<div class="sidebar__button-wrapper">-->
-<!--    <div class="button-row">-->
-<!--        <button class="btn btn-primary">⇨</button>-->
-<!--        <button class="btn btn-primary">⇦</button>-->
-<!--    </div>-->
-
-<!--</div>-->
+<script>
+function updateImagePreview(selectElement) {
+    const lessonId = {{ slide.lesson_id }}; // Получите ID урока, возможно, вам нужно будет адаптировать эту часть
+    const selectedFileName = selectElement.value; // Получаем выбранное имя файла из select
+    const imagePath = `/static/images/lesson_${lessonId}/${selectedFileName}`; // Составляем путь к новому изображению
+    document.getElementById('selectedImage').src = imagePath; // Обновляем src изображения
+}
+</script>
 {% endblock %}
 

@@ -1,95 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Реакции{% endblock %}
 {% block content %}
-<!--<script>-->
-<!--    function randomInteger(min, max) {-->
-<!--    // случайное число от min до (max+1)-->
-<!--    let rand = min + Math.random() * (max + 1 - min);-->
-<!--    return Math.floor(rand);-->
-<!--    }-->
-
-<!--    function addReaction(type) {-->
-
-<!--    const randomNum = randomInteger(1000, 9000000)-->
-<!--    console.log('randomNum', randomNum)-->
-<!--    // Получаем контейнер для правильных или неправильных реакций-->
-<!--    const container = document.getElementById(`${type}-reactions`);-->
-
-<!--    // Создаем новый элемент div-->
-<!--    const inputGroup = document.createElement('div');-->
-<!--    inputGroup.className = 'reactions-input-wrapper mb-2';-->
-
-<!--    // Создаем новый элемент input-->
-<!--    const input = document.createElement('input');-->
-<!--    input.type = 'text';-->
-<!--    input.className = 'form-control';-->
-<!--    input.name = `${type}_${randomNum}_new`; // Важно установить уникальное имя для нового поля-->
-
-<!--    // Создаем новый div для кнопки-->
-<!--    const inputGroupAppend = document.createElement('div');-->
-<!--    inputGroupAppend.className = 'input-group-append';-->
-
-<!--    // Создаем новый элемент кнопку для удаления-->
-<!--    const deleteButton = document.createElement('button');-->
-<!--    deleteButton.className = 'btn btn-danger btn-square';-->
-<!--    deleteButton.type = 'button';-->
-<!--    deleteButton.textContent = '-';-->
-
-<!--    // Логика для удаления элемента из DOM-->
-<!--    deleteButton.onclick = function(e) {-->
-<!--        const target = e.target;-->
-<!--        const parent = target.parentElement.parentElement-->
-
-<!--        parent.remove()-->
-<!--    };-->
-
-
-<!--    inputGroupAppend.appendChild(deleteButton);-->
-<!--    inputGroup.appendChild(input);-->
-<!--    inputGroup.appendChild(inputGroupAppend);-->
-<!--    container.appendChild(inputGroup);-->
-<!--    }-->
-
-
-<!--    document.addEventListener("DOMContentLoaded", () => {-->
-<!--    const textareas = document.querySelectorAll('textarea');-->
-<!--    textareas.forEach(textarea => {-->
-<!--        autoResizeTextarea.call(textarea);-->
-<!--        textarea.addEventListener('input', autoResizeTextarea);-->
-<!--    });-->
-
-
-<!--    document.getElementById('editReactionsForm').onsubmit = async function(e) {-->
-<!--        e.preventDefault(); // Предотвращаем стандартную отправку формы-->
-<!--        let formData = new FormData(this);-->
-<!--        let response = await fetch('/reactions', {-->
-<!--            method: 'POST',-->
-<!--            body: formData-->
-<!--        });-->
-<!--        let result = await response.json();-->
-<!--        if (response.ok) {-->
-<!--            alert(result.message); // Показываем сообщение-->
-<!--            window.location.reload(); // Перезагружаем страницу-->
-<!--        } else {-->
-<!--            alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку-->
-<!--        }-->
-<!--    };-->
-<!--    function confirmDeletion(reactionId) {-->
-<!--        if (confirm('Вы уверены, что хотите удалить эту реакцию?')) {-->
-<!--        fetch(`/reactions/${reactionId}`, {-->
-<!--            method: 'DELETE'-->
-<!--        })-->
-<!--        .then(response => response.json())-->
-<!--        .then(data => {-->
-<!--            alert(data.message);-->
-<!--            window.location.reload(); // Перезагружаем страницу для отображения изменений-->
-<!--        })-->
-<!--        .catch(error => {-->
-<!--            alert('Ошибка при удалении: ' + error);-->
-<!--        });-->
-<!--    }-->
-<!--    }-->
-<!--</script>-->
 <div class="container mt-4">
     <h3 class="text-left">Редактирование реакций</h3>
     <form id="editReactionsForm" action="/reactions" method="post">
@@ -122,45 +33,38 @@
             </div>
             {% endfor %}
         </div>
-        <div class="content__button-wrapper">
-            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
-        </div>
     </form>
 </div>
-
 
 
 {% endblock %}
 {% block sidebar_content %}
 <div class="sidebar__button-wrapper">
-    <!--    <button class="btn btn-primary">-->
-    <!--        <span>Сохранить изменения</span>-->
-    <!--    </button>-->
-    <button id="save" type="submit" class="btn btn-primary">Сохранить изменения</button>
+    <button id="save" type="submit" class="btn btn-success">Сохранить</button>
 
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('save').addEventListener('click', async function(e) {
-      e.preventDefault(); // Prevent standard form submission
-      let formData = new FormData(document.getElementById('editReactionsForm'));
-      console.log("Form data being sent:", formData);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('save').addEventListener('click', async function(e) {
+        e.preventDefault(); // Prevent standard form submission
+        let formData = new FormData(document.getElementById('editReactionsForm'));
+        console.log("Form data being sent:", formData);
 
-      try {
-        let response = await fetch('/reactions', {
-          method: 'POST',
-          body: formData
-        });
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        let result = await response.json();
-        console.log("Server response:", result);
-        alert(result.message); // Display the message
-      } catch (error) {
-        console.error("Error during form submission:", error);
-        alert("Error saving: " + error); // Display the error
-      }
+        try {
+          let response = await fetch('/reactions', {
+            method: 'POST',
+            body: formData
+          });
+          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+          let result = await response.json();
+          console.log("Server response:", result);
+          alert(result.message); // Display the message
+        } catch (error) {
+          console.error("Error during form submission:", error);
+          alert("Error saving: " + error); // Display the error
+        }
+      });
     });
-  });
 </script>
 {% endblock %}

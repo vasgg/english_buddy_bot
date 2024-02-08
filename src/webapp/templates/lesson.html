@@ -1,41 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Редактирование урока{% endblock %}
-{% block sidebar_content %}
-<div class="sidebar__button-wrapper">
-    <button class="btn btn-primary ">
-        <a href="/lesson_{{ lesson.id }}/slides">Слайды</a>
-    </button>
-    <button class="btn btn-primary ">
-        <a type="submit">Сохранить</a>
-    </button>
-</div>
-{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
     <h2>Редактирование урока</h2>
-    <form id="editLessonForm" action="/update-lesson/{{ lesson.id }}" method="post">
-        <div class="form-group">
-            <label for="firstSlideId">First Slide ID</label>
-            <input type="number" class="form-control" id="firstSlideId" name="first_slide_id" value="{{ lesson.first_slide_id }}">
-        </div>
-        <div class="form-group">
-            <label for="examSlideId">Exam Slide ID</label>
-            <input type="number" class="form-control" id="examSlideId" name="exam_slide_id" value="{{ lesson.exam_slide_id }}">
-        </div>
-        <div class="form-group">
-            <label for="isPaid">Is Paid</label>
-            <select class="form-control" id="isPaid" name="is_paid">
-                <option value="true" {% if lesson.is_paid %} selected {% endif %}>Yes</option>
-                <option value="false" {% if not lesson.is_paid %} selected {% endif %}>No</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="totalSlides">Total Slides</label>
-            <input type="number" class="form-control" id="totalSlides" name="total_slides" value="{{ lesson.total_slides }}">
-        </div>
+    <h4>lesson {{ lesson.id }} / {{ lesson.title }}</h4>
+    <p></p>
 
-
-    </form>
+    <form id="editLessonForm">
+        <table class="table">
+            <tr>
+                <th>Lesson ID</th>
+                <td><input type="text" class="form-control" name="id" value="{{ lesson.id }}" readonly></td>
+            </tr>
+            <tr>
+                <th>Title</th>
+                <td><input type="text" class="form-control" name="title" value="{{ lesson.title }}"></td>
+            </tr>
+            <tr>
+                <th>First slide ID</th>
+                <td><input type="text" class="form-control" name="first_slide_id" value="{{ lesson.first_slide_id }}"></td>
+            </tr>
+            <tr>
+                <th>Exam slide ID</th>
+                <td><input type="text" class="form-control" name="exam_slide_id" value="{{ lesson.exam_slide_id }}"></td>
+            <tr>
+                <th>Total slides</th>
+                <td><input type="text" class="form-control" name="total_slides" value="{{ lesson.total_slides }}"></td>
+            </tr>
+            <tr>
+                <th>Is paid</th>
+                <td><input type="checkbox" name="is_paid" value="true" {{ 'checked' if lesson.is_paid else '' }}></td>
+            </tr>
+</div>
+{% endblock %}
+{% block sidebar_content %}
+<div class="sidebar__button-wrapper">
+    <button class="btn btn-primary" onclick="showSlides({{ lesson.id }})">Слайды</button>
+    <div class="sidebar__arrow-buttons">
+        <button class="btn btn-primary SwitchLessonButton" {% if lesson.index== 1 %}disabled{% endif %} data-link-slide="{{ lesson.index - 1 }}">
+            ←
+        </button>
+        <button class="btn btn-primary SwitchLessonButton" {% if lesson.index== lessons_count %}disabled{% endif %}
+                data-link-slide="{{ lesson.index + 1 }}">
+            →
+        </button>
+    </div>
+    <button class="btn btn-success" onclick="saveLesson()">Сохранить</button>
 </div>
 {% endblock %}
