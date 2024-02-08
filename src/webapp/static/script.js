@@ -2,6 +2,70 @@
 
 let currentSlideId = null; // Глобальная переменная для хранения ID текущего слайда
 
+// slide.html
+async function saveSlide(slideId) {
+    const form = document.getElementById('editSlideForm');
+    const formData = new FormData(form);
+
+    const jsonData = {};
+
+    formData.forEach((value, key) => {
+        if (!(value instanceof File)) {
+            if (value.length > 0) {
+                jsonData[key] = value;
+            }
+        } else {
+            if (value.size > 0) {
+            }
+        }
+    });
+
+    if (formData.has('new_picture') && formData.get('new_picture').size > 0) {
+        const fileData = new FormData();
+        fileData.append('new_picture', formData.get('new_picture'));
+
+        await sendFile(slideId, fileData);
+    }
+
+    await sendJsonData(slideId, jsonData);
+}
+
+async function sendJsonData(slideId, jsonData) {
+    try {
+        const response = await fetch(`/slides/${slideId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jsonData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при отправке JSON данных');
+        }
+
+        alert('JSON данные успешно отправлены');
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function sendFile(slideId, fileData) {
+    try {
+        const response = await fetch(`/slides/${slideId}/upload_picture`, {
+            method: 'POST',
+            body: fileData
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка при отправке файла');
+        }
+
+        alert('Файл успешно отправлен');
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+
 // reactions.html
 function randomInteger(min, max) {
     let rand = min + Math.random() * (max + 1 - min);
@@ -12,30 +76,24 @@ function randomInteger(min, max) {
 function addReaction(type) {
     const randomNum = randomInteger(1000, 9000)
     console.log('randomNum', randomNum)
-    // Получаем контейнер для правильных или неправильных реакций
     const container = document.getElementById(`${type}-reactions`);
 
-    // Создаем новый элемент div
     const inputGroup = document.createElement('div');
     inputGroup.className = 'reactions-input-wrapper mb-2';
 
-    // Создаем новый элемент input
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'form-control';
-    input.name = `${type}_${randomNum}_new`; // Важно установить уникальное имя для нового поля
+    input.name = `${type}_${randomNum}_new`;
 
-    // Создаем новый div для кнопки
     const inputGroupAppend = document.createElement('div');
     inputGroupAppend.className = 'input-group-append';
 
-    // Создаем новый элемент кнопку для удаления
     const deleteButton = document.createElement('button');
     deleteButton.className = 'btn btn-danger btn-square';
     deleteButton.type = 'button';
     deleteButton.textContent = '-';
 
-    // Логика для удаления элемента из DOM
     deleteButton.onclick = function(e) {
         const target = e.target;
         const parent = target.parentElement.parentElement
@@ -50,36 +108,6 @@ function addReaction(type) {
     container.appendChild(inputGroup);
 }
 
-    // slides.html save slides order
-const saveOrderBtn = document.getElementById('saveOrderBtn')
-if (saveOrderBtn) {
-    document.getElementById('saveOrderBtn').addEventListener('click', function() {
-        const slides = document.querySelectorAll('#slidesTable tr');
-        const orderData = Array.from(slides).map(slide => ({
-            slide_id: parseInt(slide.getAttribute('data-slide-id'), 10),
-            lesson_id: parseInt(slide.getAttribute('data-lesson-id'), 10),
-            next_slide_id: slide.nextElementSibling ? parseInt(slide.nextElementSibling.getAttribute('data-slide-id'), 10) : null
-        }));
-
-        fetch('/save-slides-order', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({slides: orderData})
-        })
-          .then(response => response.json())
-          .then(data => {
-              alert(data.message);
-              window.location.reload();
-          })
-          .catch(error => {
-              console.error('Error:', error);
-              alert('Error saving slide order.');
-          });
-    });
-}
-
-
-
 
 // reactions.html "-" button
 function confirmDeletion(reactionId) {
@@ -90,7 +118,7 @@ function confirmDeletion(reactionId) {
         .then(response => response.json())
         .then(data => {
             alert(data.message);
-            window.location.reload(); // Перезагружаем страницу для отображения изменений
+            window.location.reload();
         })
         .catch(error => {
             alert('Ошибка при удалении: ' + error);
@@ -100,6 +128,10 @@ function confirmDeletion(reactionId) {
 // slides.html "✏️" button
 function editSlide(slideId) {
     window.location.href = `/slides/${slideId}`;
+}
+// lessons.html "✏️" button
+function editLesson(lessonId) {
+    window.location.href = `/lesson/${lessonId}`;
 }
 
 // base.html "Редактирование текстов" button
@@ -117,6 +149,11 @@ function lessonListButton() {
     window.location.href = `/lessons/`;
 }
 
+// lesson.html "Слайды" button
+function showSlides(lessonId) {
+    window.location.href = `/lesson_${lessonId}/slides`;
+}
+
 // lesson.html "Добавить урок" button
 function addLessonButton() {
     window.location.href = `/add-lesson/`;
@@ -132,23 +169,17 @@ if (SwitchSlideButtons.length) {
     })
 }
 
-
-
-
 // slides.html "+" button
-
 function showModalWithSlideId(slideId) {
     currentSlideId = slideId; // Запоминаем ID слайда
     document.getElementById('slideTypeDialog').showModal();
 }
 
 function selectSlideType(slideType) {
-    // Закрыть диалоговое окно после выбора
     document.getElementById('slideTypeDialog').close();
 
     console.log(`Выбран тип слайда: ${slideType} для слайда с ID ${currentSlideId}`);
 
-    // Отправляем данные на сервер
     fetch('/add-slide', {
         method: 'POST',
         headers: {
@@ -162,20 +193,20 @@ function selectSlideType(slideType) {
     .then(response => response.json())
     .then(data => {
         console.log(data.message);
-        window.location.reload();
-//        alert(data.message);
-
-        // Действия после успешного добавления, например, обновление интерфейса
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+            }
+//        window.location.reload();
+//        window.location.href = `/slides/${slideId}`;
     })
     .catch(error => {
         console.error('Ошибка при добавлении нового слайда:', error);
     });
 }
+
 // slides.html "-" button
 function confirmSlideDeletion(slideId) {
-    // Показываем диалоговое окно для подтверждения
     if (confirm(`Вы уверены, что хотите удалить слайд ID ${slideId}?`)) {
-        // Пользователь подтвердил удаление, отправляем запрос на сервер
         fetch(`/slides/${slideId}`, {
             method: 'DELETE',
         })
@@ -183,13 +214,10 @@ function confirmSlideDeletion(slideId) {
             if (response.ok) {
                 return response.json();
             }
-            // Обрабатываем возможные ошибки HTTP
             throw new Error('Проблема при попытке удаления слайда.');
         })
         .then(data => {
-            // Отображаем сообщение об успешном удалении
             alert(`Слайд ${slideId} был успешно удален.`);
-            // Обновляем страницу, чтобы отразить изменения
             window.location.reload();
         })
         .catch(error => {
@@ -197,7 +225,31 @@ function confirmSlideDeletion(slideId) {
             alert("Ошибка при удалении слайда.");
         });
     } else {
-        // Пользователь отменил удаление
+        console.log("Удаление отменено.");
+    }
+}
+
+// lessons.html "-" button
+function confirmLessonDeletion(lessonId) {
+    if (confirm(`Вы уверены, что хотите удалить урок ID ${lessonId}?`)) {
+        fetch(`/slides/${slideId}`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Проблема при попытке удаления слайда.');
+        })
+        .then(data => {
+            alert(`Слайд ${slideId} был успешно удален.`);
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert("Ошибка при удалении слайда.");
+        });
+    } else {
         console.log("Удаление отменено.");
     }
 }
@@ -216,6 +268,47 @@ function moveSlideDown(button) {
         slideRow.parentNode.insertBefore(slideRow.nextElementSibling, slideRow);
     }
 }
+// lessons.html "∆" and "∇" button
+function moveLessonUp(button) {
+    const lessonRow = button.closest('tr');
+    if (lessonRow.previousElementSibling) {
+        lessonRow.parentNode.insertBefore(lessonRow, lessonRow.previousElementSibling);
+    }
+}
+
+function moveLessonDown(button) {
+    const lessonRow = button.closest('tr');
+    if (lessonRow.nextElementSibling) {
+        lessonRow.parentNode.insertBefore(lessonRow.nextElementSibling, lessonRow);
+    }
+}
+// lessons.html save lessons order
+function saveLessonsOrder() {
+    const lessonsData = Array.from(document.querySelectorAll('#lessonsTable tr[data-lesson-id]')).map((row, index) => ({
+        lesson_id: row.getAttribute('data-lesson-id'),
+        lesson_index: index + 1,
+    }));
+
+    fetch('/save-lessons-order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lessons: lessonsData }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        alert('Порядок уроков успешно сохранён!');
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при сохранении порядка уроков.');
+    });
+}
+
+
+
 // slides.html save slides order
 function saveSlideOrder() {
     const slides = document.querySelectorAll('#slidesTable tr');
@@ -279,21 +372,52 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Сервер не отвечает"); // Показываем ошибку
         }
     };
-
-    document.getElementById('editReactionsForm').onsubmit = async function(e) {
-        e.preventDefault(); // Предотвращаем стандартную отправку формы
-        let formData = new FormData(this);
-        let response = await fetch('/reactions', {
-            method: 'POST',
-            body: formData
-        });
-        let result = await response.json();
-        if (response.ok) {
-            alert(result.message); // Показываем сообщение
-            window.location.reload(); // Перезагружаем страницу
-        } else {
-            alert("Ошибка при сохранении: " + result.detail); // Показываем ошибку
-        }
-    };
-
 });
+
+// lesson.html
+const SwitchLessonButtons = document.querySelectorAll('.SwitchLessonButton')
+if (SwitchLessonButtons.length) {
+    SwitchLessonButtons.forEach(button => {
+        button.addEventListener(('click'), () => {
+            const dataParam = button.getAttribute("data-link-slide");
+            window.location.href = `/lesson/${dataParam}`;
+        })
+    })
+}
+
+function saveLesson() {
+    const form = document.getElementById('editLessonForm');
+    const formData = new FormData(form);
+    const object = {};
+    formData.forEach((value, key) => {
+    // Если значение равно "None", не включаем его в объект данных
+    // Или можно присвоить null или другое специальное значение
+    if (value !== "None") {
+        object[key] = value;
+    } else {
+        // Здесь можно задать значение по умолчанию или не добавлять ключ вовсе
+        // Например: object[key] = null; или просто пропустить
+    }
+    });
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(object),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Сетевая ошибка при попытке обновления');
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message || 'Данные успешно обновлены');
+        window.location.reload();
+    })
+    .catch(error => {
+        alert('Ошибка: ' + error.message);
+    });
+}

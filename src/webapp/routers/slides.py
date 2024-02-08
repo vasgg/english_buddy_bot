@@ -1,9 +1,9 @@
 import logging
+from pathlib import Path
 import shutil
 import traceback
-from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import delete, select
@@ -20,8 +20,8 @@ from bot.controllers.slide_controllers import (
 from bot.database.db import db
 from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
-from bot.resources.enums import KeyboardType, SlideType
-from webapp.shemas import CreateNewSlideBellow, SlideOrderUpdateRequest
+from bot.resources.enums import SlideType
+from webapp.schemas import CreateNewSlideBellow, SlideData, SlideOrderUpdateRequest
 
 slides_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')
@@ -82,79 +82,76 @@ async def delete_slide(slide_id: int):
 
 
 @slides_router.post("/slides/{slide_id}")
-async def update_slide(
-    slide_id: int,
-    next_slide: int = Form(...),
-    text: Optional[str] = Form(None),
-    delay: Optional[int] = Form(None),
-    keyboard_type: Optional[KeyboardType] = Form(None),
-    keyboard: Optional[str] = Form(None),
-    picture: Optional[str] = Form(None),
-    right_answers: Optional[str] = Form(None),
-    almost_right_answers: Optional[str] = Form(None),
-    almost_right_answer_reply: Optional[str] = Form(None),
-    is_exam_slide: Optional[bool] = Form(None),
-    new_picture: Optional[UploadFile] = File(None),
-):
+async def update_slide(slide_data: SlideData):
     try:
         async with db.session_factory.begin() as db_session:
-            stmt = select(Slide).where(Slide.id == slide_id)
+            stmt = select(Slide).where(Slide.id == slide_data.slide_id)
             result = await db_session.execute(stmt)
             slide = result.scalar_one_or_none()
-
             if not slide:
                 raise HTTPException(status_code=404, detail="Slide not found")
 
             match slide.slide_type:
                 case SlideType.TEXT:
-                    slide.next_slide_id = next_slide
-                    slide.text = text
-                    slide.delay = delay
-                    slide.keyboard_type = keyboard_type
+                    slide.next_slide_id = slide_data.next_slide
+                    slide.text = slide_data.text
+                    slide.delay = slide_data.delay
+                    slide.keyboard_type = slide_data.keyboard_type
                 case SlideType.IMAGE:
-                    slide.next_slide_id = next_slide
-                    slide.picture = picture
-                    slide.delay = delay
-                    slide.keyboard_type = keyboard_type
+                    slide.next_slide_id = slide_data.next_slide
+                    slide.picture = slide_data.picture
+                    slide.delay = slide_data.delay
+                    if slide_data.keyboard_type is not None:
+                        slide.keyboard_type = slide_data.keyboard_type
                 case SlideType.PIN_DICT:
-                    slide.next_slide_id = next_slide
-                    slide.text = text
+                    slide.next_slide_id = slide_data.next_slide
+                    slide.text = slide_data.text
                 case SlideType.QUIZ_OPTIONS:
-                    slide.next_slide_id = next_slide
-                    slide.text = text
-                    slide.right_answers = right_answers
-                    slide.keyboard = keyboard
-                    slide.is_exam_slide = False if is_exam_slide is None else is_exam_slide
+                    slide.next_slide_id = slide_data.next_slide
+                    slide.text = slide_data.text
+                    slide.right_answers = slide_data.right_answers
+                    slide.keyboard = slide_data.keyboard
+                    slide.is_exam_slide = False if slide_data.is_exam_slide is None else slide_data.is_exam_slide
                 case SlideType.QUIZ_INPUT_WORD:
-                    slide.next_slide_id = next_slide
-                    slide.text = text
-                    slide.right_answers = right_answers
-                    slide.is_exam_slide = False if is_exam_slide is None else is_exam_slide
+                    slide.next_slide_id = slide_data.next_slide
+                    slide.text = slide_data.text
+                    slide.right_answers = slide_data.right_answers
+                    slide.is_exam_slide = False if slide_data.is_exam_slide is None else slide_data.is_exam_slide
                 case SlideType.QUIZ_INPUT_PHRASE:
-                    slide.next_slide_id = next_slide
-                    slide.text = text
-                    slide.right_answers = right_answers
-                    slide.almost_right_answers = almost_right_answers
-                    slide.almost_right_answer_reply = almost_right_answer_reply
-                    slide.is_exam_slide = False if is_exam_slide is None else is_exam_slide
+                    slide.next_slide_id = slide_data.next_slide
+                    slide.text = slide_data.text
+                    slide.right_answers = slide_data.right_answers
+                    slide.almost_right_answers = slide_data.almost_right_answers
+                    slide.almost_right_answer_reply = slide_data.almost_right_answer_reply
+                    slide.is_exam_slide = False if slide_data.is_exam_slide is None else slide_data.is_exam_slide
                 case SlideType.FINAL_SLIDE:
-                    slide.next_slide_id = next_slide
-                    slide.text = text
-            if new_picture and new_picture.filename:
-                logging.info(f"New picture: {new_picture.filename}")
-                file_path = f"src/webapp/static/images/lesson{slide.lesson_id}/{new_picture.filename}"
-                if allowed_image_file_to_upload(new_picture.filename):
-                    with open(file_path, "wb") as buffer:
-                        shutil.copyfileobj(new_picture.file, buffer)
-                    slide.picture = new_picture.filename
-                else:
-                    return {'message': 'Invalid file type'}
+                    slide.next_slide_id = slide_data.next_slide
+                    slide.text = slide_data.text
             await db_session.commit()
-        return {'message': f'Slide updated successfully.Slide ID: {slide.id}'}
+        return {'message': f'Slide updated successfully. Slide ID: {slide.id}'}
     except Exception as e:
         traceback.print_exc()
         logging.error(f"An error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@slides_router.post("/slides/{slide_id}/upload_picture")
+async def upload_new_slide_picture(slide_id: int, new_picture: UploadFile | None = File(None)):
+    async with db.session_factory.begin() as db_session:
+        data = await db_session.execute(select(Slide).where(Slide.id == slide_id))
+        slide = data.scalar_one_or_none()
+        logging.info(f"New picture: {new_picture.filename}")
+        directory = Path(f"src/webapp/static/images/lesson_{slide.lesson_id}")
+        directory.mkdir(parents=True, exist_ok=True)
+        file_path = directory / new_picture.filename
+        if allowed_image_file_to_upload(new_picture):
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(new_picture.file, buffer)
+            slide.picture = new_picture.filename
+        else:
+            return {'message': f'Unsupported file type: {new_picture.content_type}'}
+        await db_session.commit()
+        return {'message': f'Slide{slide.id} updated successfully'}
 
 
 @slides_router.get("/lesson_{lesson_id}/slides", response_class=HTMLResponse)
@@ -186,14 +183,13 @@ async def add_slide(data: CreateNewSlideBellow):
             )
             transaction.add(new_slide)
             await transaction.flush()
-            print(new_slide.id)
             slide.next_slide = new_slide.id
             await transaction.commit()
         except Exception as e:
             await transaction.rollback()
             logging.error(f"An error occurred during adding new slide: {e}")
             raise HTTPException(status_code=500, detail=str(e))
-    return {"message": f"Slide added successfully. Slide ID: {new_slide.id}"}
+    return {"message": f"Slide added successfully. Slide ID: {new_slide.id}", "redirectUrl": f"/slides/{new_slide.id}"}
 
 
 @slides_router.post("/save-slides-order")
@@ -202,7 +198,7 @@ async def save_slides_order(order_data: SlideOrderUpdateRequest):
     async with db.session_factory.begin() as transaction:
         try:
             await reset_next_slide_for_all_slides_in_lesson(order_data.slides[0].lesson_id, transaction)
-            logging.info("all next_slide fields reset")
+            logging.info("all next_slide fields are reset")
             for slide in order_data.slides:
                 await update_slides_order(slide.slide_id, slide.next_slide_id, transaction)
             logging.info("all next_slide fields updated")

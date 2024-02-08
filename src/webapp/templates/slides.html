@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Slides{% endblock %}
 {% block content %}
-
 <div class="container mt-4">
     <h2>{{ lesson.title }}</h2>
     <p></p>
@@ -105,6 +104,6 @@
 {% endblock %}
 {% block sidebar_content %}
 <div class="sidebar__button-wrapper">
-    <button class="btn btn-primary" onclick="saveSlideOrder()">Сохранить изменения</button>
+    <button class="btn btn-success" onclick="saveSlideOrder()">Сохранить</button>
 </div>
 {% endblock %}
