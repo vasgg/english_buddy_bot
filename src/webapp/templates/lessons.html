@@ -1,21 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Lessons{% endblock %}
 {% block content %}
-<div class="container mt-3">
-    <h4 class="mb-4 text-left">Список уроков</h4>
-    <ul class="list-group">
+<div class="container mt-4">
+    <h2>Список уроков</h2>
+    <p></p>
+    <table class="slides-table" id="lessonsTable">
         {% for lesson in lessons %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>{{ lesson.title }}</span>
-            <div>
-                <a href="/lesson/{{ lesson.id }}" class="btn btn-secondary btn-sm mr-1">Редактировать</a>
-                <form action="/delete-lesson/{{ lesson.id }}" method="post" class="d-inline"
-                      onsubmit="return confirm('Вы уверены, что хотите удалить этот урок?');">
-                    <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
-                </form>
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
+        <tr data-lesson-id="{{ lesson.id }}">
+            <td>{{ lesson.index }}</td>
+            <td></td>
+            <td>{{ lesson.title }}</td>
+            <td>{% if lesson.is_paid %}PAID{% else %}{% endif %}</td>
+            <td>
+                <button class="edit-button" onclick="editLesson({{ lesson.id }})">✏️</button>
+            </td>
+            <td>
+                <button onclick="moveLessonUp(this)">∆</button>
+            </td>
+            <td>
+                <button onclick="moveLessonDown(this)">∇</button>
+            </td>
+            <td>
+                <button onclick="" data-lesson-id="{{ lesson.id }}">+</button>
+            </td>
+<!--            <td>-->
+<!--                <button class="delete-lesson" onclick="confirmLessonDeletion({{ lesson.id }})">−</button>-->
+<!--            </td>-->
+            {% endfor %}
+</div>
+{% endblock %}
+{% block sidebar_content %}
+<div class="sidebar__button-wrapper">
+    <button class="btn btn-success" onclick="saveLessonsOrder()">Сохранить</button>
 </div>
 {% endblock %}

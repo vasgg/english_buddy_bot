@@ -32,7 +32,7 @@ async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
 
 
 async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
-    query = select(Lesson)
+    query = select(Lesson).group_by(Lesson.index)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     return [row for row in lessons]
@@ -301,3 +301,11 @@ async def update_lesson_first_slide(lesson_id: int, first_slide_id: int, db_sess
 
 async def update_lesson_exam_slide(lesson_id: int, exam_slide_id: int, db_session):
     await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(exam_slide_id=exam_slide_id))
+
+
+async def reset_index_for_all_lessons(db_session):
+    await db_session.execute(update(Lesson).values(index=None))
+
+
+async def update_lesson_index(lesson_id: int, index: int | None, db_session: AsyncSession):
+    await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(index=index))
