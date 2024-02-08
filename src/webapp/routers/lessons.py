@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from bot.controllers.lesson_controllers import reset_index_for_all_lessons, update_lesson_index
 from bot.database.db import db
 from bot.database.models.lesson import Lesson
-from webapp.shemas import LessonData, LessonOrderUpdateRequest
+from webapp.schemas import LessonData, LessonOrderUpdateRequest
 
 lessons_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')

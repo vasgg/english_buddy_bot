@@ -18,6 +18,15 @@ class SlideOrderUpdateRequest(BaseModel):
     slides: list[SlideOrderItem]
 
 
+class LessonOrderItem(BaseModel):
+    lesson_id: int
+    lesson_index: int
+
+
+class LessonOrderUpdateRequest(BaseModel):
+    lessons: list[LessonOrderItem]
+
+
 class LessonData(BaseModel):
     id: int
     index: int | None = None
