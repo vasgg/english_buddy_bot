@@ -40,6 +40,10 @@
                 <td><textarea class="form-control" name="text">{{ slide.text }}</textarea></td>
             </tr>
             <tr>
+                <th>Delay</th>
+                <td><input type="number" class="form-control" name="delay" value="{{ slide.delay }}"></td>
+            </tr>
+            <tr>
                 <th>Keyboard type</th>
                 <td>
                     <select class="form-control" name="keyboard_type">
@@ -169,6 +173,7 @@
 
 </div>
 <div class="sidebar__button-wrapper">
+    <button class="btn btn-primary" onclick="showSlides({{ lesson.id }})">Слайды</button>
     <div class="sidebar__arrow-buttons">
         <button class="btn btn-primary SwitchSlideButton" {% if not previous_slide %}disabled{% endif %} data-link-slide="{{previous_slide.id}}">
             ←
@@ -183,12 +188,12 @@
 
 </div>
 <script>
-function updateImagePreview(selectElement) {
-    const lessonId = {{ slide.lesson_id }}; // Получите ID урока, возможно, вам нужно будет адаптировать эту часть
-    const selectedFileName = selectElement.value; // Получаем выбранное имя файла из select
-    const imagePath = `/static/images/lesson_${lessonId}/${selectedFileName}`; // Составляем путь к новому изображению
-    document.getElementById('selectedImage').src = imagePath; // Обновляем src изображения
-}
+    function updateImagePreview(selectElement) {
+        const lessonId = {{ slide.lesson_id }}; // Получите ID урока, возможно, вам нужно будет адаптировать эту часть
+        const selectedFileName = selectElement.value; // Получаем выбранное имя файла из select
+        const imagePath = `/static/images/lesson_${lessonId}/${selectedFileName}`; // Составляем путь к новому изображению
+        document.getElementById('selectedImage').src = imagePath; // Обновляем src изображения
+    }
 </script>
 {% endblock %}
 

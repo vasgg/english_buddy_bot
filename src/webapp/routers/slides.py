@@ -21,7 +21,7 @@ from bot.database.db import db
 from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
 from bot.resources.enums import SlideType
-from webapp.shemas import CreateNewSlideBellow, SlideData, SlideOrderUpdateRequest
+from webapp.schemas import CreateNewSlideBellow, SlideData, SlideOrderUpdateRequest
 
 slides_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')
@@ -183,14 +183,13 @@ async def add_slide(data: CreateNewSlideBellow):
             )
             transaction.add(new_slide)
             await transaction.flush()
-            print(new_slide.id)
             slide.next_slide = new_slide.id
             await transaction.commit()
         except Exception as e:
             await transaction.rollback()
             logging.error(f"An error occurred during adding new slide: {e}")
             raise HTTPException(status_code=500, detail=str(e))
-    return {"message": f"Slide added successfully. Slide ID: {new_slide.id}"}
+    return {"message": f"Slide added successfully. Slide ID: {new_slide.id}", "redirectUrl": f"/slides/{new_slide.id}"}
 
 
 @slides_router.post("/save-slides-order")
@@ -199,7 +198,7 @@ async def save_slides_order(order_data: SlideOrderUpdateRequest):
     async with db.session_factory.begin() as transaction:
         try:
             await reset_next_slide_for_all_slides_in_lesson(order_data.slides[0].lesson_id, transaction)
-            logging.info("all next_slide fields reset")
+            logging.info("all next_slide fields are reset")
             for slide in order_data.slides:
                 await update_slides_order(slide.slide_id, slide.next_slide_id, transaction)
             logging.info("all next_slide fields updated")
