@@ -21,7 +21,7 @@ from bot.database.db import db
 from bot.database.models.lesson import Lesson
 from bot.database.models.slide import Slide
 from bot.resources.enums import SlideType
-from webapp.schemas import CreateNewSlideBellow, SlideData, SlideOrderUpdateRequest
+from webapp.schemas import CreateNewSlideRequest, SlideData, SlideOrderUpdateRequest
 
 slides_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')
@@ -166,11 +166,25 @@ async def get_slides(request: Request, lesson_id: int):
 
 
 @slides_router.post("/add-slide")
-async def add_slide(data: CreateNewSlideBellow):
-    logging.info('[slide_type]: ', data.slide_type)
-    logging.info('[slide_id]: ', data.slide_id)
+async def add_slide(data: CreateNewSlideRequest):
     async with db.session_factory.begin() as transaction:
         try:
+            if data.slide_id is None:
+                slide = Slide(
+                    lesson_id=data.lesson_id,
+                    slide_type=data.slide_type,
+                    text=f"New {data.slide_type} slide template",
+                )
+                transaction.add(slide)
+                await transaction.flush()
+                await update_lesson_first_slide(
+                    lesson_id=data.lesson_id, first_slide_id=slide.id, db_session=transaction
+                )
+                await transaction.commit()
+                return {
+                    "message": f"Slide added successfully. Slide ID: {slide.id}",
+                    "redirectUrl": f"/slides/{slide.id}",
+                }
             slide = await get_slide_by_id(data.slide_id, transaction)
             temp = slide.next_slide
             slide.next_slide = None

@@ -3,9 +3,14 @@ from pydantic import BaseModel
 from bot.resources.enums import KeyboardType, LessonLevel, SlideType
 
 
-class CreateNewSlideBellow(BaseModel):
+class CreateNewLessonRequest(BaseModel):
+    lesson_id: int
+
+
+class CreateNewSlideRequest(BaseModel):
+    lesson_id: int
     slide_type: SlideType
-    slide_id: int
+    slide_id: int | None = None
 
 
 class SlideOrderItem(BaseModel):
