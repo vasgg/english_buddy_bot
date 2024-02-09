@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
@@ -105,6 +106,8 @@ async def add_lesson(data: CreateNewLessonRequest):
                 lesson.index = lesson.index + 1
             transaction.add(new_lesson)
             await transaction.flush()
+            directory = Path(f"src/webapp/static/images/lesson_{new_lesson.id}")
+            directory.mkdir(parents=True, exist_ok=True)
             logging.info(f"Added new lesson: {new_lesson.id}")
             await transaction.commit()
         except Exception as e:
