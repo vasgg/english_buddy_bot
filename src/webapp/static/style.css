@@ -244,3 +244,18 @@ textarea {
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
 }
+
+#slideTypeDialog button {
+    outline: none; /* Убираем контур при фокусе для доступности, но будьте осторожны с доступностью */
+    background-color: #f0f0f0; /* Пример задания фонового цвета */
+    background: none; /* Убирает фоновый цвет */
+    border: none; /* Убирает границы */
+    padding: 0; /* Убирает отступы */
+    margin: 0; /* Убирает внешние отступы */
+    cursor: pointer; /* Меняет курсор при наведении на кнопку */
+    font-size: 14px; /* Размер шрифта для эмодзи */
+}
+
+#slideTypeDialog button:hover {
+    background-color: #e0e0e0; /* Цвет фона кнопки при наведении */
+}

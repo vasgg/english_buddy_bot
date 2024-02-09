@@ -1,6 +1,6 @@
-// slides.html "+" button
 
 let currentSlideId = null; // Глобальная переменная для хранения ID текущего слайда
+let currentLessonId = null;
 
 // slide.html
 async function saveSlide(slideId) {
@@ -154,10 +154,6 @@ function showSlides(lessonId) {
     window.location.href = `/lesson_${lessonId}/slides`;
 }
 
-// lesson.html "Добавить урок" button
-function addLessonButton() {
-    window.location.href = `/add-lesson/`;
-}
 
 const SwitchSlideButtons = document.querySelectorAll('.SwitchSlideButton')
 if (SwitchSlideButtons.length) {
@@ -169,33 +165,60 @@ if (SwitchSlideButtons.length) {
     })
 }
 
+// lessons.html "+" button
+function addLesson(lessonId) {
+    fetch('/add-lesson', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ lesson_id: lessonId }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+        } else {
+            console.error('Error: Slide could not be added.');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка при добавлении урока:', error);
+    });
+}
+
+
+
 // slides.html "+" button
-function showModalWithSlideId(slideId) {
-    currentSlideId = slideId; // Запоминаем ID слайда
+function showNewSlidesModal(lessonId, slideId = null) {
+    currentLessonId = lessonId;
+    currentSlideId = slideId; // Запоминаем ID слайда или null, если ID не предоставлен
     document.getElementById('slideTypeDialog').showModal();
 }
 
 function selectSlideType(slideType) {
     document.getElementById('slideTypeDialog').close();
 
-    console.log(`Выбран тип слайда: ${slideType} для слайда с ID ${currentSlideId}`);
+    let requestBody = {
+        lesson_id: currentLessonId, // Добавляем lesson_id в тело запроса
+        slide_type: slideType,
+        slide_id: currentSlideId
+    };
 
     fetch('/add-slide', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            slide_type: slideType,
-            slide_id: currentSlideId,
-        }),
+        body: JSON.stringify(requestBody),
     })
     .then(response => response.json())
     .then(data => {
-        console.log(data.message);
         if (data.redirectUrl) {
             window.location.href = data.redirectUrl;
-            }
+        } else {
+            console.error('Error: Slide could not be added.');
+        }
 //        window.location.reload();
 //        window.location.href = `/slides/${slideId}`;
     })
@@ -203,6 +226,7 @@ function selectSlideType(slideType) {
         console.error('Ошибка при добавлении нового слайда:', error);
     });
 }
+
 
 // slides.html "-" button
 function confirmSlideDeletion(slideId) {
@@ -299,6 +323,7 @@ function saveLessonsOrder() {
     .then(response => response.json())
     .then(data => {
         console.log('Success:', data);
+        window.location.reload();
         alert('Порядок уроков успешно сохранён!');
     })
     .catch((error) => {
@@ -348,7 +373,6 @@ document.addEventListener("DOMContentLoaded", () => {
         autoResizeTextarea.call(textarea);
         textarea.addEventListener('input', autoResizeTextarea);
     });
-
     document.getElementById('editTextsForm').onsubmit = async function(e) {
         e.preventDefault(); // Предотвращаем стандартную отправку формы
         console.log('e =>', e)
@@ -421,3 +445,10 @@ function saveLesson() {
         alert('Ошибка: ' + error.message);
     });
 }
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('slideTypeDialog').addEventListener('click', function(event) {
+        if (event.target === this) {
+            this.close();
+        }
+    });
+});

@@ -4,10 +4,15 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 
-from bot.controllers.lesson_controllers import reset_index_for_all_lessons, update_lesson_index
+from bot.controllers.lesson_controllers import (
+    get_lesson,
+    get_lessons_with_greater_index,
+    reset_index_for_all_lessons,
+    update_lesson_index,
+)
 from bot.database.db import db
 from bot.database.models.lesson import Lesson
-from webapp.schemas import LessonData, LessonOrderUpdateRequest
+from webapp.schemas import CreateNewLessonRequest, LessonData, LessonOrderUpdateRequest
 
 lessons_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')
@@ -84,3 +89,29 @@ async def save_lessons_order(order_data: LessonOrderUpdateRequest):
             await transaction.rollback()
             raise HTTPException(status_code=500, detail=str(e))
     return {"message": "Lessons order updated successfully"}
+
+
+@lessons_router.post('/add-lesson')
+async def add_lesson(data: CreateNewLessonRequest):
+    async with db.session_factory.begin() as transaction:
+        try:
+            parent_lesson = await get_lesson(data.lesson_id, transaction)
+            new_lesson = Lesson(
+                index=parent_lesson.index + 1,
+                title='NEW LESSON TEMPLATE',
+            )
+            lessons = await get_lessons_with_greater_index(parent_lesson.index + 1, transaction)
+            for lesson in lessons:
+                lesson.index = lesson.index + 1
+            transaction.add(new_lesson)
+            await transaction.flush()
+            logging.info(f"Added new lesson: {new_lesson.id}")
+            await transaction.commit()
+        except Exception as e:
+            await transaction.rollback()
+            logging.error(f"An error occurred during adding new lesson: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "message": f"Lesson added successfully. Lesson ID: {new_lesson.id}",
+        "redirectUrl": f"/lesson/{new_lesson.id}",
+    }

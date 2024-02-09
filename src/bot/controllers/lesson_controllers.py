@@ -38,6 +38,13 @@ async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
     return [row for row in lessons]
 
 
+async def get_lessons_with_greater_index(index: int, db_session: AsyncSession) -> list[Lesson]:
+    query = select(Lesson).filter(Lesson.index > index)
+    result = await db_session.execute(query)
+    lessons = result.scalars().all()
+    return [row for row in lessons]
+
+
 async def add_completed_lesson_to_db(user_id: int, lesson_id: int, session_id: int, db_session: AsyncSession) -> None:
     completed_lesson = CompleteLesson(
         user_id=user_id,
