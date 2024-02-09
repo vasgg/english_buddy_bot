@@ -21,11 +21,11 @@
                 <button onclick="moveLessonDown(this)">∇</button>
             </td>
             <td>
-                <button onclick="" data-lesson-id="{{ lesson.id }}">+</button>
+                <button onclick="addLesson({{ lesson.id }})" data-lesson-id="{{ lesson.id }}">+</button>
             </td>
-<!--            <td>-->
-<!--                <button class="delete-lesson" onclick="confirmLessonDeletion({{ lesson.id }})">−</button>-->
-<!--            </td>-->
+            <!--            <td>-->
+            <!--                <button class="delete-lesson" onclick="confirmLessonDeletion({{ lesson.id }})">−</button>-->
+            <!--            </td>-->
             {% endfor %}
 </div>
 {% endblock %}
