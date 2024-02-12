@@ -1,14 +1,14 @@
-import logging
 import os
 
 from fastapi import File
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.config import settings
-from bot.database.models.lesson import Lesson
-from bot.database.models.slide import Slide
+from app import logger
 from bot.resources.enums import SlideType
+from config import settings
+from database.models.lesson import Lesson
+from database.models.slide import Slide
 
 
 async def get_all_base_questions_id_in_lesson(
@@ -84,7 +84,7 @@ async def get_all_slides_from_lesson_by_order(lesson_id, db_session):
 
 def allowed_image_file_to_upload(file: File) -> bool:
     check = file.content_type in settings.allowed_MIME_types_to_upload
-    logging.info(f"File {file.filename} is allowed to upload: {check}")
+    logger.info(f"File {file.filename} is allowed to upload: {check}")
     return check
 
 

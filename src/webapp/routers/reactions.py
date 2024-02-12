@@ -3,9 +3,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import delete, select
 
-from bot.database.db import db
-from bot.database.models.reaction import Reaction
 from bot.resources.enums import ReactionType
+from database.db import db
+from database.models.reaction import Reaction
 
 reactions_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')

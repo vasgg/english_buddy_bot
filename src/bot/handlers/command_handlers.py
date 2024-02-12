@@ -5,16 +5,16 @@ from aiogram.types import BotCommandScopeChat
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.config import settings
 from bot.controllers.answer_controllers import get_text_by_prompt
 from bot.controllers.lesson_controllers import get_lesson
 from bot.controllers.session_controller import get_last_session_with_progress, get_session
 from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu, toggle_user_paywall_access
-from bot.database.models.user import User
 from bot.handlers.lesson_handlers import common_processing
 from bot.resources.commands import special_commands
 from bot.resources.enums import States
+from config import settings
+from database.models.user import User
 
 router = Router()
 

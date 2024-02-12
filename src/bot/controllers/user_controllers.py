@@ -6,12 +6,11 @@ from aiogram import Bot, types
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 from bot.controllers.answer_controllers import get_text_by_prompt
 from bot.controllers.lesson_controllers import get_completed_lessons, get_lessons
-from bot.database.database_connector import DatabaseConnector
-from bot.database.models.user import User
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
+from database.database_connector import DatabaseConnector
+from database.models.user import User
 
 
 async def add_user_to_db(event, db_session) -> User:
@@ -90,4 +89,3 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                     )
                     await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
                     await session.commit()
-

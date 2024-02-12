@@ -7,8 +7,6 @@ from bot.controllers.lesson_controllers import get_lesson, lesson_routine
 from bot.controllers.session_controller import get_current_session, update_session, update_session_status
 from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import set_user_reminders, show_start_menu
-from bot.database.models.session import Session
-from bot.database.models.user import User
 from bot.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
@@ -21,6 +19,8 @@ from bot.resources.enums import (
     UserLessonProgress,
     lesson_to_session,
 )
+from database.models.session import Session
+from database.models.user import User
 
 router = Router()
 

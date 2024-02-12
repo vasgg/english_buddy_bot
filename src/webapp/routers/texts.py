@@ -5,8 +5,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
-from bot.database.db import db
-from bot.database.models.text import Text
+from database.db import db
+from database.models.text import Text
 
 texts_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')
