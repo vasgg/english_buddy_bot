@@ -8,19 +8,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import delete, select
 
-from bot.controllers.lesson_controllers import update_lesson_exam_slide, update_lesson_first_slide
-from bot.controllers.slide_controllers import (
-    allowed_image_file_to_upload,
-    get_all_slides_from_lesson_by_order,
-    get_image_files_list,
-    get_slide_by_id,
-    reset_next_slide_for_all_slides_in_lesson,
-    update_slides_order,
-)
-from bot.database.db import db
-from bot.database.models.lesson import Lesson
-from bot.database.models.slide import Slide
 from bot.resources.enums import SlideType
+from database.db import db
+from database.models.lesson import Lesson
+from database.models.slide import Slide
 from webapp.schemas import CreateNewSlideRequest, SlideData, SlideOrderUpdateRequest
 
 slides_router = APIRouter()
@@ -29,6 +20,8 @@ templates = Jinja2Templates(directory='src/webapp/templates')
 
 @slides_router.get("/slides/{slide_id}")
 async def edit_slide(slide_id: int, request: Request):
+    from bot.controllers.slide_controllers import get_image_files_list
+
     async with db.session_factory.begin() as db_session:
         slide = await db_session.execute(select(Slide).where(Slide.id == slide_id))
         slide = slide.scalars().first()
@@ -47,6 +40,8 @@ async def edit_slide(slide_id: int, request: Request):
 
 @slides_router.delete("/slides/{slide_id}")
 async def delete_slide(slide_id: int):
+    from bot.controllers.lesson_controllers import update_lesson_exam_slide, update_lesson_first_slide
+
     async with db.session_factory.begin() as transaction:
         try:
             slide_query = await transaction.execute(select(Slide).filter(Slide.id == slide_id))
@@ -137,6 +132,8 @@ async def update_slide(slide_data: SlideData):
 
 @slides_router.post("/slides/{slide_id}/upload_picture")
 async def upload_new_slide_picture(slide_id: int, new_picture: UploadFile | None = File(None)):
+    from bot.controllers.slide_controllers import allowed_image_file_to_upload
+
     async with db.session_factory.begin() as db_session:
         data = await db_session.execute(select(Slide).where(Slide.id == slide_id))
         slide = data.scalar_one_or_none()
@@ -156,6 +153,8 @@ async def upload_new_slide_picture(slide_id: int, new_picture: UploadFile | None
 
 @slides_router.get("/lesson_{lesson_id}/slides", response_class=HTMLResponse)
 async def get_slides(request: Request, lesson_id: int):
+    from bot.controllers.slide_controllers import get_all_slides_from_lesson_by_order
+
     async with db.session_factory.begin() as db_session:
         result = await db_session.execute(select(Lesson).where(Lesson.id == lesson_id))
         lesson = result.scalars().first()
@@ -167,6 +166,9 @@ async def get_slides(request: Request, lesson_id: int):
 
 @slides_router.post("/add-slide")
 async def add_slide(data: CreateNewSlideRequest):
+    from bot.controllers.lesson_controllers import update_lesson_first_slide
+    from bot.controllers.slide_controllers import get_slide_by_id
+
     async with db.session_factory.begin() as transaction:
         try:
             if data.slide_id is None:
@@ -208,6 +210,9 @@ async def add_slide(data: CreateNewSlideRequest):
 
 @slides_router.post("/save-slides-order")
 async def save_slides_order(order_data: SlideOrderUpdateRequest):
+    from bot.controllers.lesson_controllers import update_lesson_first_slide
+    from bot.controllers.slide_controllers import reset_next_slide_for_all_slides_in_lesson, update_slides_order
+
     logging.info(f'[order_data]: {order_data}')
     async with db.session_factory.begin() as transaction:
         try:

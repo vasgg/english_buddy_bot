@@ -10,14 +10,14 @@ from bot.controllers.session_controller import (
     log_quiz_answer,
 )
 from bot.controllers.slide_controllers import get_slide_by_id
-from bot.database.models.session import Session
-from bot.database.models.slide import Slide
-from bot.database.models.user import User
 from bot.handlers.lesson_handlers import common_processing
 from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
 from bot.middlewares.session_middlewares import SessionMiddleware
 from bot.resources.enums import EventType, ReactionType, States
+from database.models.session import Session
+from database.models.slide import Slide
+from database.models.user import User
 
 router = Router()
 router.message.middleware.register(SessionMiddleware())

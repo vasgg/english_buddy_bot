@@ -5,14 +5,8 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 
-from bot.controllers.lesson_controllers import (
-    get_lesson,
-    get_lessons_with_greater_index,
-    reset_index_for_all_lessons,
-    update_lesson_index,
-)
-from bot.database.db import db
-from bot.database.models.lesson import Lesson
+from database.db import db
+from database.models.lesson import Lesson
 from webapp.schemas import CreateNewLessonRequest, LessonData, LessonOrderUpdateRequest
 
 lessons_router = APIRouter()
@@ -77,6 +71,8 @@ async def save_lessons_order(order_data: LessonOrderUpdateRequest):
     logging.info(f'{order_data}')
     async with db.session_factory.begin() as transaction:
         try:
+            from bot.controllers.lesson_controllers import reset_index_for_all_lessons, update_lesson_index
+
             await reset_index_for_all_lessons(db_session=transaction)
             logging.info("all index fields are reset")
 
@@ -94,6 +90,7 @@ async def save_lessons_order(order_data: LessonOrderUpdateRequest):
 
 @lessons_router.post('/add-lesson')
 async def add_lesson(data: CreateNewLessonRequest):
+    from bot.controllers.lesson_controllers import get_lesson, get_lessons_with_greater_index
     async with db.session_factory.begin() as transaction:
         try:
             parent_lesson = await get_lesson(data.lesson_id, transaction)

@@ -1,5 +1,5 @@
 import asyncio
-import os
+from pathlib import Path
 from random import sample
 
 from aiogram import Bot, types
@@ -17,12 +17,12 @@ from bot.controllers.session_controller import (
 )
 from bot.controllers.session_controller import update_session
 from bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson, get_slide_by_id
-from bot.database.models.complete_lesson import CompleteLesson
-from bot.database.models.lesson import Lesson
-from bot.database.models.slide import Slide
-from bot.database.models.user import User
 from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
 from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
+from database.models.complete_lesson import CompleteLesson
+from database.models.lesson import Lesson
+from database.models.slide import Slide
+from database.models.user import User
 
 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -79,6 +79,8 @@ async def lesson_routine(
 ) -> None:
     progress = f'<i>{current_step}/{total_slides}</i>\n\n'
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
+    if not slide.text:
+        slide.text = 'System message. Please add slide text in admin panel.'
     await update_session(
         user_id=user.id,
         lesson_id=lesson_id,
@@ -116,8 +118,9 @@ async def lesson_routine(
 
         case SlideType.IMAGE:
             image_file = slide.picture
-            print(os.getcwd())
-            path = f'src/webapp/static/images/lesson_{lesson_id}/{image_file}'
+            path = Path(f'src/webapp/static/images/lesson_{lesson_id}/{image_file}')
+            if not path.exists():
+                path = Path(f'src/webapp/static/images/image_not_available.png')
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:

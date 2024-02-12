@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped
 
-from bot.database.models.base import Base
 from bot.resources.enums import ReactionType
+from database.models.base import Base
 
 
 class Reaction(Base):
