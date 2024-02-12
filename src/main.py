@@ -1,12 +1,11 @@
 import asyncio
-import logging
+import logging.config
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+import sentry_sdk
 
-from bot.config import settings
 from bot.controllers.user_controllers import check_user_reminders
-from bot.database.db import db
 from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
 from bot.handlers.lesson_handlers import router as lesson_router
@@ -16,15 +15,31 @@ from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
 from bot.resources.commands import set_bot_commands
 from bot.resources.notify_admin import on_shutdown_notify, on_startup_notify
+from config import get_logging_config, settings
+from database.db import db
 
 
 async def main():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s: " "%(filename)s: " "%(levelname)s: " "%(funcName)s(): " "%(lineno)d:\t" "%(message)s",
-    )
+    logging_config = get_logging_config(__name__)
+    logging.config.dictConfig(logging_config)
 
+    # logging.basicConfig(
+    #     level=logging.INFO,
+    #     format="%(asctime)s: " "%(filename)s: " "%(levelname)s: " "%(funcName)s(): " "%(lineno)d:\t" "%(message)s",
+    # )
+    sentry_sdk.init(
+        dsn="https://7e2aa4ab9ebb45ac8f5f21ab1f4f4859@o4505314823045120.ingest.sentry.io/4505314825535488",
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of sampled transactions.
+        # We recommend adjusting this value in production.
+        profiles_sample_rate=1.0,
+    )
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
+    logging.info("bot started")
+
     # TODO: change to persistent storage
     storage = MemoryStorage()
     dispatcher = Dispatcher(storage=storage)
