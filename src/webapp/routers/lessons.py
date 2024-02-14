@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 
-from database.db import AsyncDBSession, db
+from database.db import AsyncDBSession
 from database.models.lesson import Lesson
 from webapp.schemas import CreateNewLessonRequest, LessonData, LessonOrderUpdateRequest
 
@@ -30,12 +30,6 @@ async def show_edit_lesson_page(lesson_id: int, request: Request, db_session: As
     return templates.TemplateResponse(
         "lesson.html", {"request": request, "lesson": lesson, "lessons_count": lessons_count}
     )
-
-
-@lessons_router.delete("/lesson/{lesson_id}")
-async def delete_lesson(lesson_id: int):
-    async with db.session_factory.begin() as transaction:
-        ...
 
 
 @lessons_router.post("/lesson/{lesson_id}")

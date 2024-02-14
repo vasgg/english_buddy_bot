@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
-from database.db import AsyncDBSession, db
+from database.db import AsyncDBSession
 from database.models.text import Text
 
 texts_router = APIRouter()
