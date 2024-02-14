@@ -55,3 +55,4 @@ class SlideData(BaseModel):
     almost_right_answers: str | None = None
     almost_right_answer_reply: str | None = None
     is_exam_slide: bool = False
+    further_button: bool | None = None

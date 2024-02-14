@@ -1,14 +1,16 @@
+import logging
 import os
 
 from fastapi import File
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import logger
-from bot.resources.enums import SlideType
+from bot.resources.enums import KeyboardType, SlideType
 from config import settings
 from database.models.lesson import Lesson
 from database.models.slide import Slide
+
+logger = logging.Logger(__name__)
 
 
 async def get_all_base_questions_id_in_lesson(
@@ -36,10 +38,16 @@ async def get_slide_by_position(position: int, db_session: AsyncSession) -> Slid
     return slide
 
 
+async def get_lesson_slides_count(lesson_id: int, db_session: AsyncSession) -> int:
+    query = select(func.count(Slide.id)).select_from(Slide).filter(Slide.lesson_id == lesson_id)
+    result = await db_session.execute(query)
+    slides_count = result.scalar_one()
+    return slides_count
+
+
 async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, db_session: AsyncSession) -> int:
     current_slide_id = first_slide_id
     steps = 0
-
     while current_slide_id is not None:
         if current_slide_id == target_slide_id:
             return steps
@@ -96,3 +104,59 @@ def get_image_files_list(lesson_id: int) -> list[str]:
         if filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
             files.append(filename)
     return files
+
+
+def add_new_slide(lesson_id: int, slide_type: SlideType, slide_id: int | None = None):
+    match slide_type:
+        case SlideType.TEXT | SlideType.PIN_DICT | SlideType.FINAL_SLIDE:
+            slide = Slide(
+                lesson_id=lesson_id,
+                slide_type=slide_type,
+                text=f"New {slide_type} slide template",
+                next_slide=slide_id,
+            )
+        case SlideType.IMAGE:
+            slide = Slide(
+                lesson_id=lesson_id,
+                slide_type=slide_type,
+                picture='src/webapp/static/images/image_not_available.png',
+                next_slide=slide_id,
+            )
+        case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:
+            slide = Slide(
+                lesson_id=lesson_id,
+                slide_type=slide_type,
+                next_slide=slide_id,
+            )
+        case SlideType.QUIZ_OPTIONS:
+            slide = Slide(
+                lesson_id=lesson_id,
+                slide_type=slide_type,
+                keyboard_type=KeyboardType.QUIZ,
+                keyboard='вариант1|вариант2|вариант3',
+                text=f"New {slide_type} slide template. Варианты ответов разделяются '|', заполните строку вариантов ответов"
+                f" возможными вариантами. Убедитесь, что в поле ОТВЕТ есть один из вариантов ответа",
+                right_answers='вариант3',
+                next_slide=slide_id,
+            )
+        case SlideType.QUIZ_INPUT_WORD:
+            slide = Slide(
+                lesson_id=lesson_id,
+                slide_type=slide_type,
+                text=f"New {slide_type} slide template. Здесь нужен текст фразы с пропущенным словом (символ …). ",
+                right_answers='тут нужен правильный ответ (он будет подставлен вместо … при правильном вводе',
+                next_slide=slide_id,
+            )
+        case SlideType.QUIZ_INPUT_PHRASE:
+            slide = Slide(
+                lesson_id=lesson_id,
+                slide_type=slide_type,
+                text=f"New {slide_type} slide template. Здесь нужен текст фразы для перевода на английский язык. ",
+                right_answers='тут нужен правильный ответ. Если их несколько, пишем несколько вариантов через "|".',
+                almost_right_answers='тут будут почти правильные ответы. Если их несколько, пишем несколько вариантов через "|".',
+                almost_right_answer_reply='тут вставляем пояснение на "почти правильный ответ"',
+                next_slide=slide_id,
+            )
+        case _:
+            assert False, f'Unknown slide type: {slide_type}'
+    return slide

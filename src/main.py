@@ -28,7 +28,7 @@ async def main():
     #     format="%(asctime)s: " "%(filename)s: " "%(levelname)s: " "%(funcName)s(): " "%(lineno)d:\t" "%(message)s",
     # )
     sentry_sdk.init(
-        dsn="https://7e2aa4ab9ebb45ac8f5f21ab1f4f4859@o4505314823045120.ingest.sentry.io/4505314825535488",
+        dsn=settings.SENTRY_AIOGRAM_DSN.get_secret_value(),
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         traces_sample_rate=1.0,

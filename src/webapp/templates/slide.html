@@ -19,7 +19,6 @@
         {% endif %}</h4>
     <p></p>
     <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post" enctype="multipart/form-data">
-        <!--    <form id="editSlideForm" action="/slides/{{ slide.id }}" method="post" enctype="multipart/form-data">-->
         <table class="table">
             <tr>
                 <th>Slide ID</th>
@@ -44,17 +43,8 @@
                 <td><input type="number" class="form-control" name="delay" value="{{ slide.delay }}"></td>
             </tr>
             <tr>
-                <th>Keyboard type</th>
-                <td>
-                    <select class="form-control" name="keyboard_type">
-                        <option value="" {{
-                        'selected' if slide.keyboard_type.value == None else '' }}>None</option>
-                        <option value="further" {{
-                        'selected' if slide.keyboard_type.value == 'further' else '' }}>further</option>
-                        <option value="quiz" {{
-                        'selected' if slide.keyboard_type.value == 'quiz' else '' }}>quiz</option>
-                    </select>
-                </td>
+                <th>Further button</th>
+                <td><input type="checkbox" name="further_button" value="true" {{ 'checked' if slide.keyboard_type.value == 'further' else '' }}></td>
             </tr>
             {% elif slide.slide_type.value == 'image' %}
             <tr>
@@ -62,7 +52,8 @@
                 <td>
                     <select class="form-control" name="picture" onchange="updateImagePreview(this)">
                         {% for file in files %}
-                        <option value="{{ file }}" {{ 'selected' if file == slide.picture else '' }}>{{ file }}</option>
+                        <option value="{{ file }}" {{
+                        'selected' if file == slide.picture else '' }}>{{ file }}</option>
                         {% endfor %}
                     </select>
                 </td>
@@ -75,8 +66,8 @@
             <tr>
             <tr>
                 <th>Upload New Image</th>
-                <td><input type="file" class="form-control-file" name="new_picture" accept="image/png, image/jpeg, image/gif, image/heic" ,
-                    "image/tiff", 'image/webp'>
+                <td><input type="file" class="form-control-file" name="new_picture"
+                           accept="image/png, image/jpeg, image/gif, image/heic, image/tiff, image/webp">
                 </td>
             </tr>
             <tr>
@@ -84,17 +75,8 @@
                 <td><input type="number" class="form-control" name="delay" value="{{ slide.delay }}"></td>
             </tr>
             <tr>
-                <th>Keyboard type</th>
-                <td>
-                    <select class="form-control" name="keyboard_type">
-                        <option value="" {{
-                        'selected' if slide.keyboard_type.value == None else '' }}>None</option>
-                        <option value="further" {{
-                        'selected' if slide.keyboard_type.value == 'further' else '' }}>further</option>
-                        <option value="quiz" {{
-                        'selected' if slide.keyboard_type.value == 'quiz' else '' }}>quiz</option>
-                    </select>
-                </td>
+                <th>Further button</th>
+                <td><input type="checkbox" name="further_button" value="true" {{ 'checked' if slide.keyboard_type.value == 'further' else '' }}></td>
             </tr>
             {% elif slide.slide_type.value == 'pin_dict' %}
             <tr>
@@ -158,7 +140,6 @@
             <tr>
                 <th>Text</th>
                 <td><textarea class="form-control" name="text" rows="4">{{ slide.text }}</textarea></td>
-                <!--                <td><input type="text" class="form-control" name="text" value="{{ slide.text }}"></td>-->
             </tr>
             {% endif %}
         </table>
