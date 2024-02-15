@@ -1,5 +1,5 @@
 
-let currentSlideId = null; // Глобальная переменная для хранения ID текущего слайда
+let currentSlideId = null;
 let currentLessonId = null;
 
 // slide.html
@@ -10,12 +10,11 @@ async function saveSlide(slideId) {
     const jsonData = {};
 
     formData.forEach((value, key) => {
-        if (!(value instanceof File)) {
-            if (value.length > 0) {
+        if (value.length > 0) {
+            if (key === 'next_slide' && !isNaN(value)) {
+                jsonData[key] = parseInt(value, 10);
+            } else if (key !== 'next_slide') {
                 jsonData[key] = value;
-            }
-        } else {
-            if (value.size > 0) {
             }
         }
     });
@@ -26,7 +25,6 @@ async function saveSlide(slideId) {
 
         await sendFile(slideId, fileData);
     }
-
     await sendJsonData(slideId, jsonData);
 }
 
@@ -39,10 +37,16 @@ async function sendJsonData(slideId, jsonData) {
         });
 
         if (!response.ok) {
-            throw new Error('Ошибка при отправке JSON данных');
+            throw new Error('Ошибка при обновлении слайда');
         }
 
-        alert('JSON данные успешно отправлены');
+        const data = await response.json();
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+        } else {
+            console.error('Error: Slide could not be updated.');
+        }
+
     } catch (error) {
         alert(error.message);
     }
@@ -192,7 +196,7 @@ function addLesson(lessonId) {
 // slides.html "+" button
 function showNewSlidesModal(lessonId, slideId = null) {
     currentLessonId = lessonId;
-    currentSlideId = slideId; // Запоминаем ID слайда или null, если ID не предоставлен
+    currentSlideId = slideId;
     document.getElementById('slideTypeDialog').showModal();
 }
 
@@ -200,7 +204,7 @@ function selectSlideType(slideType) {
     document.getElementById('slideTypeDialog').close();
 
     let requestBody = {
-        lesson_id: currentLessonId, // Добавляем lesson_id в тело запроса
+        lesson_id: currentLessonId,
         slide_type: slideType,
         slide_id: currentSlideId
     };
@@ -214,13 +218,12 @@ function selectSlideType(slideType) {
     })
     .then(response => response.json())
     .then(data => {
+    console.log(data)
         if (data.redirectUrl) {
             window.location.href = data.redirectUrl;
         } else {
             console.error('Error: Slide could not be added.');
         }
-//        window.location.reload();
-//        window.location.href = `/slides/${slideId}`;
     })
     .catch(error => {
         console.error('Ошибка при добавлении нового слайда:', error);

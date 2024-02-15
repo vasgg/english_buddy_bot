@@ -1,4 +1,6 @@
 import asyncio
+import logging
+
 from pathlib import Path
 from random import sample
 
@@ -23,6 +25,9 @@ from database.models.complete_lesson import CompleteLesson
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from database.models.user import User
+
+logger = logging.Logger(__name__)
+
 
 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -63,6 +68,7 @@ async def get_completed_lessons(user_id: int, db_session: AsyncSession) -> set[i
 async def get_all_exam_slides_id_in_lesson(lesson_id: int, db_session: AsyncSession) -> set[int]:
     query = select(Slide.id).filter(Slide.lesson_id == lesson_id, Slide.is_exam_slide)
     result = await db_session.execute(query)
+    logging.info('Get all exam slides id in lesson')
     return {row for row in result.scalars().all()} if result else {}
 
 
@@ -79,6 +85,9 @@ async def lesson_routine(
 ) -> None:
     progress = f'<i>{current_step}/{total_slides}</i>\n\n'
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
+    if not slide:
+        logger.error(f'Slide {slide_id} not found')
+        return
     if not slide.text:
         slide.text = 'System message. Please add slide text in admin panel.'
     await update_session(
@@ -202,7 +211,8 @@ async def lesson_routine(
         case SlideType.QUIZ_OPTIONS:
             text = progress + slide.text
             answer = slide.right_answers
-            options = sample(population=slide.keyboard.split('|'), k=3)
+            elements = slide.keyboard.split('|')
+            options = sample(population=elements, k=len(elements))
             markup = get_quiz_keyboard(words=options, answer=answer, lesson_id=lesson_id, slide_id=slide.id)
             msg = await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=markup)
             await state.update_data(quiz_options_msg_id=msg.message_id)

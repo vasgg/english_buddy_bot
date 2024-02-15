@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import sentry_sdk
 
-from config import get_logging_config
+from config import get_logging_config, settings
+
 from webapp.routers.lessons import lessons_router
 from webapp.routers.reactions import reactions_router
 from webapp.routers.root import root_router
@@ -17,7 +18,7 @@ logger = logging.getLogger('webapp')
 
 
 sentry_sdk.init(
-    dsn="https://b8b1b6548f5c2df867f2b2aeb0941d71@o4505314823045120.ingest.sentry.io/4506735244804096",
+    dsn=settings.SENTRY_FASTAPI_DSN.get_secret_value(),
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     traces_sample_rate=1.0,

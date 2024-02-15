@@ -1,12 +1,12 @@
 import asyncio
 
-from bot.controllers.slide_controllers import get_slide_by_position
-from bot.database.db import db
-
 # noinspection PyUnresolvedReferences
 from bot.database.models.lesson import Lesson
-from bot.database.models.slide import Slide
+
+from bot.controllers.slide_controllers import get_slide_by_position
 from bot.resources.enums import KeyboardType, SlideType
+from database.db import db
+from database.models.slide import Slide
 
 
 async def add_new_slide_to_lesson(

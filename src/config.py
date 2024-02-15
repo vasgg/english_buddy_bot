@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     BOT_TOKEN: SecretStr
     ADMINS: list[int]
     DB_NAME: str
+    SENTRY_AIOGRAM_DSN: SecretStr
+    SENTRY_FASTAPI_DSN: SecretStr
     db_echo: bool = False
     allowed_MIME_types_to_upload: list[str] = [
         'image/png',
