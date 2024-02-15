@@ -1,4 +1,3 @@
-import logging
 import os
 
 from fastapi import File
@@ -11,6 +10,7 @@ from database.models.lesson import Lesson
 from database.models.slide import Slide
 
 logger = logging.Logger(__name__)
+
 
 
 async def get_all_base_questions_id_in_lesson(

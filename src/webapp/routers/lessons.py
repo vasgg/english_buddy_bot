@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 
+
 from database.db import AsyncDBSession
 from database.models.lesson import Lesson
 from webapp.schemas import CreateNewLessonRequest, LessonData, LessonOrderUpdateRequest
@@ -59,7 +60,6 @@ async def update_lesson(lesson_data: LessonData, db_session: AsyncDBSession):
 async def save_lessons_order(order_data: LessonOrderUpdateRequest, db_session: AsyncDBSession):
     logging.info(f'{order_data}')
     from bot.controllers.lesson_controllers import reset_index_for_all_lessons, update_lesson_index
-
     await reset_index_for_all_lessons(db_session=db_session)
     logging.info("all index fields are reset")
     for lessons in order_data.lessons:
@@ -85,7 +85,6 @@ async def add_lesson(data: CreateNewLessonRequest, db_session: AsyncDBSession):
     directory.mkdir(parents=True, exist_ok=True)
     logging.info(f"Added new lesson: {new_lesson.id}")
     await db_session.commit()
-
     return {
         "message": f"Lesson added successfully. Lesson ID: {new_lesson.id}",
         "redirectUrl": f"/lesson/{new_lesson.id}",

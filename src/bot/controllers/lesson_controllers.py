@@ -1,5 +1,6 @@
 import asyncio
 import logging
+
 from pathlib import Path
 from random import sample
 
@@ -26,6 +27,7 @@ from database.models.slide import Slide
 from database.models.user import User
 
 logger = logging.Logger(__name__)
+
 
 
 async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:

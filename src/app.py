@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 import sentry_sdk
 
 from config import get_logging_config, settings
+
 from webapp.routers.lessons import lessons_router
 from webapp.routers.reactions import reactions_router
 from webapp.routers.root import root_router
