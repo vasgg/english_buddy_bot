@@ -209,7 +209,8 @@ async def lesson_routine(
         case SlideType.QUIZ_OPTIONS:
             text = progress + slide.text
             answer = slide.right_answers
-            options = sample(population=slide.keyboard.split('|'), k=3)
+            elements = slide.keyboard.split('|')
+            options = sample(population=elements, k=len(elements))
             markup = get_quiz_keyboard(words=options, answer=answer, lesson_id=lesson_id, slide_id=slide.id)
             msg = await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=markup)
             await state.update_data(quiz_options_msg_id=msg.message_id)
