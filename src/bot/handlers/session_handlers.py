@@ -1,6 +1,7 @@
 import asyncio
 
 from aiogram import Bot, Router, types
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -248,6 +249,11 @@ async def check_input_word(
             )
         except KeyError:
             print("something went wrong")
+        except TelegramBadRequest:
+            await message.answer(
+                message_id=data["quiz_word_msg_id"],
+                text=slide.text.replace("…", f"<u>{slide.right_answers}</u>"),
+            )
         await message.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
         await log_quiz_answer(
             session=session,
