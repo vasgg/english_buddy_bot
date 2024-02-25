@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.answer_controllers import get_text_by_prompt
-from bot.controllers.lesson_controllers import get_lesson, lesson_routine
+from bot.controllers.lesson_controllers import get_lesson_by_id, lesson_routine
 from bot.controllers.session_controller import get_current_session, update_session, update_session_status
 from bot.controllers.slide_controllers import get_lesson_slides_count, get_steps_to_current_slide
 from bot.controllers.user_controllers import set_user_reminders, show_start_menu
@@ -61,7 +61,7 @@ async def lesson_callback_processing(
 ) -> None:
     await callback.message.delete()
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
-    lesson = await get_lesson(lesson_id=callback_data.lesson_id, db_session=db_session)
+    lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
     slides_count = await get_lesson_slides_count(lesson_id=lesson.id, db_session=db_session)
     if slides_count == 0:
         await callback.message.answer(text='sorryan, no slides yet')
@@ -107,7 +107,7 @@ async def lesson_start_from_callback_processing(
     slide_id = callback_data.slide_id
     attr = callback_data.attr
     session = await get_current_session(user.id, lesson_id, db_session)
-    lesson = await get_lesson(lesson_id, db_session)
+    lesson = await get_lesson_by_id(lesson_id, db_session)
     match attr:
         case LessonStartsFrom.BEGIN:
             if session:

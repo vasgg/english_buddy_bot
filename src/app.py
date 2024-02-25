@@ -5,16 +5,14 @@ from fastapi.staticfiles import StaticFiles
 import sentry_sdk
 
 from config import get_logging_config, settings
-
-from webapp.routers.lessons import lessons_router
-from webapp.routers.reactions import reactions_router
-from webapp.routers.root import root_router
-from webapp.routers.slides import slides_router
-from webapp.routers.texts import texts_router
+from webapp.routers.lessons_fastui import app as lessons_fastui_router
+from webapp.routers.root_fastui import app as root_fastui_router
+from webapp.routers.slides_fastui import app as slides_fastui_router
+from webapp.routers.texts_fastui import app as texts_fastui_router
 
 logging_config = get_logging_config(__name__)
 logging.config.dictConfig(logging_config)
-logger = logging.getLogger('webapp')
+logger = logging.getLogger()
 
 
 sentry_sdk.init(
@@ -30,8 +28,14 @@ sentry_sdk.init(
 app = FastAPI()
 logger.info("webapp started")
 app.mount("/static", StaticFiles(directory="src/webapp/static"), name="static")
-app.include_router(root_router)
-app.include_router(texts_router)
-app.include_router(reactions_router)
-app.include_router(lessons_router)
-app.include_router(slides_router)
+# app.include_router(lessons_fastui_router)
+# app.include_router(lessons_fastui_router, prefix="/api")
+app.include_router(slides_fastui_router, prefix="/api")
+app.include_router(texts_fastui_router, prefix="/api")
+app.include_router(lessons_fastui_router, prefix="/api")
+app.include_router(root_fastui_router)
+# app.include_router(root_router)
+# app.include_router(texts_router)
+# app.include_router(reactions_router)
+# app.include_router(lessons_router)
+# app.include_router(slides_router)

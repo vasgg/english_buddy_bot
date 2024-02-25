@@ -73,7 +73,7 @@ async def reset_next_slide_for_all_slides_in_lesson(lesson_id: int, db_session):
     await db_session.execute(update(Slide).where(Slide.lesson_id == lesson_id).values(next_slide=None))
 
 
-async def get_all_slides_from_lesson_by_order(lesson_id, db_session):
+async def get_all_slides_from_lesson_by_order(lesson_id, db_session) -> list[Slide]:
     slides_query = await db_session.execute(select(Slide).where(Slide.lesson_id == lesson_id))
     slides = slides_query.scalars().all()
     slides_dict = {slide.id: slide for slide in slides}
@@ -91,7 +91,7 @@ async def get_all_slides_from_lesson_by_order(lesson_id, db_session):
 
 
 def allowed_image_file_to_upload(file: File) -> bool:
-    check = file.content_type in settings.allowed_MIME_types_to_upload
+    check = file.content_type in settings.allowed_file_types_to_upload
     logger.info(f"File {file.filename} is allowed to upload: {check}")
     return check
 

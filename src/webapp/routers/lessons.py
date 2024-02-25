@@ -4,11 +4,10 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
-
+from webapp.schemas import CreateNewLessonRequest, LessonData, LessonOrderUpdateRequest
 
 from database.db import AsyncDBSession
 from database.models.lesson import Lesson
-from webapp.schemas import CreateNewLessonRequest, LessonData, LessonOrderUpdateRequest
 
 lessons_router = APIRouter()
 templates = Jinja2Templates(directory='src/webapp/templates')
@@ -60,6 +59,7 @@ async def update_lesson(lesson_data: LessonData, db_session: AsyncDBSession):
 async def save_lessons_order(order_data: LessonOrderUpdateRequest, db_session: AsyncDBSession):
     logging.info(f'{order_data}')
     from bot.controllers.lesson_controllers import reset_index_for_all_lessons, update_lesson_index
+
     await reset_index_for_all_lessons(db_session=db_session)
     logging.info("all index fields are reset")
     for lessons in order_data.lessons:
@@ -69,9 +69,9 @@ async def save_lessons_order(order_data: LessonOrderUpdateRequest, db_session: A
 
 @lessons_router.post('/add-lesson')
 async def add_lesson(data: CreateNewLessonRequest, db_session: AsyncDBSession):
-    from bot.controllers.lesson_controllers import get_lesson, get_lessons_with_greater_index
+    from bot.controllers.lesson_controllers import get_lesson_by_id, get_lessons_with_greater_index
 
-    parent_lesson = await get_lesson(data.lesson_id, db_session)
+    parent_lesson = await get_lesson_by_id(data.lesson_id, db_session)
     new_lesson = Lesson(
         index=parent_lesson.index + 1,
         title='NEW LESSON TEMPLATE',

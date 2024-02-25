@@ -1,6 +1,5 @@
 import asyncio
 import logging
-
 from pathlib import Path
 from random import sample
 
@@ -29,9 +28,14 @@ from database.models.user import User
 logger = logging.Logger(__name__)
 
 
-
-async def get_lesson(lesson_id: int, db_session: AsyncSession) -> Lesson:
+async def get_lesson_by_id(lesson_id: int, db_session: AsyncSession) -> Lesson:
     query = select(Lesson).filter(Lesson.id == lesson_id)
+    result: Result = await db_session.execute(query)
+    return result.scalar()
+
+
+async def get_lesson_by_index(lesson_index: int, db_session: AsyncSession) -> Lesson:
+    query = select(Lesson).filter(Lesson.index == lesson_index)
     result: Result = await db_session.execute(query)
     return result.scalar()
 
@@ -236,7 +240,7 @@ async def lesson_routine(
             await state.set_state(States.INPUT_PHRASE)
         case SlideType.FINAL_SLIDE:
             text = progress + slide.text
-            lesson = await get_lesson(lesson_id=lesson_id, db_session=db_session)
+            lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
             session = await get_session(session_id=session_id, db_session=db_session)
             await bot.send_message(chat_id=user.telegram_id, text=text)
             await bot.unpin_all_chat_messages(chat_id=user.telegram_id)
