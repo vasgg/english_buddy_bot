@@ -19,7 +19,7 @@ app = APIRouter()
 logger = logging.getLogger()
 
 
-@app.get("/lessons", response_model=FastUI, response_model_exclude_none=True)
+@app.get("", response_model=FastUI, response_model_exclude_none=True)
 async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('lessons router called')
     lessons = await get_lessons_fastui(db_session)
@@ -69,7 +69,7 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     )
 
 
-@app.get("/lessons/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
+@app.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     lesson = await get_lesson_by_id(lesson_id, db_session)
     submit_url = f'/api/lessons/edit/{lesson_id}/'
@@ -81,7 +81,7 @@ async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
     )
 
 
-@app.get('/lessons/up_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@app.get('/up_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info(f'pressed up_button with index {index}')
     try:
@@ -97,12 +97,11 @@ async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent
             lesson_with_target_index.index = index
             await db_session.commit()
     except ResponseValidationError:
-        # return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
         pass
     return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
-@app.get('/lessons/down_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@app.get('/down_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info(f'pressed down_button with index {index}')
     lessons = await get_lessons(db_session)
@@ -120,11 +119,10 @@ async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyCompone
             await db_session.commit()
     except ResponseValidationError:
         pass
-        # return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
     return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
-@app.post('/lessons/edit/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
+@app.post('/edit/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_lesson_form(
     lesson_id: int,
     db_session: AsyncDBSession,

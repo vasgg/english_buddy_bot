@@ -1,8 +1,12 @@
+from typing import Type
+
 from pydantic import BaseModel, Field
+
+from database.models.text import Text
 
 
 class TextsSchema(BaseModel):
-    id: int = Field(title=' ')
+    id: int
     description: str | None = Field(title='description')
     text: str | None = Field(title='text')
 
@@ -17,3 +21,28 @@ class TextsTableSchema(TextsSchema):
 
     class Config:
         from_attributes = True
+
+
+def get_text_data_model(data: Text) -> Type[BaseModel]:
+    class TextDataModel(BaseModel):
+        description: str = Field(
+            default=data.description,
+            description='Введите описание. Обязательное поле.',
+            title='description',
+        )
+        text: str = Field(default=data.text, description='Введите текст. Обязательное поле.', title='text')
+
+        class Config:
+            from_attributes = True
+            extra = 'allow'
+
+    return TextDataModel
+
+
+class EditTextDataModel(BaseModel):
+    description: str
+    text: str
+
+
+class DeleteTextDataModel(BaseModel):
+    confirmation: bool
