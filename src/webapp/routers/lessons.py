@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter
 from fastapi.exceptions import ResponseValidationError
 from fastui import AnyComponent, FastUI, components as c
-from fastui.components.display import DisplayLookup, DisplayMode
+from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 
@@ -29,7 +29,6 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
         c.Table(
             data=lessons,
             columns=[
-                # DisplayLookup(field='index', on_click=GoToEvent(url='/lessons/{id}/'), table_width_percent=3),
                 DisplayLookup(
                     field='title',
                 ),
@@ -47,13 +46,16 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                 ),
                 DisplayLookup(
                     field='total_slides',
-                    mode=DisplayMode.plain,
                     table_width_percent=13,
+                ),
+                DisplayLookup(
+                    field='slides',
+                    on_click=GoToEvent(url='/slides/lesson{id}/'),
+                    table_width_percent=3,
                 ),
                 DisplayLookup(
                     field='edit_button',
                     on_click=GoToEvent(url='/lessons/edit/{id}/'),
-                    mode=DisplayMode.plain,
                     table_width_percent=3,
                 ),
                 DisplayLookup(
@@ -135,4 +137,4 @@ async def edit_lesson_form(
             setattr(lesson, field, form_value)
     await db_session.commit()
     logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
-    return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
+    return [c.FireEvent(event=GoToEvent(url='/lessons'))]

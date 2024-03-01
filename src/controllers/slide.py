@@ -24,9 +24,8 @@ async def get_all_slides_from_lesson_by_order_fastui(lesson_id, db_session) -> l
         current_slide = slides_dict.get(current_slide)
         if current_slide:
             slide_data = {
-                'index': index,
                 'id': current_slide.id,
-                'next_slide': current_slide.next_slide,
+                'index': index,
                 'emoji': get_slide_emoji(current_slide.slide_type),
                 'text': current_slide.picture if current_slide.slide_type.value == 'image' else current_slide.text,
                 'details': get_slide_details(current_slide),

@@ -1,7 +1,7 @@
 from typing import Annotated, Type
 
 from fastapi import UploadFile
-from fastui.forms import FormFile, Textarea
+from fastui.forms import FormFile
 from pydantic import BaseModel, Field
 
 from bot.resources.enums import KeyboardType
@@ -10,7 +10,6 @@ from database.models.slide import Slide
 
 class SlidesSchema(BaseModel):
     id: int
-    next_slide: int | None
     text: str | None = Field(title='content')
     details: str | None = Field(title='context')
     is_exam_slide: str = Field(title=' ')
@@ -23,37 +22,14 @@ class SlidesSchema(BaseModel):
 class SlidesTableSchema(SlidesSchema):
     index: int = Field(title=' ')
     emoji: str = Field(title=' ')
-    edit_button: str = Field(title=" ")
-    up_button: str = Field(title=" ")
-    down_button: str = Field(title=" ")
-    plus_button: str = Field(title=" ")
-    minus_button: str = Field(title=" ")
+    edit_button: str = Field(title=' ')
+    up_button: str = Field(title=' ')
+    down_button: str = Field(title=' ')
+    plus_button: str = Field(title=' ')
+    minus_button: str = Field(title=' ')
 
     class Config:
         from_attributes = True
-
-
-class TextSlideData(BaseModel):
-    next_slide: int | None = Field(
-        None,
-        description='Введите айди следующего за этим слайда. Необязательное поле.',
-        title='next slide',
-    )
-    text: Annotated[str, Textarea()] | None = Field(
-        None, description='Введите текст слайда. Необязательное поле.', title='text'
-    )
-    delay: float | None = Field(
-        None, description='Введите задержку после слайда (например, 1 секунда). Необязательное поле.', title='delay'
-    )
-    keyboard_type: KeyboardType | None = Field(
-        None,
-        description='Если под слайдом нужна кнопка далее, выберите "FURTHER". Необязательное поле.',
-        title='keyboard type',
-    )
-
-    class Config:
-        from_attributes = True
-        extra = 'allow'
 
 
 def get_text_slide_data_model(slide: Slide) -> Type[BaseModel]:
@@ -82,44 +58,28 @@ def get_text_slide_data_model(slide: Slide) -> Type[BaseModel]:
     return TextSlideDataModel
 
 
-class ShowImageSlideData(BaseModel):
-    next_slide: int | None = Field(
-        None, description='Введите айди следующего за этим слайда. Необязательное поле.', title='next slide'
-    )
-    picture: str | None = Field(None, title='picture')
-    delay: float | None = Field(
-        None, description='Введите задержку после слайда (например, 1 секунда). Необязательное поле.', title='delay'
-    )
-    keyboard_type: KeyboardType | None = Field(
-        None,
-        description='Если под слайдом нужна кнопка далее, выберите "FURTHER". Необязательное поле.',
-        title='keyboard type',
-    )
-
-    class Config:
-        from_attributes = True
-
-
-def get_image_slide_data_model(lesson_id: int) -> Type[BaseModel]:
+def get_image_slide_data_model(slide: Slide) -> Type[BaseModel]:
     class ImageSlideData(BaseModel):
         next_slide: int | None = Field(
-            None, description='Введите айди следующего за этим слайда. Необязательное поле.', title='next slide'
+            slide.next_slide,
+            description='Введите айди следующего за этим слайда. Необязательное поле.',
+            title='next slide',
         )
         delay: float | None = Field(
-            None,
+            slide.delay,
             description='Введите задержку после слайда (например, 1 секунда). Необязательное поле.',
             title='delay',
         )
         keyboard_type: KeyboardType | None = Field(
-            # None,
+            slide.keyboard_type,
             description='Если под слайдом нужна кнопка далее, выберите "FURTHER". Необязательное поле.',
             title='keyboard type',
         )
         select_picture: str | None = Field(
-            None,
+            slide.picture,
             description='Выберите изображение из папки с загруженными изображениями этого урока. Необязательное поле.',
             title='select picture',
-            json_schema_extra={'search_url': f'/api/files/{lesson_id}/'},
+            json_schema_extra={'search_url': f'/api/files/{slide.lesson_id}/'},
         )
         upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=10_000_000)] | None = Field(
             description='Загрузите файл с вашего копьютера. Поддерживаются только изображения размером до 10мб.',
@@ -153,21 +113,6 @@ def get_pin_dict_slide_data_model(slide: Slide) -> Type[BaseModel]:
     return PinDictSlideDataModel
 
 
-class PinDictSlideData(BaseModel):
-    next_slide: int | None = Field(
-        None, description='Введите айди следующего за этим слайда. Необязательное поле.', title='next slide'
-    )
-    text: str | None = Field(
-        None,
-        description='Введите текст слайда, который будет прикреплён, как словарик урока. Необязательное поле.',
-        title='text',
-    )
-
-    class Config:
-        from_attributes = True
-        extra = 'allow'
-
-
 def get_quiz_options_slide_data_model(slide: Slide) -> Type[BaseModel]:
     class QuizOptionsSlideDataModel(BaseModel):
         next_slide: int | None = Field(
@@ -185,7 +130,7 @@ def get_quiz_options_slide_data_model(slide: Slide) -> Type[BaseModel]:
             title='Варианты ответов',
         )
         is_exam_slide: bool = Field(
-            slide.is_exam_slide, description='Отметьте эту опцию, если это вопрос с экзамена', title='exam slide'
+            slide.is_exam_slide, description='Поставьте эту галочку, если это вопрос с экзамена', title='exam slide'
         )
 
         class Config:
@@ -193,25 +138,6 @@ def get_quiz_options_slide_data_model(slide: Slide) -> Type[BaseModel]:
             extra = 'allow'
 
     return QuizOptionsSlideDataModel
-
-
-class QuizOptionsSlideData(BaseModel):
-    next_slide: int | None = Field(
-        None, description='Введите айди следующего за этим слайда. Необязательное поле.', title='next slide'
-    )
-    text: str | None = Field(description='Введите текст вопроса. Обязательное поле.', title='text')
-    right_answers: str | None = Field(description='Введите правильный ответ. Обязательное поле.', title='right answer')
-    keyboard: str | None = Field(
-        description='Введите варианты ответов, разделённые "|". Один из них должен совпадать с полем "right answer". Обязательное поле.',
-        title='Варианты ответов',
-    )
-    is_exam_slide: bool = Field(
-        False, description='Отметьте эту опцию, если это вопрос с экзамена', title='exam slide'
-    )
-
-    class Config:
-        from_attributes = True
-        extra = 'allow'
 
 
 def get_quiz_input_word_slide_data_model(slide: Slide) -> Type[BaseModel]:
@@ -228,7 +154,7 @@ def get_quiz_input_word_slide_data_model(slide: Slide) -> Type[BaseModel]:
             slide.right_answers, description='Введите правильный ответ', title='right answer'
         )
         is_exam_slide: bool = Field(
-            slide.is_exam_slide, description='Отметьте эту опцию, если это вопрос с экзамена', title='exam slide'
+            slide.is_exam_slide, description='Поставьте эту галочку, если это вопрос с экзамена', title='exam slide'
         )
 
         class Config:
@@ -236,23 +162,6 @@ def get_quiz_input_word_slide_data_model(slide: Slide) -> Type[BaseModel]:
             extra = 'allow'
 
     return QuizInputWordSlideDataModel
-
-
-class QuizInputWordSlideData(BaseModel):
-    next_slide: int | None = Field(
-        None, description='Введите айди следующего за этим слайда. Необязательное поле.', title='next slide'
-    )
-    text: str | None = Field(
-        None, description='Введите текст вопроса с пропущенным словом, отмеченным "…"', title='text'
-    )
-    right_answers: str | None = Field(None, description='Введите правильный ответ', title='right answer')
-    is_exam_slide: bool = Field(
-        False, description='Отметьте эту опцию, если это вопрос с экзамена', title='exam slide'
-    )
-
-    class Config:
-        from_attributes = True
-        extra = 'allow'
 
 
 def get_quiz_input_phrase_slide_data_model(slide: Slide) -> Type[BaseModel]:
@@ -289,29 +198,6 @@ def get_quiz_input_phrase_slide_data_model(slide: Slide) -> Type[BaseModel]:
     return QuizInputPhraseSlideDataModel
 
 
-class QuizInputPhraseSlideData(BaseModel):
-    next_slide: int | None = Field(
-        None, description='Введите айди следующего за этим слайда. Необязательное поле.', title='next slide'
-    )
-    text: str | None = Field(None, description='Введите фразу на русском для перевода на английский', title='text')
-    right_answers: str | None = Field(
-        None, description='Введите правильные ответы, разделённые "|"', title='right answers'
-    )
-    almost_right_answers: str | None = Field(
-        None, description='Введите почти правильные ответы, разделённые "|"', title='almost right answers'
-    )
-    almost_right_answer_reply: str | None = Field(
-        None, description='Введите реплику на почти правильный ответ', title='almost right answer reply'
-    )
-    is_exam_slide: bool = Field(
-        False, description='Отметьте эту опцию, если это вопрос с экзамена', title='exam slide'
-    )
-
-    class Config:
-        from_attributes = True
-        extra = 'allow'
-
-
 def get_final_slide_slide_data_model(slide: Slide) -> Type[BaseModel]:
     class FinalSlideSlideDataModel(BaseModel):
         next_slide: int | None = Field(
@@ -326,21 +212,50 @@ def get_final_slide_slide_data_model(slide: Slide) -> Type[BaseModel]:
     return FinalSlideSlideDataModel
 
 
-class FinalSlideSlideData(BaseModel):
-    next_slide: int | None = Field(
-        None, description='Введите айди следующего за этим слайда. Необязательное поле.', title='next slide'
-    )
-    text: str | None = Field(title='text')
-
-    class Config:
-        from_attributes = True
-        extra = 'allow'
+class EditTextSlideDataModel(BaseModel):
+    next_slide: int | None = None
+    text: str | None
+    delay: float | None = None
+    keyboard_type: KeyboardType | None = None
 
 
-class LessonPickerData(BaseModel):
-    select_lesson: str | None = Field(
-        None,
-        # description='Выберите изображение из папки с загруженными изображениями этого урока. Необязательное поле.',
-        title='select lesson',
-        json_schema_extra={'search_url': f'/api/lessons/'},
-    )
+class EditDictSlideData(BaseModel):
+    next_slide: int | None = None
+    text: str | None = None
+
+
+class EditQuizOptionsSlideData(BaseModel):
+    next_slide: int | None = None
+    text: str | None
+    right_answers: str | None
+    keyboard: str | None
+    is_exam_slide: bool = False
+
+
+class EditQuizInputWordSlideData(BaseModel):
+    next_slide: int | None = None
+    text: str | None
+    right_answers: str | None
+    is_exam_slide: bool = False
+
+
+class EditQuizInputPhraseSlideData(BaseModel):
+    next_slide: int | None = None
+    text: str | None
+    right_answers: str | None
+    almost_right_answers: str | None
+    almost_right_answer_reply: str | None
+    is_exam_slide: bool = False
+
+
+class EditFinalSlideSlideData(BaseModel):
+    next_slide: int | None = None
+    text: str | None
+
+
+class EditImageSlideData(BaseModel):
+    next_slide: int | None = None
+    delay: float | None = None
+    keyboard_type: KeyboardType | None = None
+    select_picture: str | None = None
+    upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=10_000_000)] | None = None

@@ -9,8 +9,6 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastui import AnyComponent, FastUI, components as c, prebuilt_html
 from fastui.forms import SelectSearchResponse
 
-from bot.controllers.lesson_controllers import get_lessons
-from database.db import AsyncDBSession
 from webapp.routers.components import get_common_content
 
 app = APIRouter()
@@ -37,21 +35,9 @@ async def files_search_view(lesson_id: int) -> SelectSearchResponse:
     for file in directory.iterdir():
         mime_type = mimetypes.guess_type(file)[0]
         if mime_type in ['image/png', 'image/jpeg', 'image/gif', 'image/heic', 'image/tiff', 'image/webp']:
-            file_name = file.stem.replace("-", "_").replace(" ", "_")
-            files[mime_type].append({'value': mime_type, 'label': file_name})
+            file_name = file.name.replace("-", "_").replace(" ", "_")
+            files['files'].append({'value': file_name, 'label': file_name})
     options = [{'label': k, 'options': v} for k, v in files.items()]
-    return SelectSearchResponse(options=options)
-
-
-@app.get('/api/lessons/', response_model=SelectSearchResponse)
-async def lessons_search_view(db_session: AsyncDBSession) -> SelectSearchResponse:
-    all_lessons = await get_lessons(db_session)
-    lessons = defaultdict(list)
-    for lesson in all_lessons:
-        index = str(lesson.index)
-        title = lesson.title
-        lessons[index].append({'value': index, 'label': title})
-    options = [{'label': k, 'options': v} for k, v in lessons.items()]
     return SelectSearchResponse(options=options)
 
 

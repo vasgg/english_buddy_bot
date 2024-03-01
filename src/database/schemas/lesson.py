@@ -24,10 +24,11 @@ class LessonSchema(BaseModel):
 
 
 class LessonsTableSchema(LessonSchema):
-    edit_button: str = Field("✏️", title=" ")
-    up_button: str = Field("🔼", title=" ")
-    down_button: str = Field("🔽", title=" ")
-    plus_button: str = Field("➕", title=" ")
+    slides: str = Field('📖', title=' ')
+    edit_button: str = Field('✏️', title=' ')
+    up_button: str = Field('🔼', title=' ')
+    down_button: str = Field('🔽', title=' ')
+    plus_button: str = Field('➕', title=' ')
 
     class Config:
         from_attributes = True

@@ -2,9 +2,8 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException
-from fastapi.exceptions import ResponseValidationError
 from fastui import AnyComponent, FastUI, components as c
-from fastui.components.display import DisplayLookup, DisplayMode
+from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
@@ -15,13 +14,13 @@ from controllers.slide import get_all_slides_from_lesson_by_order, get_all_slide
 from database.db import AsyncDBSession
 from database.models.slide import Slide
 from database.schemas.slide import (
-    FinalSlideSlideData,
-    LessonPickerData,
-    PinDictSlideData,
-    QuizInputPhraseSlideData,
-    QuizInputWordSlideData,
-    QuizOptionsSlideData,
-    TextSlideData,
+    EditDictSlideData,
+    EditFinalSlideSlideData,
+    EditImageSlideData,
+    EditQuizInputPhraseSlideData,
+    EditQuizInputWordSlideData,
+    EditQuizOptionsSlideData,
+    EditTextSlideDataModel,
     get_final_slide_slide_data_model,
     get_image_slide_data_model,
     get_pin_dict_slide_data_model,
@@ -30,30 +29,18 @@ from database.schemas.slide import (
     get_quiz_options_slide_data_model,
     get_text_slide_data_model,
 )
-from database.schemas.sticker import StickerSlideData
+from database.schemas.sticker import EditStickerSlideDataModel, get_sticker_slide_data_model
 from webapp.routers.components import get_common_content
 
 app = APIRouter()
 logger = logging.getLogger()
 
 
-@app.get("/lesson{lesson_id}", response_model=FastUI, response_model_exclude_none=True)
+@app.get("/lesson{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('slides router called')
     slides = await get_all_slides_from_lesson_by_order_fastui(lesson_id, db_session)
-    '/api/lessons/'
-    submit_url = f'/api/slides/lesson_{lesson_id}'
-    form = c.ModelForm(model=LessonPickerData, submit_url=submit_url)
     return get_common_content(
-        c.Paragraph(text=''),
-        form,
-        # c.Heading(text='Lesson 1', level=2),
-        # c.Div(
-        #     components=[
-        #         c.Button(text='◀︎', named_style='secondary', class_name='+ ms-2'),
-        #         c.Button(text='▶︎', named_style='warning', on_click=PageEvent(name='static-modal')),
-        #     ]
-        # ),
         c.Paragraph(text=''),
         c.Table(
             data=slides,
@@ -62,24 +49,15 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
                     field='index',
                     table_width_percent=3,
                 ),
-                # DisplayLookup(
-                #     field='id',
-                #     table_width_percent=3,
-                # ),
-                # DisplayLookup(
-                #     field='next_slide',
-                #     table_width_percent=3,
-                # ),
                 DisplayLookup(
                     field='emoji',
                     table_width_percent=3,
                 ),
-                DisplayLookup(field='text', mode=DisplayMode.plain),
+                DisplayLookup(field='text'),
                 DisplayLookup(field='details', table_width_percent=20),
                 DisplayLookup(field='is_exam_slide', table_width_percent=3),
                 DisplayLookup(
                     field='edit_button',
-                    mode=DisplayMode.plain,
                     on_click=GoToEvent(url='/slides/edit/{id}/'),
                     table_width_percent=3,
                 ),
@@ -106,7 +84,7 @@ async def edit_slide(slide_id: int, db_session: AsyncDBSession) -> list[AnyCompo
     match slide.slide_type:
         case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:
             submit_url = f'/api/slides/edit/sticker/{slide_id}/'
-            form = c.ModelForm(model=StickerSlideData, submit_url=submit_url)
+            form = c.ModelForm(model=get_sticker_slide_data_model(slide), submit_url=submit_url)
         case SlideType.TEXT:
             submit_url = f'/api/slides/edit/text/{slide_id}/'
             form = c.ModelForm(model=get_text_slide_data_model(slide), submit_url=submit_url)
@@ -119,8 +97,8 @@ async def edit_slide(slide_id: int, db_session: AsyncDBSession) -> list[AnyCompo
                 referrer_policy='no-referrer',
                 # class_name='border rounded',
             )
-            submit_url = f'/api/slides/edit/image/{slide.lesson_id}/{slide_id}/'
-            form = c.ModelForm(model=get_image_slide_data_model(slide.lesson_id), submit_url=submit_url)
+            submit_url = f'/api/slides/edit/image/{slide_id}/'
+            form = c.ModelForm(model=get_image_slide_data_model(slide), submit_url=submit_url)
         case SlideType.PIN_DICT:
             submit_url = f'/api/slides/edit/dict/{slide_id}/'
             form = c.ModelForm(model=get_pin_dict_slide_data_model(slide), submit_url=submit_url)
@@ -149,7 +127,9 @@ async def edit_slide(slide_id: int, db_session: AsyncDBSession) -> list[AnyCompo
 
 @app.post('/edit/sticker/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_sticker_slide(
-    slide_id: int, db_session: AsyncDBSession, form: Annotated[StickerSlideData, fastui_form(StickerSlideData)]
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditStickerSlideDataModel, fastui_form(EditStickerSlideDataModel)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     for field in form.model_fields.keys():
@@ -157,112 +137,127 @@ async def edit_sticker_slide(
         if form_value is not None:
             setattr(slide, field, form_value)
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/lesson_{slide.lesson_id}/slides'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.post('/edit/text/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_text_slide(
-    slide_id: int, db_session: AsyncDBSession, form: Annotated[TextSlideData, fastui_form(TextSlideData)]
-):
-    slide: Slide = await get_slide_by_id(slide_id, db_session)
-    slide.next_slide = form.next_slide
-    slide.text = form.text
-    slide.delay = form.delay
-    slide.keyboard_type = form.keyboard_type
-    await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/lesson_{slide.lesson_id}/slides'))]
-
-
-@app.post('/edit/{lesson_id}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
-async def edit_image_slide(
-    lesson_id: int,
     slide_id: int,
     db_session: AsyncDBSession,
-    form: Annotated[get_image_slide_data_model(0), fastui_form(TextSlideData)],
+    form: Annotated[EditTextSlideDataModel, fastui_form(EditTextSlideDataModel)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    slide.next_slide = form.next_slide
-    slide.text = form.text
-    slide.delay = form.delay
-    slide.keyboard_type = form.keyboard_type
-    # TODO: check if image uploaded
-    slide.picture = form.select_picture
-
-    # slide.picture = form.select_picture
+    for field in form.model_fields.keys():
+        form_value = getattr(form, field, None)
+        if form_value is not None:
+            setattr(slide, field, form_value)
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/lesson_{lesson_id}/slides'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.post('/edit/dict/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_dict_slide(
     slide_id: int,
     db_session: AsyncDBSession,
-    form: Annotated[PinDictSlideData, fastui_form(PinDictSlideData)],
+    form: Annotated[EditDictSlideData, fastui_form(EditDictSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    slide.next_slide = form.next_slide
-    slide.text = form.text
+    for field in form.model_fields.keys():
+        form_value = getattr(form, field, None)
+        if form_value is not None:
+            setattr(slide, field, form_value)
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/lesson_{slide.lesson_id}/slides'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.post('/edit/quiz_option/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_option_slide(
     slide_id: int,
     db_session: AsyncDBSession,
-    form: Annotated[QuizOptionsSlideData, fastui_form(QuizOptionsSlideData)],
+    form: Annotated[EditQuizOptionsSlideData, fastui_form(EditQuizOptionsSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    slide.next_slide = form.next_slide
-    slide.text = form.text
-    slide.right_answers = form.right_answers
-    slide.keyboard = form.keyboard
-    slide.is_exam_slide = form.is_exam_slide
+    for field in form.model_fields.keys():
+        form_value = getattr(form, field, None)
+        if form_value is not None:
+            setattr(slide, field, form_value)
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/api/lesson_{slide.lesson_id}/slides'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.post('/edit/quiz_input_word/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_input_word_slide(
     slide_id: int,
     db_session: AsyncDBSession,
-    form: Annotated[QuizInputWordSlideData, fastui_form(QuizInputWordSlideData)],
+    form: Annotated[EditQuizInputWordSlideData, fastui_form(EditQuizInputWordSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    slide.next_slide = form.next_slide
-    slide.text = form.text
-    slide.right_answers = form.right_answers
-    slide.is_exam_slide = form.is_exam_slide
+    for field in form.model_fields.keys():
+        form_value = getattr(form, field, None)
+        if form_value is not None:
+            setattr(slide, field, form_value)
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/lesson_{slide.lesson_id}/slides'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.post('/edit/quiz_input_phrase/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_input_phrase_slide(
     slide_id: int,
     db_session: AsyncDBSession,
-    form: Annotated[QuizInputPhraseSlideData, fastui_form(QuizInputPhraseSlideData)],
+    form: Annotated[EditQuizInputPhraseSlideData, fastui_form(EditQuizInputPhraseSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    slide.next_slide = form.next_slide
-    slide.text = form.text
-    slide.right_answers = form.right_answers
-    slide.almost_right_answers = form.almost_right_answers
-    slide.almost_right_answers_reply = form.almost_right_answers_reply
-    slide.is_exam_slide = form.is_exam_slide
+    for field in form.model_fields.keys():
+        form_value = getattr(form, field, None)
+        if form_value is not None:
+            setattr(slide, field, form_value)
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/lesson_{slide.lesson_id}/slides'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.post('/edit/final/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_final_slide(
-    slide_id: int, db_session: AsyncDBSession, form: Annotated[FinalSlideSlideData, fastui_form(FinalSlideSlideData)]
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditFinalSlideSlideData, fastui_form(EditFinalSlideSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    slide.next_slide = form.next_slide
-    slide.text = form.text
+    for field in form.model_fields.keys():
+        form_value = getattr(form, field, None)
+        if form_value is not None:
+            setattr(slide, field, form_value)
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/lesson_{slide.lesson_id}/slides'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+
+
+@app.post('/edit/image/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+async def edit_image_slide(
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
+):
+    slide: Slide = await get_slide_by_id(slide_id, db_session)
+    print(form)
+    if form.upload_new_picture != '':
+        if form.next_slide is not None:
+            slide.next_slide = form.next_slide
+        if form.delay is not None:
+            slide.delay = form.delay
+        if form.keyboard_type is not None:
+            slide.keyboard_type = form.keyboard_type
+        if form.select_picture is not None:
+            slide.picture = form.select_picture
+    else:
+        if form.next_slide is not None:
+            slide.next_slide = form.next_slide
+        if form.delay is not None:
+            slide.delay = form.delay
+        if form.keyboard_type is not None:
+            slide.keyboard_type = form.keyboard_type
+        if form.upload_new_picture is not None:
+            slide.picture = form.upload_new_picture
+    await db_session.commit()
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.get('/up_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -270,35 +265,29 @@ async def slides_up_button(index: int, slide_id: int, db_session: AsyncDBSession
     logger.info(f'pressed slide up button with slide id {slide_id} index {index}')
     slide = await get_slide_by_id(slide_id, db_session)
     all_slides = await get_all_slides_from_lesson_by_order(slide.lesson_id, db_session)
-    try:
-        if index <= 1:
-            pass
-
-        elif index == 2:
-            slide_minus_1: Slide = all_slides[index - 2]
-            temp = slide.next_slide
-            slide.next_slide = None
-            slide_minus_1.next_slide = None
-            await db_session.flush()
-            slide.next_slide = slide_minus_1.id
-            slide_minus_1.next_slide = temp
-            await update_lesson_first_slide(slide.lesson_id, slide.id, db_session)
-
-        else:
-            slide_minus_2: Slide = all_slides[index - 3]
-            slide_minus_1: Slide = all_slides[index - 2]
-            temp = slide.next_slide
-            slide.next_slide = None
-            slide_minus_1.next_slide = None
-            slide_minus_2.next_slide = None
-            await db_session.flush()
-            slide_minus_2.next_slide = slide.id
-            slide.next_slide = slide_minus_1.id
-            slide_minus_1.next_slide = temp
-        await db_session.commit()
-    except ResponseValidationError:
+    if index == 1:
         pass
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}'))]
+    elif index == 2:
+        slide_minus_1: Slide = all_slides[index - 2]
+        temp = slide.next_slide
+        slide.next_slide = None
+        slide_minus_1.next_slide = None
+        await db_session.flush()
+        slide.next_slide = slide_minus_1.id
+        slide_minus_1.next_slide = temp
+        await update_lesson_first_slide(slide.lesson_id, slide.id, db_session)
+    else:
+        slide_minus_2: Slide = all_slides[index - 3]
+        slide_minus_1: Slide = all_slides[index - 2]
+        temp = slide.next_slide
+        slide.next_slide = None
+        slide_minus_1.next_slide = None
+        slide_minus_2.next_slide = None
+        await db_session.flush()
+        slide_minus_2.next_slide = slide.id
+        slide.next_slide = slide_minus_1.id
+        slide_minus_1.next_slide = temp
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
 @app.get('/down_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -306,30 +295,35 @@ async def slides_down_button(index: int, slide_id: int, db_session: AsyncDBSessi
     logger.info(f'pressed slide down button with slide id {slide_id} index {index}')
     slide = await get_slide_by_id(slide_id, db_session)
     all_slides = await get_all_slides_from_lesson_by_order(slide.lesson_id, db_session)
-    next_slide = all_slides[index]
-    try:
-        if index == len(all_slides):
-            pass
-        elif index == 1:
-            await update_lesson_first_slide(slide.lesson_id, next_slide.id, db_session)
-            temp2 = next_slide.next_slide
-            slide.next_slide = None
-            next_slide.next_slide = None
-            await db_session.flush()
-            next_slide.next_slide = slide.id
-            slide.next_slide = temp2
-
-        elif index == 2:
-            temp = slide.next_slide
-            temp2 = next_slide.next_slide
-            slide.next_slide = None
-            next_slide.next_slide = None
-            await db_session.flush()
-            slide.next_slide = temp2
-            next_slide.next_slide = slide.id
-        else:
-            ...
-        await db_session.commit()
-    except ResponseValidationError:
+    if index == len(all_slides):
+        logger.info(f'pressed down button on last slide with slide id {slide_id} index {index}')
         pass
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson1'))]
+    elif index == len(all_slides) - 1:
+        slide_minus_1: Slide = all_slides[index - 2]
+        next_slide = all_slides[index]
+        slide.next_slide = None
+        await db_session.flush()
+        slide_minus_1.next_slide = next_slide.id
+        next_slide.next_slide = slide.id
+    elif index == 1:
+        next_slide = all_slides[index]
+        temp = next_slide.next_slide
+        slide.next_slide = None
+        next_slide.next_slide = None
+        await db_session.flush()
+        slide.next_slide = temp
+        next_slide.next_slide = slide.id
+        await update_lesson_first_slide(slide.lesson_id, next_slide.id, db_session)
+    else:
+        slide_minus_1: Slide = all_slides[index - 2]
+        next_slide = all_slides[index]
+        temp = next_slide.next_slide
+        slide.next_slide = None
+        slide_minus_1.next_slide = None
+        next_slide.next_slide = None
+        await db_session.flush()
+        slide_minus_1.next_slide = next_slide.id
+        slide.next_slide = temp
+        next_slide.next_slide = slide.id
+    # await db_session.commit()
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]

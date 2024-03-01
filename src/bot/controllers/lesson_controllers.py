@@ -87,7 +87,7 @@ async def lesson_routine(
     session_id: int,
     db_session: AsyncSession,
 ) -> None:
-    progress = f'<i>{current_step}/{total_slides}</i>\n\n'
+    # progress = f'<i>{current_step}/{total_slides}</i>\n\n'
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
     if not slide:
         logger.error(f'Slide {slide_id} not found')
@@ -104,7 +104,7 @@ async def lesson_routine(
     )
     match slide.slide_type:
         case SlideType.TEXT:
-            text = progress + slide.text
+            text = slide.text
             if not slide.keyboard_type:
                 await bot.send_message(chat_id=user.telegram_id, text=text)
                 if slide.delay:
@@ -213,7 +213,7 @@ async def lesson_routine(
                 db_session=db_session,
             )
         case SlideType.QUIZ_OPTIONS:
-            text = progress + slide.text
+            text = slide.text
             answer = slide.right_answers
             elements = slide.keyboard.split('|')
             options = sample(population=elements, k=len(elements))
@@ -230,7 +230,7 @@ async def lesson_routine(
             )
             await state.set_state(States.INPUT_WORD)
         case SlideType.QUIZ_INPUT_PHRASE:
-            text = progress + slide.text
+            text = slide.text
             msg = await bot.send_message(chat_id=user.telegram_id, text=text)
             await state.update_data(
                 quiz_phrase_msg_id=msg.message_id,
@@ -239,7 +239,7 @@ async def lesson_routine(
             )
             await state.set_state(States.INPUT_PHRASE)
         case SlideType.FINAL_SLIDE:
-            text = progress + slide.text
+            text = slide.text
             lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
             session = await get_session(session_id=session_id, db_session=db_session)
             await bot.send_message(chat_id=user.telegram_id, text=text)

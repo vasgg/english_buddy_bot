@@ -20,11 +20,6 @@ def get_common_content(
                     active='startswith:/lessons',
                 ),
                 c.Link(
-                    components=[c.Text(text='Слайды')],
-                    on_click=GoToEvent(url='/slides/lesson1'),
-                    active='startswith:/slides',
-                ),
-                c.Link(
                     components=[c.Text(text='Тексты')],
                     on_click=GoToEvent(url='/texts'),
                     active='startswith:/texts',
