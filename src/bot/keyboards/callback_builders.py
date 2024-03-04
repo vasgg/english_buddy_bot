@@ -1,6 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 
-from bot.internal.enums import LessonStartsFrom
+from enums import LessonStartsFrom
 
 
 class LessonsCallbackFactory(CallbackData, prefix='lesson'):
