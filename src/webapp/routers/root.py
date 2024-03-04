@@ -31,7 +31,7 @@ async def root_page() -> list[AnyComponent]:
 @app.get('/api/files/{lesson_id}/', response_model=SelectSearchResponse)
 async def files_search_view(lesson_id: int) -> SelectSearchResponse:
     files = defaultdict(list)
-    directory = Path(f"src/webapp/static/images/lesson_{lesson_id}")
+    directory = Path(f"src/webapp/static/lessons_images/{lesson_id}")
     for file in directory.iterdir():
         mime_type = mimetypes.guess_type(file)[0]
         if mime_type in ['image/png', 'image/jpeg', 'image/gif', 'image/heic', 'image/tiff', 'image/webp']:

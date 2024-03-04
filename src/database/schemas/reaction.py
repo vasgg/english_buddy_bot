@@ -2,8 +2,8 @@ from typing import Type
 
 from pydantic import BaseModel, Field
 
-from bot.resources.enums import ReactionType
 from database.models.reaction import Reaction
+from enums import ReactionType
 
 
 class ReactionsSchema(BaseModel):

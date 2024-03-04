@@ -10,11 +10,11 @@ from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
 from bot.handlers.lesson_handlers import router as lesson_router
 from bot.handlers.session_handlers import router as quiz_router
+from bot.internal.commands import set_bot_commands
+from bot.internal.notify_admin import on_shutdown_notify, on_startup_notify
 from bot.middlewares.auth_middleware import AuthMiddleware
 from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
-from bot.resources.commands import set_bot_commands
-from bot.resources.notify_admin import on_shutdown_notify, on_startup_notify
 from config import get_logging_config, settings
 from database.db import db
 

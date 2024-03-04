@@ -3,8 +3,8 @@ from typing import Type
 
 from pydantic import BaseModel, Field
 
-from bot.resources.enums import LessonLevel
 from database.models.lesson import Lesson
+from enums import LessonLevel
 
 
 class LessonSchema(BaseModel):
@@ -12,10 +12,7 @@ class LessonSchema(BaseModel):
     index: int | None = Field(title=' ')
     title: str = Field(title='title')
     level: LessonLevel | None = None
-    first_slide_id: int | None = Field(title='first slide id')
     exam_slide_id: int | None = Field(title='exam slide id')
-    is_paid: bool = Field(title='is paid')
-    total_slides: int | None = Field(title='total slides')
     created_at: datetime | None = None
 
     class Config:

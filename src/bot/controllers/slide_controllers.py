@@ -1,12 +1,10 @@
 import logging
 import os
 
-from fastapi import File
-from sqlalchemy import func, select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.resources.enums import KeyboardType, SlideType
-from config import settings
+from bot.internal.enums import KeyboardType, SlideType
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 
@@ -24,37 +22,13 @@ async def get_all_base_questions_id_in_lesson(
     return {row for row in result.scalars().all()} if result else {}
 
 
-async def get_slide_by_id(slide_id: int, db_session: AsyncSession) -> Slide:
-    query = select(Slide).filter(Slide.id == slide_id)
-    result = await db_session.execute(query)
-    slide = result.scalar()
-    return slide
-
-
-async def get_slide_by_position(position: int, db_session: AsyncSession) -> Slide:
-    query = select(Slide).filter(Slide.next_slide == position)
-    result = await db_session.execute(query)
-    slide = result.scalar()
-    return slide
-
-
-async def get_lesson_slides_count(lesson_id: int, db_session: AsyncSession) -> int:
-    query = select(func.count(Slide.id)).select_from(Slide).filter(Slide.lesson_id == lesson_id)
-    result = await db_session.execute(query)
-    slides_count = result.scalar_one()
-    return slides_count
-
-
-async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, db_session: AsyncSession) -> int:
-    current_slide_id = first_slide_id
-    steps = 0
-    while current_slide_id is not None:
-        if current_slide_id == target_slide_id:
-            return steps
-        result = await db_session.execute(select(Slide).filter(Slide.id == current_slide_id))
-        current_slide = result.scalar_one()
-        current_slide_id = current_slide.next_slide
-        steps += 1
+async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, path: str) -> int:
+    slide_ids_str = path.split(".")
+    slide_ids = [int(id_str) for id_str in slide_ids_str]
+    start_index = slide_ids.index(first_slide_id)
+    target_index = slide_ids.index(target_slide_id)
+    steps = abs(target_index - start_index)
+    return steps
 
 
 async def set_new_slide_image(slide_id: int, image_name: str, db_session: AsyncSession):
@@ -63,14 +37,6 @@ async def set_new_slide_image(slide_id: int, image_name: str, db_session: AsyncS
     slide = result.scalar_one()
     slide.picture = image_name
     await db_session.commit()
-
-
-async def update_slides_order(slide_id: int, next_slide: int | None, db_session: AsyncSession):
-    await db_session.execute(update(Slide).where(Slide.id == slide_id).values(next_slide=next_slide))
-
-
-async def reset_next_slide_for_all_slides_in_lesson(lesson_id: int, db_session):
-    await db_session.execute(update(Slide).where(Slide.lesson_id == lesson_id).values(next_slide=None))
 
 
 async def get_all_slides_from_lesson_by_order(lesson_id, db_session) -> list[Slide]:
@@ -90,14 +56,8 @@ async def get_all_slides_from_lesson_by_order(lesson_id, db_session) -> list[Sli
     return ordered_slides
 
 
-def allowed_image_file_to_upload(file: File) -> bool:
-    check = file.content_type in settings.allowed_file_types_to_upload
-    logger.info(f"File {file.filename} is allowed to upload: {check}")
-    return check
-
-
 def get_image_files_list(lesson_id: int) -> list[str]:
-    directory = f'src/webapp/static/images/lesson_{lesson_id}'
+    directory = f'src/webapp/static/lessons_images/{lesson_id}'
     allowed_image_formats = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
     files = []
     for filename in os.listdir(directory):
@@ -119,7 +79,7 @@ def add_new_slide(lesson_id: int, slide_type: SlideType, slide_id: int | None = 
             slide = Slide(
                 lesson_id=lesson_id,
                 slide_type=slide_type,
-                picture='src/webapp/static/images/image_not_available.png',
+                picture='src/webapp/static/lessons_images/image_not_available.png',
                 next_slide=slide_id,
             )
         case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:

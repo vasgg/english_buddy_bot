@@ -5,75 +5,32 @@ from random import sample
 
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import Result, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.answer_controllers import get_random_sticker_id, get_text_by_prompt
-from bot.controllers.session_controller import (
+from bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson
+from bot.internal.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
+from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
+from database.crud.answer import get_random_sticker_id, get_text_by_prompt
+from database.crud.lesson import (
+    add_completed_lesson_to_db,
+    get_all_exam_slides_id_in_lesson,
+    get_completed_lessons,
+    get_lesson_by_id,
+    get_lessons,
+)
+from database.crud.session import (
     count_errors_in_session,
     get_all_questions_in_session,
     get_hints_shown_counter_in_session,
-    get_session,
+    update_session,
     update_session_status,
 )
-from bot.controllers.session_controller import update_session
-from bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson, get_slide_by_id
-from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
-from bot.resources.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
-from database.models.complete_lesson import CompleteLesson
-from database.models.lesson import Lesson
+from database.crud.slide import get_slide_by_id
+from database.models.session import Session
 from database.models.slide import Slide
 from database.models.user import User
 
 logger = logging.Logger(__name__)
-
-
-async def get_lesson_by_id(lesson_id: int, db_session: AsyncSession) -> Lesson:
-    query = select(Lesson).filter(Lesson.id == lesson_id)
-    result: Result = await db_session.execute(query)
-    return result.scalar()
-
-
-async def get_lesson_by_index(lesson_index: int, db_session: AsyncSession) -> Lesson:
-    query = select(Lesson).filter(Lesson.index == lesson_index)
-    result: Result = await db_session.execute(query)
-    return result.scalar()
-
-
-async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
-    query = select(Lesson).group_by(Lesson.index)
-    result = await db_session.execute(query)
-    lessons = result.scalars().all()
-    return [row for row in lessons]
-
-
-async def get_lessons_with_greater_index(index: int, db_session: AsyncSession) -> list[Lesson]:
-    query = select(Lesson).filter(Lesson.index > index)
-    result = await db_session.execute(query)
-    lessons = result.scalars().all()
-    return [row for row in lessons]
-
-
-async def add_completed_lesson_to_db(user_id: int, lesson_id: int, session_id: int, db_session: AsyncSession) -> None:
-    completed_lesson = CompleteLesson(
-        user_id=user_id,
-        lesson_id=lesson_id,
-        session_id=session_id,
-    )
-    db_session.add(completed_lesson)
-
-
-async def get_completed_lessons(user_id: int, db_session: AsyncSession) -> set[int]:
-    query = select(CompleteLesson.lesson_id).filter(CompleteLesson.user_id == user_id)
-    result = await db_session.execute(query)
-    return {row for row in result.scalars().all()}
-
-
-async def get_all_exam_slides_id_in_lesson(lesson_id: int, db_session: AsyncSession) -> set[int]:
-    query = select(Slide.id).filter(Slide.lesson_id == lesson_id, Slide.is_exam_slide)
-    result = await db_session.execute(query)
-    logging.info('Get all exam slides id in lesson')
-    return {row for row in result.scalars().all()} if result else {}
 
 
 async def lesson_routine(
@@ -84,11 +41,12 @@ async def lesson_routine(
     current_step: int,
     total_slides: int,
     state: FSMContext,
-    session_id: int,
+    session: Session,
     db_session: AsyncSession,
 ) -> None:
     # progress = f'<i>{current_step}/{total_slides}</i>\n\n'
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
+    slide_ids = [int(elem) for elem in session.path.split(".")]
     if not slide:
         logger.error(f'Slide {slide_id} not found')
         return
@@ -99,7 +57,7 @@ async def lesson_routine(
         lesson_id=lesson_id,
         current_slide_id=slide.id,
         current_step=current_step,
-        session_id=session_id,
+        session_id=session.id,
         db_session=db_session,
     )
     match slide.slide_type:
@@ -114,24 +72,26 @@ async def lesson_routine(
                     bot=bot,
                     user=user,
                     lesson_id=lesson_id,
-                    slide_id=slide.next_slide,
+                    slide_id=slide_ids[slide_ids.index(slide.id) + 1],
                     current_step=current_step + 1,
                     total_slides=total_slides,
                     state=state,
-                    session_id=session_id,
+                    session=session,
                     db_session=db_session,
                 )
             else:
                 match slide.keyboard_type:
                     case KeyboardType.FURTHER:
-                        markup = get_furher_button(current_lesson=lesson_id, next_slide=slide.next_slide)
+                        markup = get_furher_button(
+                            current_lesson=lesson_id, next_slide=slide_ids[slide_ids.index(slide.id) + 1]
+                        )
                         await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=markup)
                     case _:
                         assert False, f'Unknown keyboard type: {slide.keyboard_type}'
 
         case SlideType.IMAGE:
             image_file = slide.picture
-            path = Path(f'src/webapp/static/images/lesson_{lesson_id}/{image_file}')
+            path = Path(f'src/webapp/static/lessons_images/{lesson_id}/{image_file}')
             if not path.exists():
                 path = Path(f'src/webapp/static/images/image_not_available.png')
             if not slide.keyboard_type:
@@ -143,17 +103,19 @@ async def lesson_routine(
                     bot=bot,
                     user=user,
                     lesson_id=lesson_id,
-                    slide_id=slide.next_slide,
+                    slide_id=slide_ids[slide_ids.index(slide.id) + 1],
                     current_step=current_step + 1,
                     total_slides=total_slides,
                     state=state,
-                    session_id=session_id,
+                    session=session,
                     db_session=db_session,
                 )
             else:
                 match slide.keyboard_type:
                     case KeyboardType.FURTHER:
-                        markup = get_furher_button(current_lesson=lesson_id, next_slide=slide.next_slide)
+                        markup = get_furher_button(
+                            current_lesson=lesson_id, next_slide=slide_ids[slide_ids.index(slide.id) + 1]
+                        )
                         await bot.send_photo(
                             chat_id=user.telegram_id,
                             photo=types.FSInputFile(path=path),
@@ -170,11 +132,11 @@ async def lesson_routine(
                 bot=bot,
                 user=user,
                 lesson_id=lesson_id,
-                slide_id=slide.next_slide,
+                slide_id=slide_ids[slide_ids.index(slide.id) + 1],
                 current_step=current_step + 1,
                 total_slides=total_slides,
                 state=state,
-                session_id=session_id,
+                session=session,
                 db_session=db_session,
             )
         case SlideType.BIG_STICKER:
@@ -186,11 +148,11 @@ async def lesson_routine(
                 bot=bot,
                 user=user,
                 lesson_id=lesson_id,
-                slide_id=slide.next_slide,
+                slide_id=slide_ids[slide_ids.index(slide.id) + 1],
                 current_step=current_step + 1,
                 total_slides=total_slides,
                 state=state,
-                session_id=session_id,
+                session=session,
                 db_session=db_session,
             )
         case SlideType.PIN_DICT:
@@ -205,11 +167,11 @@ async def lesson_routine(
                 bot=bot,
                 user=user,
                 lesson_id=lesson_id,
-                slide_id=slide.next_slide,
+                slide_id=slide_ids[slide_ids.index(slide.id) + 1],
                 current_step=current_step + 1,
                 total_slides=total_slides,
                 state=state,
-                session_id=session_id,
+                session=session,
                 db_session=db_session,
             )
         case SlideType.QUIZ_OPTIONS:
@@ -241,12 +203,11 @@ async def lesson_routine(
         case SlideType.FINAL_SLIDE:
             text = slide.text
             lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
-            session = await get_session(session_id=session_id, db_session=db_session)
             await bot.send_message(chat_id=user.telegram_id, text=text)
             await bot.unpin_all_chat_messages(chat_id=user.telegram_id)
-            await add_completed_lesson_to_db(user.id, lesson_id, session_id, db_session)
+            await add_completed_lesson_to_db(user.id, lesson_id, session.id, db_session)
             await update_session_status(
-                session_id=session_id,
+                session_id=session.id,
                 new_status=SessionStatus.COMPLETED,
                 db_session=db_session,
             )
@@ -254,13 +215,13 @@ async def lesson_routine(
                 lesson_id=lesson_id, db_session=db_session
             )
             all_questions_slides_in_session = await get_all_questions_in_session(
-                session_id=session_id, db_session=db_session
+                session_id=session.id, db_session=db_session
             )
             total_exam_questions_in_session = all_exam_slides_in_lesson & all_questions_slides_in_session
             total_exam_questions_errors = await count_errors_in_session(
-                session_id=session_id, slides_set=total_exam_questions_in_session, db_session=db_session
+                session_id=session.id, slides_set=total_exam_questions_in_session, db_session=db_session
             )
-            hints_shown = await get_hints_shown_counter_in_session(session_id=session_id, db_session=db_session)
+            hints_shown = await get_hints_shown_counter_in_session(session_id=session.id, db_session=db_session)
             session_starts_from = session.starts_from
             lessons = await get_lessons(db_session)
             completed_lessons = await get_completed_lessons(user_id=user.id, db_session=db_session)
@@ -284,7 +245,7 @@ async def lesson_routine(
                     )
                     total_base_questions_in_session = total_base_questions_in_lesson & all_questions_slides_in_session
                     total_base_questions_errors = await count_errors_in_session(
-                        session_id=session_id, slides_set=total_base_questions_in_lesson, db_session=db_session
+                        session_id=session.id, slides_set=total_base_questions_in_lesson, db_session=db_session
                     )
                     await bot.send_message(
                         chat_id=user.telegram_id,
@@ -317,19 +278,3 @@ async def lesson_routine(
             return
         case _:
             assert False, f'Unknown slide type: {slide.slide_type}'
-
-
-async def update_lesson_first_slide(lesson_id: int, first_slide_id: int, db_session):
-    await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(first_slide_id=first_slide_id))
-
-
-async def update_lesson_exam_slide(lesson_id: int, exam_slide_id: int, db_session):
-    await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(exam_slide_id=exam_slide_id))
-
-
-async def reset_index_for_all_lessons(db_session):
-    await db_session.execute(update(Lesson).values(index=None))
-
-
-async def update_lesson_index(lesson_id: int, index: int | None, db_session: AsyncSession):
-    await db_session.execute(update(Lesson).where(Lesson.id == lesson_id).values(index=index))

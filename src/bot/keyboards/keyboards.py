@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from bot.internal.enums import LessonStartsFrom, UserLessonProgress
 from bot.keyboards.callback_builders import (
     HintCallbackFactory,
     LessonStartsFromCallbackFactory,
@@ -8,7 +9,6 @@ from bot.keyboards.callback_builders import (
     RemindersCallbackFactory,
     SlideCallbackFactory,
 )
-from bot.resources.enums import LessonStartsFrom, UserLessonProgress
 from database.models.lesson import Lesson
 
 
@@ -70,6 +70,7 @@ def get_quiz_keyboard(words: list[str], answer: str, lesson_id: int, slide_id: i
 async def get_lesson_progress_keyboard(
     mode: UserLessonProgress, lesson: Lesson, current_slide_id: int = None
 ) -> InlineKeyboardMarkup:
+    first_slide_id = lesson.path.split('.')[1]
     match mode:
         case UserLessonProgress.NO_PROGRESS:
             if lesson.exam_slide_id:
@@ -79,7 +80,7 @@ async def get_lesson_progress_keyboard(
                             text='Начать урок сначала',
                             callback_data=LessonStartsFromCallbackFactory(
                                 lesson_id=lesson.id,
-                                slide_id=lesson.first_slide_id,
+                                slide_id=first_slide_id,
                                 attr=LessonStartsFrom.BEGIN,
                             ).pack(),
                         )
@@ -102,7 +103,7 @@ async def get_lesson_progress_keyboard(
                             text='Начать урок сначала',
                             callback_data=LessonStartsFromCallbackFactory(
                                 lesson_id=lesson.id,
-                                slide_id=lesson.first_slide_id,
+                                slide_id=first_slide_id,
                                 attr=LessonStartsFrom.BEGIN,
                             ).pack(),
                         )
@@ -116,7 +117,7 @@ async def get_lesson_progress_keyboard(
                         text='Начать урок сначала',
                         callback_data=LessonStartsFromCallbackFactory(
                             lesson_id=lesson.id,
-                            slide_id=lesson.first_slide_id,
+                            slide_id=first_slide_id,
                             attr=LessonStartsFrom.BEGIN,
                         ).pack(),
                     )

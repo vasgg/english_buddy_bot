@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.resources.enums import ReactionType, StickerType
+from bot.internal.enums import ReactionType, StickerType
 from database.models.reaction import Reaction
 from database.models.sticker import Sticker
 from database.models.text import Text

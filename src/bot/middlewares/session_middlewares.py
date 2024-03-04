@@ -6,7 +6,7 @@ from aiogram.types import Message
 from sqlalchemy.exc import PendingRollbackError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.session_controller import get_session
+from database.crud.session import get_session
 from database.db import db
 
 

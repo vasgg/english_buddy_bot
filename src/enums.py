@@ -21,11 +21,6 @@ class SlideType(Enum):
     FINAL_SLIDE = 'final_slide'
 
 
-class StickerSize(Enum):
-    SMALL_STICKER = 'small_sticker'
-    BIG_STICKER = 'big_sticker'
-
-
 class LessonLevel(Enum):
     BEGINNER = 'beginner'
     INTERMEDIATE = 'intermediate'
@@ -74,11 +69,6 @@ class EventType(Enum):
     CALLBACK_QUERY = 'callback_query'
     HINT = 'hint'
     CONTINUE = 'continue'
-
-
-class DeletedObjectType(Enum):
-    SLIDE = 'slide'
-    REACTION = 'reaction'
 
 
 class NavigationObjectType(Enum):

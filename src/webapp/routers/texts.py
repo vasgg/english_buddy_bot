@@ -7,9 +7,9 @@ from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
-from controllers.text import get_text_by_id, get_texts_table_content
 from database.db import AsyncDBSession
 from database.schemas.text import EditTextDataModel, get_text_data_model
+from webapp.controllers.text import get_text_by_id, get_texts_table_content
 from webapp.routers.components import get_common_content
 
 app = APIRouter()

@@ -1,30 +1,5 @@
-from fastui import components as c
-from fastui.events import GoToEvent
-
-from bot.resources.enums import NavigationObjectType, SlideType
 from database.models.slide import Slide
-
-
-def get_nav_keyboard(mode: NavigationObjectType, prev_obj_id: int | None, next_obj_id: int | None) -> list:
-    buttons = []
-    url_further = (
-        f'/{mode.value}/edit/{next_obj_id}/' if next_obj_id is not None else f'/{mode.value}/{prev_obj_id + 1}/'
-    )
-    url_back = f'/{mode.value}/edit/{prev_obj_id}/' if prev_obj_id is not None else f'/{mode.value}/{next_obj_id - 1}/'
-    buttons.append(
-        c.Link(
-            components=[c.Button(text='◀︎', named_style='secondary', class_name='+ ms-2')],
-            on_click=GoToEvent(url=url_back),
-            # on_click=GoToEvent(url=url_back),
-        )
-    )
-    buttons.append(
-        c.Link(
-            components=[c.Button(text='►', named_style='secondary', class_name='+ ms-2')],
-            on_click=GoToEvent(url=url_further),
-        )
-    )
-    return buttons
+from enums import SlideType
 
 
 def get_slide_emoji(slide_type: SlideType) -> str:

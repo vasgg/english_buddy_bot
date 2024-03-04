@@ -8,11 +8,11 @@ from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 
-from bot.controllers.lesson_controllers import get_lesson_by_id, get_lesson_by_index, get_lessons
-from controllers.lesson import get_lessons_fastui
+from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons
 from database.db import AsyncDBSession
 from database.models.lesson import Lesson
 from database.schemas.lesson import EditLessonDataModel, get_lesson_data_model
+from webapp.controllers.lesson import get_lessons_fastui
 from webapp.routers.components import get_common_content
 
 app = APIRouter()
@@ -64,7 +64,7 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                 DisplayLookup(
                     field='down_button', on_click=GoToEvent(url='/lessons/down_button/{index}/'), table_width_percent=3
                 ),
-                DisplayLookup(field='plus_button', on_click=GoToEvent(url='/user/{id}/'), table_width_percent=3),
+                DisplayLookup(field='plus_button', table_width_percent=3),
             ],
         ),
         title='Уроки',

@@ -2,10 +2,10 @@ import logging
 
 from sqlalchemy import select
 
-from bot.resources.enums import ReactionType
 from database.db import AsyncDBSession
 from database.models.reaction import Reaction
 from database.schemas.reaction import ReactionsTableSchema
+from enums import ReactionType
 
 logger = logging.getLogger()
 

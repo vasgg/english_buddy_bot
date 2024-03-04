@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column
 
-from bot.resources.enums import StickerType
+from bot.internal.enums import StickerType
 from database.models.base import Base
 
 

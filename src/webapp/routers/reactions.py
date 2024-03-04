@@ -8,10 +8,10 @@ from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent, PageEvent
 from fastui.forms import fastui_form
 
-from bot.resources.enums import ReactionType
-from controllers.reaction import delete_reaction_by_id, get_reaction_by_id, get_reactions_table_content
 from database.db import AsyncDBSession
 from database.schemas.reaction import EditReactionDataModel, get_reaction_data_model
+from enums import ReactionType
+from webapp.controllers.reaction import delete_reaction_by_id, get_reaction_by_id, get_reactions_table_content
 from webapp.routers.components import get_common_content
 
 app = APIRouter()

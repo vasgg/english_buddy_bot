@@ -4,7 +4,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
-from bot.resources.enums import SlideType
+from bot.internal.enums import SlideType
 from database.models.base import Base
 
 

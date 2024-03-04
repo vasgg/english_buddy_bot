@@ -5,17 +5,19 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.answer_controllers import get_random_answer, get_text_by_prompt
 from bot.controllers.session_controller import (
-    get_wrong_answers_counter,
     log_quiz_answer,
 )
-from bot.controllers.slide_controllers import get_slide_by_id
 from bot.handlers.lesson_handlers import common_processing
+from bot.internal.enums import EventType, ReactionType, States
 from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
 from bot.middlewares.session_middlewares import SessionMiddleware
-from bot.resources.enums import EventType, ReactionType, States
+from database.crud.answer import get_random_answer, get_text_by_prompt
+from database.crud.lesson import get_lesson_by_id
+from database.crud.session import get_wrong_answers_counter
+from database.crud.slide import get_slide_by_id
+from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.slide import Slide
 from database.models.user import User
@@ -64,6 +66,7 @@ async def quiz_callback_processing(
     slide_id = callback_data.slide_id
     answer = callback_data.answer
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
+    slide_ids = [int(elem) for elem in session.path.split(".")]
     data = await state.get_data()
     if 'wrong_answer' in answer:
         try:
@@ -125,7 +128,7 @@ async def quiz_callback_processing(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
-            slide_id=slide.next_slide,
+            slide_id=slide_ids[slide_ids.index(slide.id) + 1],
             state=state,
             session=session,
             db_session=db_session,
@@ -145,9 +148,11 @@ async def hint_callback(
 ) -> None:
     await callback.answer()
     slide: Slide = await get_slide_by_id(slide_id=callback_data.slide_id, db_session=db_session)
+    lesson: Lesson = await get_lesson_by_id(lesson_id=slide.lesson_id, db_session=db_session)
+    slide_ids = [int(elem) for elem in lesson.path.split(".")]
     right_answer = slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0]
     if callback_data.payload == 'show_hint':
-        slide_id = slide.next_slide
+        slide_id = slide_ids[slide_ids.index(slide.id) + 1]
         await callback.message.answer(
             text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(right_answer)
         )
@@ -208,6 +213,8 @@ async def check_input_word(
     lesson_id = data['quiz_word_lesson_id']
     slide_id = data['quiz_word_slide_id']
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
+    lesson: Lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
+    slide_ids = [int(elem) for elem in lesson.path.split(".")]
     if input_word.lower() != slide.right_answers.lower():
         await message.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
         await log_quiz_answer(
@@ -267,7 +274,7 @@ async def check_input_word(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
-            slide_id=slide.next_slide,
+            slide_id=slide_ids[slide_ids.index(slide.id) + 1],
             state=state,
             session=session,
             db_session=db_session,
@@ -288,6 +295,8 @@ async def check_input_phrase(
     lesson_id = data["quiz_phrase_lesson_id"]
     slide_id = data["quiz_phrase_slide_id"]
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
+    lesson: Lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
+    slide_ids = [int(elem) for elem in lesson.path.split(".")]
     answers = slide.right_answers.split("|")
     answers_lower = [answer.lower() for answer in answers]
     almost_right_answers = slide.almost_right_answers.split("|")
@@ -306,7 +315,7 @@ async def check_input_phrase(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
-            slide_id=slide.next_slide,
+            slide_id=slide_ids[slide_ids.index(slide.id) + 1],
             state=state,
             session=session,
             db_session=db_session,
@@ -325,7 +334,7 @@ async def check_input_phrase(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
-            slide_id=slide.next_slide,
+            slide_id=slide_ids[slide_ids.index(slide.id) + 1],
             state=state,
             session=session,
             db_session=db_session,

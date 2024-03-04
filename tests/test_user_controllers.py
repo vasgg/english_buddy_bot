@@ -1,13 +1,14 @@
 from unittest import IsolatedAsyncioTestCase
 
-from bot.controllers.session_controller import get_lesson_progress
 from bot.database.database_connector import DatabaseConnector
 from bot.database.models.base import Base
 from bot.database.models.lesson import Lesson
 from bot.database.models.session import Session
 from bot.database.models.slide import Slide
 from bot.database.models.user import User
-from bot.resources.enums import SlideType, SessionStatus
+
+from bot.internal.enums import SessionStatus, SlideType
+from database.crud.session import get_lesson_progress
 
 
 class Test(IsolatedAsyncioTestCase):
