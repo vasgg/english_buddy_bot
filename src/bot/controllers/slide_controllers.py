@@ -4,9 +4,9 @@ import os
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.internal.enums import KeyboardType, SlideType
 from database.models.lesson import Lesson
 from database.models.slide import Slide
+from enums import KeyboardType, SlideType
 
 logger = logging.Logger(__name__)
 

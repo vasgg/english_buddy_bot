@@ -8,7 +8,6 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.slide_controllers import get_all_base_questions_id_in_lesson
-from bot.internal.enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
 from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
 from database.crud.answer import get_random_sticker_id, get_text_by_prompt
 from database.crud.lesson import (
@@ -29,6 +28,7 @@ from database.crud.slide import get_slide_by_id
 from database.models.session import Session
 from database.models.slide import Slide
 from database.models.user import User
+from enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
 
 logger = logging.Logger(__name__)
 

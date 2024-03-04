@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.internal.enums import EventType
 from database.models.session import Session
 from database.models.session_log import SessionLog
+from enums import EventType
 
 
 async def log_quiz_answer(
