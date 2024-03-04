@@ -4,8 +4,8 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
-from bot.internal.enums import SlideType
 from database.models.base import Base
+from enums import SlideType
 
 
 class SessionLog(Base):

@@ -9,7 +9,6 @@ from bot.controllers.session_controller import (
     log_quiz_answer,
 )
 from bot.handlers.lesson_handlers import common_processing
-from bot.internal.enums import EventType, ReactionType, States
 from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
 from bot.middlewares.session_middlewares import SessionMiddleware
@@ -21,6 +20,7 @@ from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.slide import Slide
 from database.models.user import User
+from enums import EventType, ReactionType, States
 
 router = Router()
 router.message.middleware.register(SessionMiddleware())

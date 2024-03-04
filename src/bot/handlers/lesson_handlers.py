@@ -5,12 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.controllers.lesson_controllers import lesson_routine
 from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import show_start_menu
-from bot.internal.enums import (
-    LessonStartsFrom,
-    SessionStatus,
-    UserLessonProgress,
-    lesson_to_session,
-)
 from bot.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
@@ -24,6 +18,7 @@ from database.crud.slide import get_lesson_slides_count
 from database.crud.user import set_user_reminders
 from database.models.session import Session
 from database.models.user import User
+from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
 
 router = Router()
 
