@@ -9,13 +9,13 @@ from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu
 from bot.handlers.lesson_handlers import common_processing
 from bot.internal.commands import special_commands
-from bot.internal.enums import States
 from config import settings
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_lesson_by_id
 from database.crud.session import get_last_session_with_progress, get_session
 from database.crud.user import toggle_user_paywall_access
 from database.models.user import User
+from enums import States
 
 router = Router()
 
