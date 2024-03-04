@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.internal.enums import LessonStartsFrom, UserLessonProgress
 from bot.keyboards.callback_builders import (
     HintCallbackFactory,
     LessonStartsFromCallbackFactory,
@@ -10,6 +9,7 @@ from bot.keyboards.callback_builders import (
     SlideCallbackFactory,
 )
 from database.models.lesson import Lesson
+from enums import LessonStartsFrom, UserLessonProgress
 
 
 def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
