@@ -5,13 +5,18 @@ from fastapi import APIRouter
 from fastapi.exceptions import ResponseValidationError
 from fastui import AnyComponent, FastUI, components as c
 from fastui.components.display import DisplayLookup
-from fastui.events import GoToEvent
+from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
 from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons
 from database.db import AsyncDBSession
 from database.models.lesson import Lesson
-from database.schemas.lesson import EditLessonDataModel, get_lesson_data_model
+from database.schemas.lesson import (
+    EditLessonDataModel,
+    NewLessonDataModel,
+    get_lesson_data_model,
+    get_new_lesson_data_model,
+)
 from webapp.controllers.lesson import get_lessons_fastui
 from webapp.routers.components import get_common_content
 
@@ -25,20 +30,15 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     lessons = await get_lessons_fastui(db_session)
     return get_common_content(
         c.Paragraph(text=''),
-        # c.Heading(text='Lessons', level=2),
         c.Table(
             data=lessons,
             columns=[
                 DisplayLookup(
+                    field='index',
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
                     field='title',
-                ),
-                DisplayLookup(
-                    field='is_paid',
-                    table_width_percent=13,
-                ),
-                DisplayLookup(
-                    field='first_slide_id',
-                    table_width_percent=13,
                 ),
                 DisplayLookup(
                     field='exam_slide_id',
@@ -47,6 +47,10 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                 DisplayLookup(
                     field='total_slides',
                     table_width_percent=13,
+                ),
+                DisplayLookup(
+                    field='is_paid',
+                    table_width_percent=6,
                 ),
                 DisplayLookup(
                     field='slides',
@@ -64,7 +68,11 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                 DisplayLookup(
                     field='down_button', on_click=GoToEvent(url='/lessons/down_button/{index}/'), table_width_percent=3
                 ),
-                DisplayLookup(field='plus_button', table_width_percent=3),
+                DisplayLookup(
+                    field='plus_button',
+                    on_click=GoToEvent(url='/lessons/plus_button/{index}/'),
+                    table_width_percent=3,
+                ),
             ],
         ),
         title='Уроки',
@@ -131,10 +139,40 @@ async def edit_lesson_form(
     form: Annotated[EditLessonDataModel, fastui_form(EditLessonDataModel)],
 ):
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
-    for field in form.model_fields.keys():
-        form_value = getattr(form, field, None)
-        if form_value is not None:
-            setattr(lesson, field, form_value)
+    slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
+    lesson.title = form.title
+    lesson.exam_slide_id = form.exam_slide_id if form.exam_slide_id else None
+    slides_ids[0] = 1 if form.is_paid else 0
+    path = '.'.join([str(slideid) for slideid in slides_ids])
+    lesson.path = path
     await db_session.commit()
     logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
+    return [c.FireEvent(event=GoToEvent(url='/lessons'))]
+
+
+@app.get('/plus_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def add_lesson(index: int) -> list[AnyComponent]:
+    submit_url = f'/api/lessons/new/{index}/'
+    form = c.ModelForm(model=get_new_lesson_data_model(), submit_url=submit_url)
+    return get_common_content(
+        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        c.Paragraph(text=''),
+        form,
+        title=f'Создание урока',
+    )
+
+
+@app.post('/new/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def new_final_slide(
+    index: int,
+    db_session: AsyncDBSession,
+    form: Annotated[NewLessonDataModel, fastui_form(NewLessonDataModel)],
+):
+    new_lesson: Lesson = Lesson(
+        index=index + 1,
+        title=form.title,
+        path='1.' if form.is_paid else '0.',
+    )
+    db_session.add(new_lesson)
+    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]

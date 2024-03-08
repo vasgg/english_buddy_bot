@@ -14,7 +14,22 @@ async def get_lessons_fastui(db_session: AsyncDBSession):
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     validated_lessons = []
-    for lesson in lessons:
-        validated_lesson = LessonsTableSchema.model_validate(lesson)
+    for index, lesson in enumerate(lessons, start=1):
+        lesson_data = {
+            'id': lesson.id,
+            'index': index,
+            'title': lesson.title,
+            'level': lesson.level if lesson.level else None,
+            'is_paid': '☑️' if lesson.path.split('.')[0] == '1' else ' ',
+            'exam_slide_id': lesson.exam_slide_id if lesson.exam_slide_id else None,
+            'total_slides': str(len(lesson.path.split('.')) - 1) if lesson.path else ' ',
+            'slides': '📖',
+            'edit_button': '✏️',
+            'up_button': '🔼',
+            'down_button': '🔽',
+            'plus_button': '➕',
+        }
+        validated_lesson = LessonsTableSchema.model_validate(lesson_data)
         validated_lessons.append(validated_lesson)
+        logger.info(f"Processed lessons: {len(validated_lessons)}")
     return validated_lessons

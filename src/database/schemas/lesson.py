@@ -21,6 +21,8 @@ class LessonSchema(BaseModel):
 
 
 class LessonsTableSchema(LessonSchema):
+    total_slides: str | None = Field(' ', title='total slides')
+    is_paid: str = Field(' ', title='is paid')
     slides: str = Field('📖', title=' ')
     edit_button: str = Field('✏️', title=' ')
     up_button: str = Field('🔼', title=' ')
@@ -38,24 +40,30 @@ def get_lesson_data_model(lesson: Lesson) -> Type[BaseModel]:
             description='Введите название урока. Обязательное поле.',
             title='title',
         )
-        first_slide_id: int | None = Field(
-            lesson.first_slide_id,
-            description='Введите id первого слайда. Необязательное поле.',
-            title='first slide',
-        )
         exam_slide_id: int | None = Field(
             lesson.exam_slide_id,
             description='Введите id первого экзаменационного слайда. Необязательное поле.',
             title='exam slide',
         )
-        total_slides: int | None = Field(
-            lesson.total_slides,
-            description='Введите общее количество слайдов в уроке. Необязательное поле.',
-            title='total slides',
+        is_paid: bool | None = Field(
+            True if lesson.path.split('.')[0] == '1' else False,
+            description='Отметьте, если этот урок платный. Необязательное поле.',
+            title='is paid',
+        )
+
+    return LessonDataModel
+
+
+def get_new_lesson_data_model() -> Type[BaseModel]:
+    class LessonDataModel(BaseModel):
+        title: str = Field(
+            'New lesson',
+            description='Введите название урока. Обязательное поле.',
+            title='title',
         )
         is_paid: bool | None = Field(
-            lesson.is_paid,
-            description='Отметьте, если этот урок платный.',
+            False,
+            description='Отметьте, если этот урок платный. Необязательное поле.',
             title='is paid',
         )
 
@@ -67,4 +75,9 @@ class EditLessonDataModel(BaseModel):
     first_slide_id: int | None = None
     exam_slide_id: int | None = None
     total_slides: int | None = None
+    is_paid: bool | None = False
+
+
+class NewLessonDataModel(BaseModel):
+    title: str
     is_paid: bool | None = False

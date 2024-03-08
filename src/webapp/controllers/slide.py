@@ -9,7 +9,7 @@ logger = logging.getLogger()
 
 
 async def get_all_slides_from_lesson_by_order_fastui(path: str, db_session: AsyncDBSession) -> list:
-    slides_ids = [int(slide_id) for slide_id in path.split('.')[1:] if slide_id]
+    slides_ids = [int(slideid) for slideid in path.split('.')[1:] if slideid]
     ordered_slides = []
     for index, slide_id in enumerate(slides_ids, start=1):
         slide = await get_slide_by_id(slide_id, db_session)
