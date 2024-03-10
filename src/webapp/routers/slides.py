@@ -45,8 +45,11 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
     if len(slides) == 0:
         return get_common_content(
             c.Paragraph(text=''),
-            c.Paragraph(text='There is no slides yet'),
-            title='Слайды',
+            c.Paragraph(text='В этом уроке ещё нет слайдов.'),
+            c.Button(text='Назад', named_style='secondary', on_click=BackEvent()),
+            c.Paragraph(text=''),
+            c.Button(text='Создать слайд', on_click=GoToEvent(url=f'/slides/plus_button/0/{lesson.index}/')),
+            title=f'Слайды | Урок {lesson.index} | {lesson.title}',
         )
 
     slides_table = c.Table(
@@ -79,8 +82,9 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
 
     return get_common_content(
         c.Paragraph(text=''),
+        c.Paragraph(text=''),
         slides_table,
-        title='Слайды',
+        title=f'Слайды | Урок {lesson.index} | {lesson.title}',
     )
 
 
@@ -96,13 +100,23 @@ async def edit_slide(index: int, slide_id: int, db_session: AsyncDBSession) -> l
             submit_url = f'/api/slides/edit/text/{index}/{slide_id}/'
             form = c.ModelForm(model=get_text_slide_data_model(slide), submit_url=submit_url)
         case SlideType.IMAGE:
-            optionnal_component = c.Image(
-                src=f'/static/lessons_images/{slide.lesson_id}/{slide.picture}',
-                width=600,
-                # height=200,
-                loading='lazy',
-                referrer_policy='no-referrer',
-                # class_name='border rounded',
+            optionnal_component = c.Div(
+                components=[
+                    c.Image(
+                        src=f'/static/lessons_images/{slide.lesson_id}/{slide.picture}',
+                        width=600,
+                        # height=200,
+                        loading='lazy',
+                        referrer_policy='no-referrer',
+                        # class_name='border rounded',
+                    ),
+                    c.Paragraph(text=''),
+                    c.Button(
+                        text='Загрузить новую картинку',
+                        named_style='secondary',
+                        on_click=GoToEvent(url=f'/upload/image/{slide_id}/'),
+                    ),
+                ]
             )
             submit_url = f'/api/slides/edit/image/{index}/{slide_id}/'
             form = c.ModelForm(model=get_image_slide_data_model(slide), submit_url=submit_url)
@@ -368,6 +382,7 @@ async def create_slide(
     db_session: AsyncDBSession,
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
+    lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
     match slide_type:
         case SlideType.TEXT:
             submit_url = f'/api/slides/new/text/{index}/{slide_id}/'
@@ -379,11 +394,12 @@ async def create_slide(
             submit_url = f'/api/slides/new/dict/{index}/{slide_id}/'
             form = c.ModelForm(model=get_pin_dict_slide_data_model(), submit_url=submit_url)
         case SlideType.SMALL_STICKER:
-            lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+            if index == 0:
+                lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
             slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
             new_slide: Slide = Slide(
                 slide_type=SlideType.SMALL_STICKER,
-                lesson_id=slide.lesson_id,
+                lesson_id=lesson.id,
             )
             db_session.add(new_slide)
             await db_session.flush()
@@ -391,13 +407,14 @@ async def create_slide(
             path = '.'.join([str(slideid) for slideid in slides_ids])
             lesson.path = path
             await db_session.commit()
-            return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+            return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
         case SlideType.BIG_STICKER:
-            lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+            if index == 0:
+                lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
             slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
             new_slide: Slide = Slide(
                 slide_type=SlideType.BIG_STICKER,
-                lesson_id=slide.lesson_id,
+                lesson_id=lesson.id,
             )
             db_session.add(new_slide)
             await db_session.flush()
@@ -405,7 +422,7 @@ async def create_slide(
             path = '.'.join([str(slideid) for slideid in slides_ids])
             lesson.path = path
             await db_session.commit()
-            return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+            return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
         case SlideType.QUIZ_OPTIONS:
             submit_url = f'/api/slides/new/quiz_option/{index}/{slide_id}/'
             form = c.ModelForm(model=get_quiz_options_slide_data_model(), submit_url=submit_url)
@@ -437,10 +454,12 @@ async def new_text_slide_form(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     new_slide: Slide = Slide(
         slide_type=SlideType.TEXT,
-        lesson_id=slide.lesson_id,
+        lesson_id=lesson.id,
         text=form.text,
         delay=form.delay,
         keyboard_type=KeyboardType.FURTHER if form.keyboard_type else None,
@@ -451,7 +470,7 @@ async def new_text_slide_form(
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
 @app.post('/new/image/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -463,10 +482,12 @@ async def new_image_slide_form(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     new_slide: Slide = Slide(
         slide_type=SlideType.IMAGE,
-        lesson_id=slide.lesson_id,
+        lesson_id=lesson.id,
         picture=form.select_picture,
         delay=form.delay,
         keyboard_type=KeyboardType.FURTHER if form.keyboard_type else None,
@@ -477,7 +498,7 @@ async def new_image_slide_form(
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
 @app.post('/new/dict/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -489,10 +510,12 @@ async def new_dict_slide(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     new_slide: Slide = Slide(
         slide_type=SlideType.PIN_DICT,
-        lesson_id=slide.lesson_id,
+        lesson_id=lesson.id,
         text=form.text,
     )
     db_session.add(new_slide)
@@ -501,7 +524,7 @@ async def new_dict_slide(
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
 @app.post('/new/quiz_option/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -513,10 +536,12 @@ async def new_quiz_option_slide(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     new_slide: Slide = Slide(
         slide_type=SlideType.QUIZ_OPTIONS,
-        lesson_id=slide.lesson_id,
+        lesson_id=lesson.id,
         text=form.text,
         right_answers=form.right_answers,
         keyboard=form.keyboard,
@@ -528,7 +553,7 @@ async def new_quiz_option_slide(
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
 @app.post('/new/quiz_input_word/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -540,10 +565,12 @@ async def new_quiz_input_word_slide(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     new_slide: Slide = Slide(
         slide_type=SlideType.QUIZ_INPUT_WORD,
-        lesson_id=slide.lesson_id,
+        lesson_id=lesson.id,
         text=form.text,
         right_answers=form.right_answers,
         is_exam_slide=form.is_exam_slide,
@@ -554,7 +581,7 @@ async def new_quiz_input_word_slide(
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
 @app.post('/new/quiz_input_phrase/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -566,10 +593,12 @@ async def new_quiz_input_phrase_slide(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     new_slide: Slide = Slide(
         slide_type=SlideType.QUIZ_INPUT_PHRASE,
-        lesson_id=slide.lesson_id,
+        lesson_id=lesson.id,
         text=form.text,
         right_answers=form.right_answers,
         almost_right_answers=form.almost_right_answers,
@@ -582,7 +611,7 @@ async def new_quiz_input_phrase_slide(
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
 @app.post('/new/final_slide/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -594,10 +623,12 @@ async def new_final_slide(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     new_slide: Slide = Slide(
         slide_type=SlideType.FINAL_SLIDE,
-        lesson_id=slide.lesson_id,
+        lesson_id=lesson.id,
         text=form.text,
     )
     db_session.add(new_slide)
@@ -606,7 +637,7 @@ async def new_final_slide(
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
 @app.get('/plus_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
@@ -730,7 +761,8 @@ async def delete_slide(
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     del slides_ids[index]
-    path = '.'.join([str(slideid) for slideid in slides_ids])
+    path_string = '.'.join([str(slideid) for slideid in slides_ids])
+    path = path_string if len(slides_ids) > 1 else path_string + '.'
     lesson.path = path
     await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
