@@ -13,3 +13,4 @@ class Lesson(Base):
     level: Mapped[LessonLevel | None]
     path: Mapped[str | None]
     exam_slide_id: Mapped[int | None] = mapped_column(ForeignKey('slides.id'))
+    is_active: Mapped[bool] = mapped_column(default=True, server_default='1')

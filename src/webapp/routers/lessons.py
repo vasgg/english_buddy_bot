@@ -50,7 +50,7 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                 ),
                 DisplayLookup(
                     field='is_paid',
-                    table_width_percent=6,
+                    table_width_percent=3,
                 ),
                 DisplayLookup(
                     field='slides',
@@ -71,6 +71,11 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                 DisplayLookup(
                     field='plus_button',
                     on_click=GoToEvent(url='/lessons/plus_button/{index}/'),
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='minus_button',
+                    on_click=GoToEvent(url='/lessons/confirm_delete/{index}/'),
                     table_width_percent=3,
                 ),
             ],
@@ -160,6 +165,41 @@ async def add_lesson(index: int) -> list[AnyComponent]:
         form,
         title=f'Создание урока',
     )
+
+
+@app.get('/confirm_delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def delete_lesson_confirm(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    lesson: Lesson = await get_lesson_by_index(index, db_session)
+    return get_common_content(
+        c.Paragraph(text=f'Вы уверены, что хотите удалить урок?'),
+        c.Div(
+            components=[
+                c.Link(
+                    components=[c.Button(text='Назад', named_style='secondary')],
+                    on_click=BackEvent(),
+                    class_name='+ ms-2',
+                ),
+                c.Link(
+                    components=[c.Button(text='Удалить', named_style='warning')],
+                    on_click=GoToEvent(url=f'/lessons/delete/{index}/'),
+                    class_name='+ ms-2',
+                ),
+            ]
+        ),
+        title=f'Удаление урока {lesson.index} | {lesson.title}',
+    )
+
+
+@app.get('/delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def delete_slide(
+    index: int,
+    db_session: AsyncDBSession,
+):
+    lesson: Lesson = await get_lesson_by_index(index, db_session)
+    logger.info(f'delete lesson with id {lesson.id} index {index}')
+    lesson.is_active = False
+    await db_session.commit()
+    return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
 @app.post('/new/{index}/', response_model=FastUI, response_model_exclude_none=True)

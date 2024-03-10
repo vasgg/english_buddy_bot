@@ -10,7 +10,7 @@ logger = logging.getLogger()
 
 
 async def get_lessons_fastui(db_session: AsyncDBSession):
-    query = select(Lesson).group_by(Lesson.index)
+    query = select(Lesson).group_by(Lesson.index).filter(Lesson.is_active)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     validated_lessons = []
@@ -28,6 +28,7 @@ async def get_lessons_fastui(db_session: AsyncDBSession):
             'up_button': '🔼',
             'down_button': '🔽',
             'plus_button': '➕',
+            'minus_button': '➖',
         }
         validated_lesson = LessonsTableSchema.model_validate(lesson_data)
         validated_lessons.append(validated_lesson)

@@ -22,12 +22,13 @@ class LessonSchema(BaseModel):
 
 class LessonsTableSchema(LessonSchema):
     total_slides: str | None = Field(' ', title='total slides')
-    is_paid: str = Field(' ', title='is paid')
+    is_paid: str = Field(' ', title='paid')
     slides: str = Field('📖', title=' ')
     edit_button: str = Field('✏️', title=' ')
     up_button: str = Field('🔼', title=' ')
     down_button: str = Field('🔽', title=' ')
     plus_button: str = Field('➕', title=' ')
+    minus_button: str = Field('➖', title=' ')
 
     class Config:
         from_attributes = True
