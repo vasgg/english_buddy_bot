@@ -93,7 +93,7 @@ async def lesson_routine(
             image_file = slide.picture
             path = Path(f'src/webapp/static/lessons_images/{lesson_id}/{image_file}')
             if not path.exists():
-                path = Path(f'src/webapp/static/images/image_not_available.png')
+                path = Path(f'src/webapp/static/images/lessons_images/image_not_available.png')
             if not slide.keyboard_type:
                 await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=path))
                 if slide.delay:
