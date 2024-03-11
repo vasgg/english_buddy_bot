@@ -63,7 +63,7 @@ async def lesson_callback_processing(
     slides_count = await get_lesson_slides_count(path=lesson.path)
     is_paid = int(lesson.path.split('.')[0]) == 1
     if slides_count == 0:
-        await callback.message.answer(text='sorryan, no slides yet')
+        await callback.message.answer(text='no slides yet')
         return
     if is_paid and user.paywall_access is False:
         await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
@@ -171,7 +171,7 @@ async def reminders_callback_processing(
             case _:
                 assert False, 'unexpected frequency'
     else:
-        message = get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
+        message = await get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
     await set_user_reminders(user_id=user.id, reminder_freq=frequency, db_session=db_session)
     await callback.message.answer(text=message)
     await callback.answer()
