@@ -84,7 +84,7 @@ async def quiz_callback_processing(
             slide=slide,
             db_session=db_session,
         )
-        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
+        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session) + 1
         if wrong_answers_count >= 3:
             await callback.message.answer(
                 text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)).format(
@@ -225,7 +225,7 @@ async def check_input_word(
             slide=slide,
             db_session=db_session,
         )
-        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
+        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session) + 1
         if wrong_answers_count >= 3:
             await message.answer(
                 text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)).format(
@@ -349,7 +349,7 @@ async def check_input_phrase(
             slide=slide,
             db_session=db_session,
         )
-        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
+        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session) + 1
         if wrong_answers_count >= 3:
             await message.answer(
                 text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)).format(
