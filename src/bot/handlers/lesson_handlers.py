@@ -2,25 +2,23 @@ from aiogram import Bot, Router, types
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.answer_controllers import get_text_by_prompt
-from bot.controllers.lesson_controllers import get_lesson, lesson_routine
-from bot.controllers.session_controller import get_current_session, update_session, update_session_status
-from bot.controllers.slide_controllers import get_lesson_slides_count, get_steps_to_current_slide
-from bot.controllers.user_controllers import set_user_reminders, show_start_menu
+from bot.controllers.lesson_controllers import lesson_routine
+from bot.controllers.slide_controllers import get_steps_to_current_slide
+from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
     RemindersCallbackFactory,
 )
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
-from bot.resources.enums import (
-    LessonStartsFrom,
-    SessionStatus,
-    UserLessonProgress,
-    lesson_to_session,
-)
+from database.crud.answer import get_text_by_prompt
+from database.crud.lesson import get_lesson_by_id
+from database.crud.session import get_current_session, update_session, update_session_status
+from database.crud.slide import get_lesson_slides_count
+from database.crud.user import set_user_reminders
 from database.models.session import Session
 from database.models.user import User
+from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
 
 router = Router()
 
@@ -48,7 +46,7 @@ async def common_processing(
         db_session=db_session,
     )
     await lesson_routine(
-        bot, user, lesson_id, slide_id, current_step, session.total_slides, state, session.id, db_session
+        bot, user, lesson_id, slide_id, current_step, session.total_slides, state, session, db_session
     )
 
 
@@ -61,12 +59,13 @@ async def lesson_callback_processing(
 ) -> None:
     await callback.message.delete()
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
-    lesson = await get_lesson(lesson_id=callback_data.lesson_id, db_session=db_session)
-    slides_count = await get_lesson_slides_count(lesson_id=lesson.id, db_session=db_session)
+    lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
+    slides_count = await get_lesson_slides_count(path=lesson.path)
+    is_paid = int(lesson.path.split('.')[0]) == 1
     if slides_count == 0:
-        await callback.message.answer(text='sorryan, no slides yet')
+        await callback.message.answer(text='no slides yet')
         return
-    if lesson.is_paid and user.paywall_access is False:
+    if is_paid and user.paywall_access is False:
         await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
         return
     if session:
@@ -107,7 +106,8 @@ async def lesson_start_from_callback_processing(
     slide_id = callback_data.slide_id
     attr = callback_data.attr
     session = await get_current_session(user.id, lesson_id, db_session)
-    lesson = await get_lesson(lesson_id, db_session)
+    lesson = await get_lesson_by_id(lesson_id, db_session)
+    total_slides = len(lesson.path.split('.')) - 1
     match attr:
         case LessonStartsFrom.BEGIN:
             if session:
@@ -117,7 +117,8 @@ async def lesson_start_from_callback_processing(
                 lesson_id=lesson_id,
                 current_slide_id=slide_id,
                 starts_from=lesson_to_session(attr),
-                total_slides=lesson.total_slides,
+                total_slides=total_slides,
+                path=lesson.path,
             )
             db_session.add(session)
             await db_session.flush()
@@ -125,15 +126,17 @@ async def lesson_start_from_callback_processing(
             if session:
                 await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
             steps = await get_steps_to_current_slide(
-                first_slide_id=lesson.first_slide_id, target_slide_id=lesson.exam_slide_id, db_session=db_session
+                first_slide_id=int(lesson.path.split('.')[1]), target_slide_id=lesson.exam_slide_id, path=lesson.path
             )
-            total_slides = lesson.total_slides - steps
+            total_slides = total_slides - steps
+            slides = lesson.path.split('.')
             session = Session(
                 user_id=user.id,
                 lesson_id=lesson_id,
                 current_slide_id=slide_id,
                 starts_from=lesson_to_session(attr),
                 total_slides=total_slides,
+                path=lesson.path[:2] + '.'.join(slides[slides.index(str(lesson.exam_slide_id)) :]),
             )
             db_session.add(session)
             await db_session.flush()
@@ -168,7 +171,7 @@ async def reminders_callback_processing(
             case _:
                 assert False, 'unexpected frequency'
     else:
-        message = get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
+        message = await get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
     await set_user_reminders(user_id=user.id, reminder_freq=frequency, db_session=db_session)
     await callback.message.answer(text=message)
     await callback.answer()

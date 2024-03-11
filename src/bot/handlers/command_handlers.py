@@ -5,16 +5,17 @@ from aiogram.types import BotCommandScopeChat
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.answer_controllers import get_text_by_prompt
-from bot.controllers.lesson_controllers import get_lesson
-from bot.controllers.session_controller import get_last_session_with_progress, get_session
 from bot.controllers.slide_controllers import get_steps_to_current_slide
-from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu, toggle_user_paywall_access
+from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu
 from bot.handlers.lesson_handlers import common_processing
-from bot.resources.commands import special_commands
-from bot.resources.enums import States
+from bot.internal.commands import special_commands
 from config import settings
+from database.crud.answer import get_text_by_prompt
+from database.crud.lesson import get_lesson_by_id
+from database.crud.session import get_last_session_with_progress, get_session
+from database.crud.user import toggle_user_paywall_access
 from database.models.user import User
+from enums import States
 
 router = Router()
 
@@ -51,12 +52,12 @@ async def set_slide_position_handler(
 ) -> None:
     data = await state.get_data()
     session = await get_session(data['custom_session_id'], db_session)
-    lesson = await get_lesson(lesson_id=session.lesson_id, db_session=db_session)
+    lesson = await get_lesson_by_id(lesson_id=session.lesson_id, db_session=db_session)
     try:
         new_slide_id = int(message.text)
         await state.set_state()
         steps = await get_steps_to_current_slide(
-            first_slide_id=lesson.first_slide_id, target_slide_id=new_slide_id, db_session=db_session
+            first_slide_id=int(lesson.path.split('.')[1]), target_slide_id=new_slide_id, path=lesson.path
         )
         await message.answer(text=f'Пройдено шагов: {steps}')
         await common_processing(

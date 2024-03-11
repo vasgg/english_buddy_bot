@@ -39,6 +39,6 @@ async def create_or_drop_db(engine: AsyncEngine):
 
 
 if __name__ == '__main__':
-    from bot.database.db import db
+    from database.db import db
 
     asyncio.run(create_or_drop_db(db.engine))

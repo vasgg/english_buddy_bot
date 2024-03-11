@@ -1,91 +1,218 @@
 import logging
-from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from fastapi import APIRouter
+from fastapi.exceptions import ResponseValidationError
+from fastui import AnyComponent, FastUI, components as c
+from fastui.components.display import DisplayLookup
+from fastui.events import BackEvent, GoToEvent
+from fastui.forms import fastui_form
 
-
+from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons
 from database.db import AsyncDBSession
 from database.models.lesson import Lesson
-from webapp.schemas import CreateNewLessonRequest, LessonData, LessonOrderUpdateRequest
+from database.schemas.lesson import (
+    EditLessonDataModel,
+    NewLessonDataModel,
+    get_lesson_data_model,
+    get_new_lesson_data_model,
+)
+from webapp.controllers.lesson import get_lessons_fastui
+from webapp.routers.components import get_common_content
 
-lessons_router = APIRouter()
-templates = Jinja2Templates(directory='src/webapp/templates')
+app = APIRouter()
+logger = logging.getLogger()
 
 
-@lessons_router.get("/lessons")
-async def show_lessons(request: Request, db_session: AsyncDBSession):
-    result = await db_session.execute(select(Lesson).group_by(Lesson.index))
-    data = result.scalars().all()
-    return templates.TemplateResponse(request=request, name="lessons.html", context={'lessons': data})
-
-
-@lessons_router.get("/lesson/{lesson_id}")
-async def show_edit_lesson_page(lesson_id: int, request: Request, db_session: AsyncDBSession):
-    data = await db_session.execute(select(Lesson).where(Lesson.id == lesson_id))
-    lesson = data.scalars().first()
-    lessons_count = await db_session.scalar(select(func.count()).select_from(Lesson))
-    if lesson is None:
-        raise HTTPException(status_code=404, detail="Lesson not found")
-    return templates.TemplateResponse(
-        "lesson.html", {"request": request, "lesson": lesson, "lessons_count": lessons_count}
+@app.get("", response_model=FastUI, response_model_exclude_none=True)
+async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
+    logger.info('lessons router called')
+    lessons = await get_lessons_fastui(db_session)
+    return get_common_content(
+        c.Paragraph(text=''),
+        c.Table(
+            data=lessons,
+            columns=[
+                DisplayLookup(
+                    field='index',
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='title',
+                ),
+                DisplayLookup(
+                    field='exam_slide_id',
+                    table_width_percent=13,
+                ),
+                DisplayLookup(
+                    field='total_slides',
+                    table_width_percent=13,
+                ),
+                DisplayLookup(
+                    field='is_paid',
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='slides',
+                    on_click=GoToEvent(url='/slides/lesson{id}/'),
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='edit_button',
+                    on_click=GoToEvent(url='/lessons/edit/{id}/'),
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='up_button', on_click=GoToEvent(url='/lessons/up_button/{index}/'), table_width_percent=3
+                ),
+                DisplayLookup(
+                    field='down_button', on_click=GoToEvent(url='/lessons/down_button/{index}/'), table_width_percent=3
+                ),
+                DisplayLookup(
+                    field='plus_button',
+                    on_click=GoToEvent(url='/lessons/plus_button/{index}/'),
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='minus_button',
+                    on_click=GoToEvent(url='/lessons/confirm_delete/{index}/'),
+                    table_width_percent=3,
+                ),
+            ],
+        ),
+        title='Уроки',
     )
 
 
-@lessons_router.post("/lesson/{lesson_id}")
-async def update_lesson(lesson_data: LessonData, db_session: AsyncDBSession):
+@app.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
+async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    lesson = await get_lesson_by_id(lesson_id, db_session)
+    submit_url = f'/api/lessons/edit/{lesson_id}/'
+    form = c.ModelForm(model=get_lesson_data_model(lesson), submit_url=submit_url)
+    return get_common_content(
+        c.Paragraph(text=''),
+        form,
+        title=f'edit | lesson {lesson.index} | {lesson.title}',
+    )
+
+
+@app.get('/up_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    logger.info(f'pressed up_button with index {index}')
     try:
-        stmt = select(Lesson).where(Lesson.id == lesson_data.id)
-        result = await db_session.execute(stmt)
-        lesson = result.scalar_one_or_none()
-        if not lesson:
-            raise HTTPException(status_code=404, detail="Lesson not found")
-        lesson.title = lesson_data.title
-        lesson.first_slide_id = lesson_data.first_slide_id
-        if not lesson_data.exam_slide_id:
-            lesson.exam_slide_id = None
-        lesson.is_paid = lesson_data.is_paid
-        lesson.total_slides = lesson_data.total_slides
-
-        await db_session.commit()
-
-        return {"message": f'Lesson "{lesson_data.title}" updated successfully'}
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        if index == 1:
+            pass
+        else:
+            lesson = await get_lesson_by_index(index, db_session)
+            lesson_with_target_index = await get_lesson_by_index(index - 1, db_session)
+            lesson.index = None
+            lesson_with_target_index.index = None
+            await db_session.flush()
+            lesson.index = index - 1
+            lesson_with_target_index.index = index
+            await db_session.commit()
+    except ResponseValidationError:
+        pass
+    return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
-@lessons_router.post("/save-lessons-order")
-async def save_lessons_order(order_data: LessonOrderUpdateRequest, db_session: AsyncDBSession):
-    logging.info(f'{order_data}')
-    from bot.controllers.lesson_controllers import reset_index_for_all_lessons, update_lesson_index
-    await reset_index_for_all_lessons(db_session=db_session)
-    logging.info("all index fields are reset")
-    for lessons in order_data.lessons:
-        await update_lesson_index(lesson_id=lessons.lesson_id, index=lessons.lesson_index, db_session=db_session)
-    return {"message": "Lessons order updated successfully"}
+@app.get('/down_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    logger.info(f'pressed down_button with index {index}')
+    lessons = await get_lessons(db_session)
+    try:
+        if index == len(lessons):
+            pass
+        else:
+            lesson = await get_lesson_by_index(index, db_session)
+            lesson_with_target_index = await get_lesson_by_index(index + 1, db_session)
+            lesson.index = None
+            lesson_with_target_index.index = None
+            await db_session.flush()
+            lesson.index = index + 1
+            lesson_with_target_index.index = index
+            await db_session.commit()
+    except ResponseValidationError:
+        pass
+    return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
-@lessons_router.post('/add-lesson')
-async def add_lesson(data: CreateNewLessonRequest, db_session: AsyncDBSession):
-    from bot.controllers.lesson_controllers import get_lesson, get_lessons_with_greater_index
-
-    parent_lesson = await get_lesson(data.lesson_id, db_session)
-    new_lesson = Lesson(
-        index=parent_lesson.index + 1,
-        title='NEW LESSON TEMPLATE',
-    )
-    lessons = await get_lessons_with_greater_index(parent_lesson.index + 1, db_session)
-    for lesson in lessons:
-        lesson.index = lesson.index + 1
-    db_session.add(new_lesson)
-    await db_session.flush()
-    directory = Path(f"src/webapp/static/images/lesson_{new_lesson.id}")
-    directory.mkdir(parents=True, exist_ok=True)
-    logging.info(f"Added new lesson: {new_lesson.id}")
+@app.post('/edit/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
+async def edit_lesson_form(
+    lesson_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditLessonDataModel, fastui_form(EditLessonDataModel)],
+):
+    lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
+    slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
+    lesson.title = form.title
+    lesson.exam_slide_id = form.exam_slide_id if form.exam_slide_id else None
+    slides_ids[0] = 1 if form.is_paid else 0
+    path = '.'.join([str(slideid) for slideid in slides_ids])
+    lesson.path = path
     await db_session.commit()
-    return {
-        "message": f"Lesson added successfully. Lesson ID: {new_lesson.id}",
-        "redirectUrl": f"/lesson/{new_lesson.id}",
-    }
+    logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
+    return [c.FireEvent(event=GoToEvent(url='/lessons'))]
+
+
+@app.get('/plus_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def add_lesson(index: int) -> list[AnyComponent]:
+    submit_url = f'/api/lessons/new/{index}/'
+    form = c.ModelForm(model=get_new_lesson_data_model(), submit_url=submit_url)
+    return get_common_content(
+        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        c.Paragraph(text=''),
+        form,
+        title=f'Создание урока',
+    )
+
+
+@app.get('/confirm_delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def delete_lesson_confirm(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    lesson: Lesson = await get_lesson_by_index(index, db_session)
+    return get_common_content(
+        c.Paragraph(text=f'Вы уверены, что хотите удалить урок?'),
+        c.Div(
+            components=[
+                c.Link(
+                    components=[c.Button(text='Назад', named_style='secondary')],
+                    on_click=BackEvent(),
+                    class_name='+ ms-2',
+                ),
+                c.Link(
+                    components=[c.Button(text='Удалить', named_style='warning')],
+                    on_click=GoToEvent(url=f'/lessons/delete/{index}/'),
+                    class_name='+ ms-2',
+                ),
+            ]
+        ),
+        title=f'Удаление урока {lesson.index} | {lesson.title}',
+    )
+
+
+@app.get('/delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def delete_slide(
+    index: int,
+    db_session: AsyncDBSession,
+):
+    lesson: Lesson = await get_lesson_by_index(index, db_session)
+    logger.info(f'delete lesson with id {lesson.id} index {index}')
+    lesson.is_active = False
+    await db_session.commit()
+    return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
+
+
+@app.post('/new/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def new_final_slide(
+    index: int,
+    db_session: AsyncDBSession,
+    form: Annotated[NewLessonDataModel, fastui_form(NewLessonDataModel)],
+):
+    new_lesson: Lesson = Lesson(
+        index=index + 1,
+        title=form.title,
+        path='1.' if form.is_paid else '0.',
+    )
+    db_session.add(new_lesson)
+    await db_session.commit()
+    return [c.FireEvent(event=GoToEvent(url='/lessons'))]

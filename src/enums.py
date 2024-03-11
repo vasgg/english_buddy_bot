@@ -71,6 +71,11 @@ class EventType(Enum):
     CONTINUE = 'continue'
 
 
+class NavigationObjectType(Enum):
+    SLIDES = 'slides'
+    LESSONS = 'lessons'
+
+
 class Times(Enum):
     UTC_STARTING_MARK = 14
     ONE_HOUR = 3600

@@ -1,6 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 
-from bot.resources.enums import LessonStartsFrom
+from enums import LessonStartsFrom
 
 
 class LessonsCallbackFactory(CallbackData, prefix='lesson'):
@@ -22,7 +22,6 @@ class QuizCallbackFactory(CallbackData, prefix='quiz'):
     lesson_id: int
     slide_id: int
     answer: str
-
 
 
 class HintCallbackFactory(CallbackData, prefix='hint'):

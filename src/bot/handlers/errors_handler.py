@@ -20,7 +20,7 @@ async def error_handler(error_event: "ErrorEvent", bot: aiogram.Bot):
 
     error_message = (
         f"🚨 <b>An error occurred</b> 🚨\n\n"
-        f"<b>Type:</b> {type(exc_info).__name__}\n<b>Message:</b> {exc_info}\n\n<b>Traceback:</b>\n<code>{exc_traceback[-3800:]}</code>"
+        f"<b>Type:</b> {type(exc_info).__name__}\n<b>Message:</b> {exc_info}\n\n<b>Traceback:</b>\n<code>{exc_traceback[-3500:]}</code>"
     )
     logging.exception("Exception:", exc_info=exc_info)
 

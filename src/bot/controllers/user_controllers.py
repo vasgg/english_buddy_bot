@@ -3,46 +3,15 @@ from datetime import datetime, timedelta
 import logging
 
 from aiogram import Bot, types
-from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.answer_controllers import get_text_by_prompt
-from bot.controllers.lesson_controllers import get_completed_lessons, get_lessons
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
+from database.crud.answer import get_text_by_prompt
+from database.crud.lesson import get_completed_lessons, get_lessons
+from database.crud.user import get_all_users_with_reminders, update_last_reminded_at
 from database.database_connector import DatabaseConnector
 from database.models.user import User
-
-
-async def add_user_to_db(event, db_session) -> User:
-    new_user = User(
-        telegram_id=event.from_user.id,
-        first_name=event.from_user.first_name,
-        last_name=event.from_user.last_name,
-        username=event.from_user.username,
-        paywall_access=False,
-        reminder_freq=None,
-        last_reminded_at=datetime.utcnow(),
-    )
-    db_session.add(new_user)
-    await db_session.flush()
-    return new_user
-
-
-async def get_user_from_db(event, db_session: AsyncSession) -> User:
-    query = select(User).filter(User.telegram_id == event.from_user.id)
-    result: Result = await db_session.execute(query)
-    user = result.scalar()
-    return user
-
-
-async def toggle_user_paywall_access(user_id: int, db_session: AsyncSession) -> None:
-    await db_session.execute(
-        update(User).filter(User.id == user_id).values(paywall_access=func.not_(User.paywall_access))
-    )
-
-
-async def set_user_reminders(user_id: int, reminder_freq: int, db_session: AsyncSession) -> None:
-    await db_session.execute(update(User).filter(User.id == user_id).values(reminder_freq=reminder_freq))
+from enums import Times
 
 
 async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
@@ -61,31 +30,19 @@ async def show_start_menu(user: User, message: types.Message, db_session: AsyncS
     )
 
 
-async def get_all_users_with_reminders(db_session: AsyncSession) -> list[User]:
-    query = select(User).filter(User.reminder_freq)
-    result = await db_session.execute(query)
-    return list(result.scalars().all())
-
-
-async def update_last_reminded_at(user_id: int, timestamp: datetime, db_session: AsyncSession) -> None:
-    await db_session.execute(update(User).filter(User.id == user_id).values(last_reminded_at=timestamp))
-
-
 async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
     while True:
-        await asyncio.sleep(10)
-        # await asyncio.sleep(Times.ONE_HOUR.value)
+        await asyncio.sleep(Times.ONE_HOUR.value)
         utcnow = datetime.utcnow()
-        # if utcnow.hour == Times.UTC_STARTING_MARK.value:
-        async with db_connector.session_factory() as session:
-            for user in await get_all_users_with_reminders(session):
-                delta = utcnow - user.last_reminded_at
-                if delta > timedelta(seconds=user.reminder_freq * 10):
-                    logging.info(f"{'=' * 10} {'reminder sended to ' + str(user)}")
-
-                    await bot.send_message(
-                        chat_id=user.telegram_id,
-                        text=await get_text_by_prompt(prompt='reminder_text', db_session=session),
-                    )
-                    await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
-                    await session.commit()
+        if utcnow.hour == Times.UTC_STARTING_MARK.value:
+            async with db_connector.session_factory() as session:
+                for user in await get_all_users_with_reminders(session):
+                    delta = utcnow - user.last_reminded_at
+                    if delta > timedelta(days=user.reminder_freq):
+                        await bot.send_message(
+                            chat_id=user.telegram_id,
+                            text=await get_text_by_prompt(prompt='reminder_text', db_session=session),
+                        )
+                        logging.info(f"{'=' * 10} {'reminder sended to ' + str(user)}")
+                        await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
+                        await session.commit()

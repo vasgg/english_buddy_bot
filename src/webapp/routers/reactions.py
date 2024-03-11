@@ -1,65 +1,196 @@
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy import delete, select
+import logging
+from typing import Annotated
 
-from bot.resources.enums import ReactionType
+from fastapi import APIRouter
+from fastui import AnyComponent, FastUI, components as c
+from fastui.components.display import DisplayLookup
+from fastui.events import BackEvent, GoToEvent
+from fastui.forms import fastui_form
+
 from database.db import AsyncDBSession
-
 from database.models.reaction import Reaction
+from database.schemas.reaction import (
+    AddReactionDataModel,
+    EditReactionDataModel,
+    get_new_reaction_data_model,
+    get_reaction_data_model,
+)
+from enums import ReactionType
+from webapp.controllers.reaction import delete_reaction_by_id, get_reaction_by_id, get_reactions_table_content
+from webapp.routers.components import get_common_content
 
-reactions_router = APIRouter()
-templates = Jinja2Templates(directory='src/webapp/templates')
-
-
-@reactions_router.get("/reactions", response_class=HTMLResponse)
-async def read_answers(request: Request, db_session: AsyncDBSession):
-    result = await db_session.execute(select(Reaction))
-    data = result.scalars().all()
-    right = [reaction for reaction in data if reaction.type.value == 'right']
-    wrong = [reaction for reaction in data if reaction.type.value == 'wrong']
-    return templates.TemplateResponse(request=request, name="reactions.html", context={'right': right, 'wrong': wrong})
-
-
-@reactions_router.post("/reactions")
-async def save_reactions(request: Request, db_session: AsyncDBSession):
-    form_data = await request.form()
-    reactions_to_update = []
-    new_reactions = []
-    for key, value in form_data.items():
-        if '_new' in key:
-            reaction_type = key.replace("_new", "").lower().split("_")[0]
-            new_reaction = Reaction(text=value, type=ReactionType(reaction_type))
-            db_session.add(new_reaction)
-        else:
-            reaction_id = int(key.split("_")[1])
-            reaction_type = key.split("_")[0]
-            query = await db_session.execute(select(Reaction).filter(Reaction.id == reaction_id))
-            reaction = query.scalar_one_or_none()
-
-            if reaction:
-                reaction.text = value
-                reaction.type = ReactionType(reaction_type)
-                reactions_to_update.append(reaction)
-            else:
-                raise HTTPException(status_code=404, detail=f"Reaction with id {reaction_id} not found")
-
-    db_session.add_all(reactions_to_update)
-
-    for new_reaction in new_reactions:
-        db_reaction = Reaction(text=new_reaction.text, type=new_reaction.type)
-        db_session.add(db_reaction)
-
-    return {"message": "Reactions saved successfully"}
+app = APIRouter()
+logger = logging.getLogger()
 
 
-@reactions_router.delete("/reactions/{reaction_id}")
-async def delete_reaction(reaction_id: int, db_session: AsyncDBSession):
-    reaction = await db_session.execute(select(Reaction).filter(Reaction.id == reaction_id))
-    reaction = reaction.scalar_one_or_none()
-    if not reaction:
-        raise HTTPException(status_code=404, detail="Reaction not found")
-    query = delete(Reaction).filter(Reaction.id == reaction_id)
-    await db_session.execute(query)
+@app.get("", response_model=FastUI, response_model_exclude_none=True)
+async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
+    logger.info('slides router called')
+    right_reactions = await get_reactions_table_content(ReactionType.RIGHT, db_session)
+    wrong_reactions = await get_reactions_table_content(ReactionType.WRONG, db_session)
+    return get_common_content(
+        c.Div(
+            components=[
+                c.Heading(text='RIGHT', level=4),
+                c.Button(text='➕', named_style='secondary', on_click=GoToEvent(url=f'/reactions/add/right/')),
+            ]
+        ),
+        c.Paragraph(text=''),
+        c.Table(
+            data=right_reactions,
+            columns=[
+                DisplayLookup(field='text', title='text'),
+                DisplayLookup(
+                    field='edit_button',
+                    title=' ',
+                    on_click=GoToEvent(url='/reactions/edit/{id}'),
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='minus_button',
+                    title=' ',
+                    on_click=GoToEvent(url='/reactions/confirm_delete/{id}/'),
+                    table_width_percent=3,
+                ),
+            ],
+        ),
+        c.Paragraph(text=''),
+        c.Div(
+            components=[
+                c.Heading(text='WRONG', level=4),
+                c.Button(
+                    text='➕',
+                    named_style='secondary',
+                    on_click=GoToEvent(url=f'/reactions/add/wrong/'),
+                ),
+            ]
+        ),
+        c.Paragraph(text=''),
+        c.Table(
+            data=wrong_reactions,
+            columns=[
+                DisplayLookup(field='text', title='text'),
+                DisplayLookup(
+                    field='edit_button',
+                    title=' ',
+                    on_click=GoToEvent(url='/reactions/edit/{id}'),
+                    table_width_percent=3,
+                ),
+                DisplayLookup(
+                    field='minus_button',
+                    title=' ',
+                    on_click=GoToEvent(url='/reactions/confirm_delete/{id}/'),
+                    table_width_percent=3,
+                ),
+            ],
+        ),
+        title='Реакции',
+    )
+
+
+@app.get('/add/{reaction_type}/', response_model=FastUI, response_model_exclude_none=True)
+async def add_reaction_form(reaction_type: ReactionType) -> list[AnyComponent]:
+    match reaction_type:
+        case ReactionType.RIGHT:
+            submit_url = f'/api/reactions/add/right/'
+            form = c.ModelForm(
+                model=get_new_reaction_data_model(reaction_type=ReactionType.RIGHT), submit_url=submit_url
+            )
+        case ReactionType.WRONG:
+            submit_url = f'/api/reactions/add/wrong/'
+            form = c.ModelForm(
+                model=get_new_reaction_data_model(reaction_type=ReactionType.WRONG), submit_url=submit_url
+            )
+        case _:
+            assert False, 'Unexpected reaction type'
+    return get_common_content(
+        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        c.Paragraph(text=''),
+        form,
+        title=f'add reaction | {reaction_type.value}',
+    )
+
+
+@app.post('/add/{reaction_type}/', response_model=FastUI, response_model_exclude_none=True)
+async def add_reaction(
+    reaction_type: ReactionType,
+    db_session: AsyncDBSession,
+    form: Annotated[AddReactionDataModel, fastui_form(AddReactionDataModel)],
+):
+    reaction = Reaction(type=reaction_type, text=form.text)
+    db_session.add(reaction)
     await db_session.commit()
-    return {"message": "Reaction deleted successfully"}
+    return [c.FireEvent(event=GoToEvent(url=f'/reactions'))]
+
+
+@app.post('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+async def delete_reaction(
+    reaction_id: int,
+    db_session: AsyncDBSession,
+):
+    await delete_reaction_by_id(reaction_id, db_session)
+    return [c.FireEvent(event=GoToEvent(url=f'/reactions'))]
+
+
+@app.get("/edit/{reaction_id}", response_model=FastUI, response_model_exclude_none=True)
+async def edit_text_page(reaction_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    reaction = await get_reaction_by_id(reaction_id, db_session)
+    submit_url = f'/api/reactions/edit/{reaction_id}/'
+    form = c.ModelForm(model=get_reaction_data_model(reaction), submit_url=submit_url)
+    return get_common_content(
+        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        c.Paragraph(text=''),
+        form,
+        title=f'edit | reaction {reaction_id}',
+    )
+
+
+@app.post('/edit/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+async def edit_lesson_form(
+    reaction_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditReactionDataModel, fastui_form(EditReactionDataModel)],
+):
+    reaction = await get_reaction_by_id(reaction_id, db_session)
+    for field in form.model_fields.keys():
+        form_value = getattr(form, field, None)
+        if form_value is not None:
+            setattr(reaction, field, form_value)
+    await db_session.commit()
+    logger.info(f'reaction {reaction.id} updated. data: {form.dict()}')
+    return [c.FireEvent(event=GoToEvent(url=f'/reactions'))]
+
+
+@app.get('/confirm_delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+async def delete_slide(reaction_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    reaction: Reaction = await get_reaction_by_id(reaction_id, db_session)
+    return get_common_content(
+        c.Paragraph(text=''),
+        c.Heading(text=f'{reaction.text}', level=4),
+        c.Paragraph(text=f'Вы уверены, что хотите удалить эту реакцию?'),
+        c.Div(
+            components=[
+                c.Link(
+                    components=[c.Button(text='Назад', named_style='secondary')],
+                    on_click=BackEvent(),
+                    class_name='+ ms-2',
+                ),
+                c.Link(
+                    components=[c.Button(text='Удалить', named_style='warning')],
+                    on_click=GoToEvent(url=f'/reactions/delete/{reaction_id}/'),
+                    class_name='+ ms-2',
+                ),
+            ]
+        ),
+        title=f'delete | reaction {reaction_id}',
+    )
+
+
+@app.get('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+async def delete_slide(
+    reaction_id: int,
+    db_session: AsyncDBSession,
+):
+    logger.info(f'reaction with id {reaction_id} deleted')
+    await delete_reaction_by_id(reaction_id, db_session)
+    return [c.FireEvent(event=GoToEvent(url=f'/reactions'))]
