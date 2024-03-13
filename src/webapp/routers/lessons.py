@@ -96,6 +96,17 @@ async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
         title=f'edit | lesson {lesson.index} | {lesson.title}',
     )
 
+@router.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
+async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    lesson = await get_lesson_by_id(lesson_id, db_session)
+    submit_url = f'/api/lessons/edit/{lesson_id}/'
+    form = c.ModelForm(model=get_lesson_data_model(lesson), submit_url=submit_url)
+    return get_common_content(
+        c.Paragraph(text=''),
+        form,
+        title=f'edit | lesson {lesson.index} | {lesson.title}',
+    )
+
 
 @router.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
