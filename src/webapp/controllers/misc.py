@@ -1,3 +1,5 @@
+import fastapi
+
 from database.models.slide import Slide
 from enums import SlideType
 
@@ -20,7 +22,7 @@ def get_slide_emoji(slide_type: SlideType) -> str:
 def get_slide_details(slide: Slide) -> str:
     slide_type_to_str = {
         'text': slide.keyboard_type if slide.keyboard_type else ' ',
-        'image': ' ',
+        'image': slide.keyboard_type if slide.keyboard_type else ' ',
         'pin_dict': ' ',
         'small_sticker': 'small sticker',
         'big_sticker': 'big sticker',
@@ -38,3 +40,11 @@ def get_lesson_details(is_paid: bool) -> str:
         False: ' ',
     }
     return lesson_is_paid_to_str.get(is_paid, ' ')
+
+
+async def extract_img_from_form(request: fastapi.Request):
+    async with request.form() as form_data:
+        if form_data.get('picture') is not None:
+            image_obj = form_data.get('picture')
+            data = await image_obj.read()
+        return data

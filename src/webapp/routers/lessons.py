@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter
@@ -8,7 +9,7 @@ from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
-from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons
+from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons, get_lessons_with_greater_index
 from database.db import AsyncDBSession
 from database.models.lesson import Lesson
 from database.schemas.lesson import (
@@ -20,11 +21,11 @@ from database.schemas.lesson import (
 from webapp.controllers.lesson import get_lessons_fastui
 from webapp.routers.components import get_common_content
 
-app = APIRouter()
+router = APIRouter()
 logger = logging.getLogger()
 
 
-@app.get("", response_model=FastUI, response_model_exclude_none=True)
+@router.get("", response_model=FastUI, response_model_exclude_none=True)
 async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('lessons router called')
     lessons = await get_lessons_fastui(db_session)
@@ -95,8 +96,19 @@ async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
         title=f'edit | lesson {lesson.index} | {lesson.title}',
     )
 
+@router.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
+async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
+    lesson = await get_lesson_by_id(lesson_id, db_session)
+    submit_url = f'/api/lessons/edit/{lesson_id}/'
+    form = c.ModelForm(model=get_lesson_data_model(lesson), submit_url=submit_url)
+    return get_common_content(
+        c.Paragraph(text=''),
+        form,
+        title=f'edit | lesson {lesson.index} | {lesson.title}',
+    )
 
-@app.get('/up_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+
+@router.get('/up_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info(f'pressed up_button with index {index}')
     try:
@@ -116,7 +128,7 @@ async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent
     return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
-@app.get('/down_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/down_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info(f'pressed down_button with index {index}')
     lessons = await get_lessons(db_session)
@@ -137,7 +149,7 @@ async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyCompone
     return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
-@app.post('/edit/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_lesson_form(
     lesson_id: int,
     db_session: AsyncDBSession,
@@ -155,7 +167,7 @@ async def edit_lesson_form(
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
 
-@app.get('/plus_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/plus_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def add_lesson(index: int) -> list[AnyComponent]:
     submit_url = f'/api/lessons/new/{index}/'
     form = c.ModelForm(model=get_new_lesson_data_model(), submit_url=submit_url)
@@ -167,7 +179,7 @@ async def add_lesson(index: int) -> list[AnyComponent]:
     )
 
 
-@app.get('/confirm_delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/confirm_delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_lesson_confirm(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     lesson: Lesson = await get_lesson_by_index(index, db_session)
     return get_common_content(
@@ -190,29 +202,43 @@ async def delete_lesson_confirm(index: int, db_session: AsyncDBSession) -> list[
     )
 
 
-@app.get('/delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_slide(
     index: int,
     db_session: AsyncDBSession,
 ):
     lesson: Lesson = await get_lesson_by_index(index, db_session)
-    logger.info(f'delete lesson with id {lesson.id} index {index}')
     lesson.is_active = False
+    lesson.index = None
+    await db_session.flush()
+    lessons = await get_lessons_with_greater_index(index, db_session)
+    for lesson in lessons:
+        lesson.index -= 1
+        await db_session.flush()
     await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/lessons'))]
 
 
-@app.post('/new/{index}/', response_model=FastUI, response_model_exclude_none=True)
-async def new_final_slide(
+@router.post('/new/{index}/', response_model=FastUI, response_model_exclude_none=True)
+async def new_slide(
     index: int,
     db_session: AsyncDBSession,
     form: Annotated[NewLessonDataModel, fastui_form(NewLessonDataModel)],
 ):
+    lessons = await get_lessons(db_session)
+    for lesson in reversed(lessons[index:]):
+        lesson.index += 1
+        await db_session.flush()
+    await db_session.commit()
+
     new_lesson: Lesson = Lesson(
         index=index + 1,
         title=form.title,
         path='1.' if form.is_paid else '0.',
     )
     db_session.add(new_lesson)
+    await db_session.flush()
+    directory = Path(f"src/webapp/static/lessons_images/{new_lesson.id}")
+    directory.mkdir(parents=True, exist_ok=True)
     await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]

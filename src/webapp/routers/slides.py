@@ -1,7 +1,9 @@
 import logging
+from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from PIL import Image
+from fastapi import APIRouter, Depends, HTTPException
 from fastui import AnyComponent, FastUI, components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
@@ -30,14 +32,15 @@ from database.schemas.slide import (
 )
 from database.schemas.sticker import EditStickerSlideDataModel, get_sticker_slide_data_model
 from enums import KeyboardType, SlideType, StickerType
+from webapp.controllers.misc import extract_img_from_form
 from webapp.controllers.slide import get_all_slides_from_lesson_by_order_fastui
 from webapp.routers.components import get_common_content
 
-app = APIRouter()
+router = APIRouter()
 logger = logging.getLogger()
 
 
-@app.get("/lesson{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
+@router.get("/lesson{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('slides router called')
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
@@ -48,7 +51,7 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
             c.Paragraph(text='В этом уроке ещё нет слайдов.'),
             c.Button(text='Назад', named_style='secondary', on_click=BackEvent()),
             c.Paragraph(text=''),
-            c.Button(text='Создать слайд', on_click=GoToEvent(url=f'/slides/plus_button/0/{lesson.index}/')),
+            c.Button(text='Создать слайд', on_click=GoToEvent(url=f'/slides/plus_button/0/{lesson.id}/')),
             title=f'Слайды | Урок {lesson.index} | {lesson.title}',
         )
 
@@ -88,7 +91,7 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
     )
 
 
-@app.get('/edit/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/edit/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_slide(index: int, slide_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     optionnal_component = c.Paragraph(text='')
@@ -111,11 +114,6 @@ async def edit_slide(index: int, slide_id: int, db_session: AsyncDBSession) -> l
                         # class_name='border rounded',
                     ),
                     c.Paragraph(text=''),
-                    c.Button(
-                        text='Загрузить новую картинку',
-                        named_style='secondary',
-                        on_click=GoToEvent(url=f'/upload/image/{slide_id}/'),
-                    ),
                 ]
             )
             submit_url = f'/api/slides/edit/image/{index}/{slide_id}/'
@@ -147,7 +145,7 @@ async def edit_slide(index: int, slide_id: int, db_session: AsyncDBSession) -> l
     )
 
 
-@app.post('/edit/sticker/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/sticker/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_sticker_slide(
     index: int,
     slide_id: int,
@@ -175,7 +173,7 @@ async def edit_sticker_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.post('/edit/text/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/text/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_text_slide(
     index: int,
     slide_id: int,
@@ -201,7 +199,7 @@ async def edit_text_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.post('/edit/dict/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/dict/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_dict_slide(
     index: int,
     slide_id: int,
@@ -225,7 +223,7 @@ async def edit_dict_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.post('/edit/quiz_option/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/quiz_option/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_option_slide(
     index: int,
     slide_id: int,
@@ -240,7 +238,8 @@ async def edit_quiz_option_slide(
         lesson_id=slide.lesson_id,
         text=form.text,
         right_answers=form.right_answers,
-        keyboard_type=form.keyboard_type,
+        keyboard_type=KeyboardType.QUIZ,
+        keyboard=form.keyboard,
         is_exam_slide=form.is_exam_slide,
     )
     db_session.add(new_slide)
@@ -252,7 +251,7 @@ async def edit_quiz_option_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.post('/edit/quiz_input_word/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/quiz_input_word/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_input_word_slide(
     index: int,
     slide_id: int,
@@ -278,7 +277,7 @@ async def edit_quiz_input_word_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.post('/edit/quiz_input_phrase/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/quiz_input_phrase/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_input_phrase_slide(
     index: int,
     slide_id: int,
@@ -306,7 +305,7 @@ async def edit_quiz_input_phrase_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.post('/edit/final/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/final/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_final_slide(
     index: int,
     slide_id: int,
@@ -330,8 +329,9 @@ async def edit_final_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.post('/edit/image/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/image/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_image_slide(
+    image_file: Annotated[bytes, Depends(extract_img_from_form)],
     index: int,
     slide_id: int,
     db_session: AsyncDBSession,
@@ -340,41 +340,39 @@ async def edit_image_slide(
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
-    # allowed_image_formats = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
-    # if form.upload_new_picture.filename:
-    #     if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
-    #         directory = Path(f"src/webapp/static/lessons_images/{slide.lesson_id}")
-    #         directory.mkdir(parents=True, exist_ok=True)
-    #         image_data = await form.upload_new_picture.read()
-    #         image = Image.open(io.BytesIO(image_data))
-    #         if image.width > 800:
-    #             new_height = int((800 / image.width) * image.height)
-    #             image = image.resize((800, new_height), Image.Resampling.LANCZOS)
-    #         file_path = directory / form.upload_new_picture.filename
-    #         with open(file_path, "wb") as buffer:
-    #             image_format = form.upload_new_picture.content_type
-    #             image.save(buffer, format=image_format.split("/")[1])
-    #
-    #         slide_picture = form.upload_new_picture.filename
-    # else:
-    slide_picture = form.select_picture
-    new_slide: Slide = Slide(
-        slide_type=SlideType.IMAGE,
-        lesson_id=slide.lesson_id,
-        picture=slide_picture,
-        delay=form.delay,
-        keyboard_type=form.keyboard_type,
-    )
-    db_session.add(new_slide)
-    await db_session.flush()
-    slides_ids[index] = new_slide.id
-    path = '.'.join([str(slideid) for slideid in slides_ids])
-    lesson.path = path
-    await db_session.commit()
+    allowed_image_formats = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
+    if form.picture.filename != '':
+        if form.picture.filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
+            directory = Path(f"src/webapp/static/lessons_images/{slide.lesson_id}")
+            directory.mkdir(parents=True, exist_ok=True)
+            image = Image.open(io.BytesIO(image_file))
+            if image.width > 800:
+                new_height = int((800 / image.width) * image.height)
+                image = image.resize((800, new_height), Image.Resampling.LANCZOS)
+            file_path = directory / form.picture.filename
+            with open(file_path, "wb") as buffer:
+                image_format = form.picture.content_type
+                image.save(buffer, format=image_format.split("/")[1])
+            slide.picture = form.picture.filename
+    else:
+        slide_picture = form.select_picture if form.select_picture else slide.picture
+        new_slide: Slide = Slide(
+            slide_type=SlideType.IMAGE,
+            lesson_id=slide.lesson_id,
+            picture=slide_picture,
+            delay=form.delay,
+            keyboard_type=KeyboardType.FURTHER if form.keyboard_type else None,
+        )
+        db_session.add(new_slide)
+        await db_session.flush()
+        slides_ids[index] = new_slide.id
+        path = '.'.join([str(slideid) for slideid in slides_ids])
+        lesson.path = path
+        await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.get('/new/{slide_type}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/new/{slide_type}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def create_slide(
     slide_type: SlideType,
     index: int,
@@ -445,7 +443,7 @@ async def create_slide(
     )
 
 
-@app.post('/new/text/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/new/text/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_text_slide_form(
     index: int,
     slide_id: int,
@@ -473,7 +471,7 @@ async def new_text_slide_form(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@app.post('/new/image/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/new/image/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_image_slide_form(
     index: int,
     slide_id: int,
@@ -501,7 +499,7 @@ async def new_image_slide_form(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@app.post('/new/dict/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/new/dict/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_dict_slide(
     index: int,
     slide_id: int,
@@ -527,7 +525,7 @@ async def new_dict_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@app.post('/new/quiz_option/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/new/quiz_option/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_quiz_option_slide(
     index: int,
     slide_id: int,
@@ -556,7 +554,7 @@ async def new_quiz_option_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@app.post('/new/quiz_input_word/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/new/quiz_input_word/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_quiz_input_word_slide(
     index: int,
     slide_id: int,
@@ -584,7 +582,7 @@ async def new_quiz_input_word_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@app.post('/new/quiz_input_phrase/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/new/quiz_input_phrase/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_quiz_input_phrase_slide(
     index: int,
     slide_id: int,
@@ -614,7 +612,7 @@ async def new_quiz_input_phrase_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@app.post('/new/final_slide/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/new/final_slide/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_final_slide(
     index: int,
     slide_id: int,
@@ -640,7 +638,7 @@ async def new_final_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@app.get('/plus_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/plus_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def add_slide(index: int, slide_id: int) -> list[AnyComponent]:
     return get_common_content(
         c.Paragraph(text=''),
@@ -718,7 +716,7 @@ async def add_slide(index: int, slide_id: int) -> list[AnyComponent]:
     )
 
 
-@app.get('/up_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/up_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def slides_up_button(index: int, slide_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info(f'pressed slide up button with slide id {slide_id} index {index}')
     slide: Slide = await get_slide_by_id(slide_id, db_session)
@@ -734,7 +732,7 @@ async def slides_up_button(index: int, slide_id: int, db_session: AsyncDBSession
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.get('/down_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/down_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def slides_down_button(index: int, slide_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info(f'pressed slide down button with slide id {slide_id} index {index}')
     slide: Slide = await get_slide_by_id(slide_id, db_session)
@@ -750,7 +748,7 @@ async def slides_down_button(index: int, slide_id: int, db_session: AsyncDBSessi
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.get('/delete/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/delete/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_slide(
     index: int,
     slide_id: int,
@@ -768,7 +766,7 @@ async def delete_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@app.get('/confirm_delete/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/confirm_delete/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_slide(index: int, slide_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     return get_common_content(
