@@ -19,11 +19,11 @@ from enums import ReactionType
 from webapp.controllers.reaction import delete_reaction_by_id, get_reaction_by_id, get_reactions_table_content
 from webapp.routers.components import get_common_content
 
-app = APIRouter()
+router = APIRouter()
 logger = logging.getLogger()
 
 
-@app.get("", response_model=FastUI, response_model_exclude_none=True)
+@router.get("", response_model=FastUI, response_model_exclude_none=True)
 async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('slides router called')
     right_reactions = await get_reactions_table_content(ReactionType.RIGHT, db_session)
@@ -88,7 +88,7 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     )
 
 
-@app.get('/add/{reaction_type}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/add/{reaction_type}/', response_model=FastUI, response_model_exclude_none=True)
 async def add_reaction_form(reaction_type: ReactionType) -> list[AnyComponent]:
     match reaction_type:
         case ReactionType.RIGHT:
@@ -111,7 +111,7 @@ async def add_reaction_form(reaction_type: ReactionType) -> list[AnyComponent]:
     )
 
 
-@app.post('/add/{reaction_type}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/add/{reaction_type}/', response_model=FastUI, response_model_exclude_none=True)
 async def add_reaction(
     reaction_type: ReactionType,
     db_session: AsyncDBSession,
@@ -123,7 +123,7 @@ async def add_reaction(
     return [c.FireEvent(event=GoToEvent(url=f'/reactions'))]
 
 
-@app.post('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_reaction(
     reaction_id: int,
     db_session: AsyncDBSession,
@@ -132,7 +132,7 @@ async def delete_reaction(
     return [c.FireEvent(event=GoToEvent(url=f'/reactions'))]
 
 
-@app.get("/edit/{reaction_id}", response_model=FastUI, response_model_exclude_none=True)
+@router.get("/edit/{reaction_id}", response_model=FastUI, response_model_exclude_none=True)
 async def edit_text_page(reaction_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     reaction = await get_reaction_by_id(reaction_id, db_session)
     submit_url = f'/api/reactions/edit/{reaction_id}/'
@@ -145,7 +145,7 @@ async def edit_text_page(reaction_id: int, db_session: AsyncDBSession) -> list[A
     )
 
 
-@app.post('/edit/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_lesson_form(
     reaction_id: int,
     db_session: AsyncDBSession,
@@ -161,7 +161,7 @@ async def edit_lesson_form(
     return [c.FireEvent(event=GoToEvent(url=f'/reactions'))]
 
 
-@app.get('/confirm_delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/confirm_delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_slide(reaction_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     reaction: Reaction = await get_reaction_by_id(reaction_id, db_session)
     return get_common_content(
@@ -186,7 +186,7 @@ async def delete_slide(reaction_id: int, db_session: AsyncDBSession) -> list[Any
     )
 
 
-@app.get('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_slide(
     reaction_id: int,
     db_session: AsyncDBSession,

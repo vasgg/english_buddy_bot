@@ -14,10 +14,10 @@ async def get_lessons_fastui(db_session: AsyncDBSession):
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     validated_lessons = []
-    for index, lesson in enumerate(lessons, start=1):
+    for lesson in lessons:
         lesson_data = {
             'id': lesson.id,
-            'index': index,
+            'index': lesson.index,
             'title': lesson.title,
             'level': lesson.level if lesson.level else None,
             'is_paid': '☑️' if lesson.path.split('.')[0] == '1' else ' ',

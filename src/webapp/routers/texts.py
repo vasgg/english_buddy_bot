@@ -12,11 +12,11 @@ from database.schemas.text import EditTextDataModel, get_text_data_model
 from webapp.controllers.text import get_text_by_id, get_texts_table_content
 from webapp.routers.components import get_common_content
 
-app = APIRouter()
+router = APIRouter()
 logger = logging.getLogger()
 
 
-@app.get("", response_model=FastUI, response_model_exclude_none=True)
+@router.get("", response_model=FastUI, response_model_exclude_none=True)
 async def texts_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('texts router called')
     texts = await get_texts_table_content(db_session)
@@ -43,7 +43,7 @@ async def texts_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     )
 
 
-@app.get("/edit/{text_id}", response_model=FastUI, response_model_exclude_none=True)
+@router.get("/edit/{text_id}", response_model=FastUI, response_model_exclude_none=True)
 async def edit_text_page(text_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     text = await get_text_by_id(text_id, db_session)
     submit_url = f'/api/texts/edit/{text_id}/'
@@ -56,7 +56,7 @@ async def edit_text_page(text_id: int, db_session: AsyncDBSession) -> list[AnyCo
     )
 
 
-@app.post('/edit/{text_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/{text_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_lesson_form(
     text_id: int,
     db_session: AsyncDBSession,

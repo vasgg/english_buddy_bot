@@ -5,12 +5,11 @@ from fastapi.staticfiles import StaticFiles
 import sentry_sdk
 
 from config import get_logging_config, settings
-from webapp.routers.lessons import app as lessons_fastui_router
-from webapp.routers.reactions import app as reaction_fastui_router
-from webapp.routers.root import app as root_fastui_router
-from webapp.routers.slides import app as slides_fastui_router
-from webapp.routers.texts import app as texts_fastui_router
-from webapp.routers.upload import app as upload_router
+from webapp.routers.lessons import router as lessons_fastui_router
+from webapp.routers.reactions import router as reaction_fastui_router
+from webapp.routers.root import router as root_fastui_router
+from webapp.routers.slides import router as slides_fastui_router
+from webapp.routers.texts import router as texts_fastui_router
 
 logging_config = get_logging_config(__name__)
 logging.config.dictConfig(logging_config)
@@ -30,7 +29,6 @@ sentry_sdk.init(
 app = FastAPI()
 logger.info("webapp started")
 app.mount("/static", StaticFiles(directory="src/webapp/static"), name="static")
-app.include_router(upload_router, prefix="/upload")
 app.include_router(slides_fastui_router, prefix="/api/slides")
 app.include_router(texts_fastui_router, prefix="/api/texts")
 app.include_router(reaction_fastui_router, prefix="/api/reactions")

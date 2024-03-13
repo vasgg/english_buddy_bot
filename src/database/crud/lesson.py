@@ -21,14 +21,14 @@ async def get_lesson_by_index(lesson_index: int, db_session: AsyncSession) -> Le
 
 
 async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
-    query = select(Lesson).group_by(Lesson.index)
+    query = select(Lesson).filter(Lesson.is_active).group_by(Lesson.index)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     return [row for row in lessons]
 
 
 async def get_lessons_with_greater_index(index: int, db_session: AsyncSession) -> list[Lesson]:
-    query = select(Lesson).filter(Lesson.index > index)
+    query = select(Lesson).filter(Lesson.is_active, Lesson.index > index).group_by(Lesson.index)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     return [row for row in lessons]
