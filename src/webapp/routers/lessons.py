@@ -85,7 +85,7 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     )
 
 
-@app.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
+@router.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     lesson = await get_lesson_by_id(lesson_id, db_session)
     submit_url = f'/api/lessons/edit/{lesson_id}/'
@@ -95,6 +95,7 @@ async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
         form,
         title=f'edit | lesson {lesson.index} | {lesson.title}',
     )
+
 
 @router.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
