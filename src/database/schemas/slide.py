@@ -2,6 +2,7 @@ from typing import Annotated, Type
 
 from fastapi import UploadFile
 from fastui.forms import FormFile
+
 from pydantic import BaseModel, Field
 
 from database.models.slide import Slide

@@ -11,6 +11,7 @@ from webapp.routers.root import router as root_fastui_router
 from webapp.routers.slides import router as slides_fastui_router
 from webapp.routers.texts import router as texts_fastui_router
 
+
 logging_config = get_logging_config(__name__)
 logging.config.dictConfig(logging_config)
 logger = logging.getLogger()
