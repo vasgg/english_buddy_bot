@@ -235,6 +235,6 @@ class EditImageSlideData(BaseModel):
     delay: float | None = None
     select_picture: str | None = None
     keyboard_type: bool = False
-    picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=16_000_000)] = Field(
+    upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=16_000_000)] | None = Field(
         description='Upload a profile picture, must not be more than 16kb'
     )

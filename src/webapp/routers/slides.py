@@ -313,19 +313,19 @@ async def edit_image_slide(
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     allowed_image_formats = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
-    if form.picture.filename != '':
-        if form.picture.filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
+    if form.upload_new_picture.filename != '':
+        if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
             directory = Path(f"src/webapp/static/lessons_images/{slide.lesson_id}")
             directory.mkdir(parents=True, exist_ok=True)
             image = Image.open(io.BytesIO(image_file))
             if image.width > 800:
                 new_height = int((800 / image.width) * image.height)
                 image = image.resize((800, new_height), Image.Resampling.LANCZOS)
-            file_path = directory / form.picture.filename
+            file_path = directory / form.upload_new_picture.filename
             with open(file_path, "wb") as buffer:
-                image_format = form.picture.content_type
+                image_format = form.upload_new_picture.content_type
                 image.save(buffer, format=image_format.split("/")[1])
-            slide.picture = form.picture.filename
+            slide.picture = form.upload_new_picture.filename
     else:
         slide_picture = form.select_picture if form.select_picture else slide.picture
         new_slide: Slide = Slide(
