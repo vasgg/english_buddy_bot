@@ -296,7 +296,11 @@ async def check_input_phrase(
     slide_id = data["quiz_phrase_slide_id"]
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
     lesson: Lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
-    slide_ids = [int(elem) for elem in lesson.path.split(".")]
+    path = [int(elem) for elem in lesson.path.split(".")]
+    try:
+        next_slide_id = path[path.index(slide.id) + 1]
+    except IndexError:
+        next_slide_id = session.current_slide_id
     answers = slide.right_answers.split("|")
     answers_lower = [answer.lower() for answer in answers]
     almost_right_answers = slide.almost_right_answers.split("|")
@@ -315,7 +319,7 @@ async def check_input_phrase(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
-            slide_id=slide_ids[slide_ids.index(slide.id) + 1],
+            slide_id=next_slide_id,
             state=state,
             session=session,
             db_session=db_session,
@@ -334,7 +338,7 @@ async def check_input_phrase(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
-            slide_id=slide_ids[slide_ids.index(slide.id) + 1],
+            slide_id=next_slide_id,
             state=state,
             session=session,
             db_session=db_session,
