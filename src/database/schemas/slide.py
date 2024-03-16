@@ -2,7 +2,6 @@ from typing import Annotated, Type
 
 from fastapi import UploadFile
 from fastui.forms import FormFile
-
 from pydantic import BaseModel, Field
 
 from database.models.slide import Slide
@@ -190,17 +189,6 @@ def get_quiz_input_phrase_slide_data_model(slide: Slide = None) -> Type[BaseMode
     return QuizInputPhraseSlideDataModel
 
 
-def get_final_slide_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
-    class FinalSlideSlideDataModel(BaseModel):
-        text: str = Field(
-            slide.text if slide else '',
-            description='Введите текст финального слайда. Обязательное поле.',
-            title='текст слайда',
-        )
-
-    return FinalSlideSlideDataModel
-
-
 def get_delete_slide_confirmation_data_model(slide: Slide = None) -> Type[BaseModel]:
     class DeleteSlideConfirmationDataModel(BaseModel):
         confirm: bool = Field(False, description=f'Вы действительно хотите удалить слайд {slide.id}?', title='Confirm')
@@ -241,10 +229,6 @@ class EditQuizInputPhraseSlideData(BaseModel):
     almost_right_answers: str | None = None
     almost_right_answer_reply: str | None = None
     is_exam_slide: bool = False
-
-
-class EditFinalSlideSlideData(BaseModel):
-    text: str
 
 
 class EditImageSlideData(BaseModel):
