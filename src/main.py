@@ -23,10 +23,6 @@ async def main():
     logging_config = get_logging_config(__name__)
     logging.config.dictConfig(logging_config)
 
-    # logging.basicConfig(
-    #     level=logging.INFO,
-    #     format="%(asctime)s: " "%(filename)s: " "%(levelname)s: " "%(funcName)s(): " "%(lineno)d:\t" "%(message)s",
-    # )
     sentry_sdk.init(
         dsn=settings.SENTRY_AIOGRAM_DSN.get_secret_value(),
         # Set traces_sample_rate to 1.0 to capture 100%

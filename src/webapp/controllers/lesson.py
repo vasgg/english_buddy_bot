@@ -21,7 +21,6 @@ async def get_lessons_fastui(db_session: AsyncDBSession):
             'title': lesson.title,
             'level': lesson.level if lesson.level else None,
             'is_paid': '☑️' if lesson.path.split('.')[0] == '1' else ' ',
-            'exam_slide_id': lesson.exam_slide_id if lesson.exam_slide_id else None,
             'total_slides': str(len(lesson.path.split('.')) - 1) if lesson.path else ' ',
             'slides': '📖',
             'edit_button': '✏️',

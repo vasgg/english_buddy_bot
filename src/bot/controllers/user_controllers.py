@@ -6,6 +6,7 @@ from aiogram import Bot, types
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
+from config import settings
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_completed_lessons, get_lessons
 from database.crud.user import get_all_users_with_reminders, update_last_reminded_at
@@ -34,6 +35,7 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
     while True:
         await asyncio.sleep(Times.ONE_HOUR.value)
         utcnow = datetime.utcnow()
+        await bot.send_message(chat_id=settings.ADMINS[0], text=f'utcnow.hour: {utcnow.hour}')
         if utcnow.hour == Times.UTC_STARTING_MARK.value:
             async with db_connector.session_factory() as session:
                 for user in await get_all_users_with_reminders(session):

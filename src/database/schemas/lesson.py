@@ -12,7 +12,6 @@ class LessonSchema(BaseModel):
     index: int | None = Field(title=' ')
     title: str = Field(title='title')
     level: LessonLevel | None = None
-    exam_slide_id: int | None = Field(title='exam slide id')
     created_at: datetime | None = None
 
     class Config:
@@ -40,11 +39,6 @@ def get_lesson_data_model(lesson: Lesson) -> Type[BaseModel]:
             lesson.title,
             description='Введите название урока. Обязательное поле.',
             title='title',
-        )
-        exam_slide_id: int | None = Field(
-            lesson.exam_slide_id,
-            description='Введите id первого экзаменационного слайда. Необязательное поле.',
-            title='exam slide',
         )
         is_paid: bool | None = Field(
             True if lesson.path.split('.')[0] == '1' else False,
@@ -74,7 +68,6 @@ def get_new_lesson_data_model() -> Type[BaseModel]:
 class EditLessonDataModel(BaseModel):
     title: str
     first_slide_id: int | None = None
-    exam_slide_id: int | None = None
     total_slides: int | None = None
     is_paid: bool | None = False
 

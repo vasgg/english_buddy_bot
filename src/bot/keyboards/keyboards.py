@@ -68,12 +68,12 @@ def get_quiz_keyboard(words: list[str], answer: str, lesson_id: int, slide_id: i
 
 
 async def get_lesson_progress_keyboard(
-    mode: UserLessonProgress, lesson: Lesson, current_slide_id: int = None
+    mode: UserLessonProgress, lesson: Lesson, exam_slide_id: int | None = None, current_slide_id: int | None = None
 ) -> InlineKeyboardMarkup:
     first_slide_id = lesson.path.split('.')[1]
     match mode:
         case UserLessonProgress.NO_PROGRESS:
-            if lesson.exam_slide_id:
+            if exam_slide_id:
                 buttons = [
                     [
                         InlineKeyboardButton(
@@ -90,7 +90,7 @@ async def get_lesson_progress_keyboard(
                             text='Начать с экзамена',
                             callback_data=LessonStartsFromCallbackFactory(
                                 lesson_id=lesson.id,
-                                slide_id=lesson.exam_slide_id,
+                                slide_id=exam_slide_id,
                                 attr=LessonStartsFrom.EXAM,
                             ).pack(),
                         )

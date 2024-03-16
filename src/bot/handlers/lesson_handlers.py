@@ -2,7 +2,7 @@ from aiogram import Bot, Router, types
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import lesson_routine
+from bot.controllers.lesson_controllers import find_first_exam_slide, session_routine
 from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_builders import (
@@ -23,7 +23,7 @@ from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to
 router = Router()
 
 
-async def common_processing(
+async def lesson_routine(
     bot: Bot,
     user: User,
     lesson_id: int,
@@ -45,9 +45,7 @@ async def common_processing(
         session_id=session.id,
         db_session=db_session,
     )
-    await lesson_routine(
-        bot, user, lesson_id, slide_id, current_step, session.total_slides, state, session, db_session
-    )
+    await session_routine(bot, user, slide_id, current_step, state, session, db_session)
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
@@ -65,6 +63,8 @@ async def lesson_callback_processing(
     if slides_count == 0:
         await callback.message.answer(text='no slides yet')
         return
+    slide_ids = [int(elem) for elem in lesson.path.split(".")]
+    first_exam_slide = await find_first_exam_slide(slide_ids, db_session)
     if is_paid and user.paywall_access is False:
         await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
         return
@@ -74,19 +74,24 @@ async def lesson_callback_processing(
             reply_markup=await get_lesson_progress_keyboard(
                 mode=UserLessonProgress.IN_PROGRESS,
                 lesson=lesson,
+                exam_slide_id=first_exam_slide,
                 current_slide_id=session.current_slide_id,
             ),
         )
     else:
-        if lesson.exam_slide_id:
+        if first_exam_slide:
             await callback.message.answer(
                 text=await get_text_by_prompt(prompt='starts_from_with_exam', db_session=db_session),
-                reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS, lesson=lesson),
+                reply_markup=await get_lesson_progress_keyboard(
+                    mode=UserLessonProgress.NO_PROGRESS, lesson=lesson, exam_slide_id=first_exam_slide
+                ),
             )
         else:
             await callback.message.answer(
                 text=await get_text_by_prompt(prompt='starts_from_without_exam', db_session=db_session),
-                reply_markup=await get_lesson_progress_keyboard(mode=UserLessonProgress.NO_PROGRESS, lesson=lesson),
+                reply_markup=await get_lesson_progress_keyboard(
+                    mode=UserLessonProgress.NO_PROGRESS, lesson=lesson, exam_slide_id=first_exam_slide
+                ),
             )
 
     await callback.answer()
@@ -108,6 +113,8 @@ async def lesson_start_from_callback_processing(
     session = await get_current_session(user.id, lesson_id, db_session)
     lesson = await get_lesson_by_id(lesson_id, db_session)
     total_slides = len(lesson.path.split('.')) - 1
+    slide_ids = [int(elem) for elem in lesson.path.split(".")]
+    first_exam_slide = await find_first_exam_slide(slide_ids, db_session)
     match attr:
         case LessonStartsFrom.BEGIN:
             if session:
@@ -126,7 +133,7 @@ async def lesson_start_from_callback_processing(
             if session:
                 await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
             steps = await get_steps_to_current_slide(
-                first_slide_id=int(lesson.path.split('.')[1]), target_slide_id=lesson.exam_slide_id, path=lesson.path
+                first_slide_id=int(lesson.path.split('.')[1]), target_slide_id=first_exam_slide, path=lesson.path
             )
             total_slides = total_slides - steps
             slides = lesson.path.split('.')
@@ -136,7 +143,7 @@ async def lesson_start_from_callback_processing(
                 current_slide_id=slide_id,
                 starts_from=lesson_to_session(attr),
                 total_slides=total_slides,
-                path=lesson.path[:2] + '.'.join(slides[slides.index(str(lesson.exam_slide_id)) :]),
+                path=lesson.path[:2] + '.'.join(slides[slides.index(str(first_exam_slide)) :]),
             )
             db_session.add(session)
             await db_session.flush()
@@ -145,7 +152,7 @@ async def lesson_start_from_callback_processing(
         case _:
             assert False, 'invalid attr'
 
-    await common_processing(bot, user, lesson_id, slide_id, session, state, db_session)
+    await lesson_routine(bot, user, lesson_id, slide_id, session, state, db_session)
     await state.update_data(session_id=session.id)
     await callback.answer()
 

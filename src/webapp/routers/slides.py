@@ -1,3 +1,4 @@
+import io
 import logging
 from pathlib import Path
 from typing import Annotated
@@ -16,13 +17,11 @@ from database.models.lesson import Lesson
 from database.models.slide import Slide
 from database.schemas.slide import (
     EditDictSlideData,
-    EditFinalSlideSlideData,
     EditImageSlideData,
     EditQuizInputPhraseSlideData,
     EditQuizInputWordSlideData,
     EditQuizOptionsSlideData,
     EditTextSlideDataModel,
-    get_final_slide_slide_data_model,
     get_image_slide_data_model,
     get_pin_dict_slide_data_model,
     get_quiz_input_phrase_slide_data_model,
@@ -130,9 +129,6 @@ async def edit_slide(index: int, slide_id: int, db_session: AsyncDBSession) -> l
         case SlideType.QUIZ_INPUT_PHRASE:
             submit_url = f'/api/slides/edit/quiz_input_phrase/{index}/{slide_id}/'
             form = c.ModelForm(model=get_quiz_input_phrase_slide_data_model(slide), submit_url=submit_url)
-        case SlideType.FINAL_SLIDE:
-            submit_url = f'/api/slides/edit/final_slide/{index}/{slide_id}/'
-            form = c.ModelForm(model=get_final_slide_slide_data_model(slide), submit_url=submit_url)
         case _:
             raise HTTPException(status_code=404, detail="Unexpected slide type")
     return get_common_content(
@@ -293,32 +289,8 @@ async def edit_quiz_input_phrase_slide(
         text=form.text,
         right_answers=form.right_answers,
         almost_right_answers=form.almost_right_answers,
-        almost_right_answers_reply=form.almost_right_answers_reply,
+        almost_right_answer_reply=form.almost_right_answer_reply,
         is_exam_slide=form.is_exam_slide,
-    )
-    db_session.add(new_slide)
-    await db_session.flush()
-    slides_ids[index] = new_slide.id
-    path = '.'.join([str(slideid) for slideid in slides_ids])
-    lesson.path = path
-    await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
-
-
-@router.post('/edit/final/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
-async def edit_final_slide(
-    index: int,
-    slide_id: int,
-    db_session: AsyncDBSession,
-    form: Annotated[EditFinalSlideSlideData, fastui_form(EditFinalSlideSlideData)],
-):
-    slide: Slide = await get_slide_by_id(slide_id, db_session)
-    lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
-    slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
-    new_slide: Slide = Slide(
-        slide_type=SlideType.FINAL_SLIDE,
-        lesson_id=slide.lesson_id,
-        text=form.text,
     )
     db_session.add(new_slide)
     await db_session.flush()
@@ -430,9 +402,6 @@ async def create_slide(
         case SlideType.QUIZ_INPUT_PHRASE:
             submit_url = f'/api/slides/new/quiz_input_phrase/{index}/{slide_id}/'
             form = c.ModelForm(model=get_quiz_input_phrase_slide_data_model(), submit_url=submit_url)
-        case SlideType.FINAL_SLIDE:
-            submit_url = f'/api/slides/new/final_slide/{index}/{slide_id}/'
-            form = c.ModelForm(model=get_final_slide_slide_data_model(), submit_url=submit_url)
         case _:
             assert False, 'Unexpected slide type'
     return get_common_content(
@@ -612,32 +581,6 @@ async def new_quiz_input_phrase_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
-@router.post('/new/final_slide/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
-async def new_final_slide(
-    index: int,
-    slide_id: int,
-    db_session: AsyncDBSession,
-    form: Annotated[EditFinalSlideSlideData, fastui_form(EditFinalSlideSlideData)],
-):
-    slide: Slide = await get_slide_by_id(slide_id, db_session)
-    lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
-    if index == 0:
-        lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
-    slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
-    new_slide: Slide = Slide(
-        slide_type=SlideType.FINAL_SLIDE,
-        lesson_id=lesson.id,
-        text=form.text,
-    )
-    db_session.add(new_slide)
-    await db_session.flush()
-    slides_ids.insert(index + 1, new_slide.id)
-    path = '.'.join([str(slideid) for slideid in slides_ids])
-    lesson.path = path
-    await db_session.commit()
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
-
-
 @router.get('/plus_button/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def add_slide(index: int, slide_id: int) -> list[AnyComponent]:
     return get_common_content(
@@ -695,13 +638,6 @@ async def add_slide(index: int, slide_id: int) -> list[AnyComponent]:
         c.Button(
             text='💬  квиз впиши фразу',
             on_click=GoToEvent(url=f'/slides/new/quiz_input_phrase/{index}/{slide_id}/'),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='🎉  финальный слайд',
-            on_click=GoToEvent(url=f'/slides/new/final_slide/{index}/{slide_id}/'),
             class_name='+ ms-2',
             named_style='secondary',
         ),
