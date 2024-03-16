@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu
-from bot.handlers.lesson_handlers import common_processing
+from bot.handlers.lesson_handlers import lesson_routine
 from bot.internal.commands import special_commands
 from config import settings
 from database.crud.answer import get_text_by_prompt
@@ -60,7 +60,7 @@ async def set_slide_position_handler(
             first_slide_id=int(lesson.path.split('.')[1]), target_slide_id=new_slide_id, path=lesson.path
         )
         await message.answer(text=f'Пройдено шагов: {steps}')
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=session.lesson_id,

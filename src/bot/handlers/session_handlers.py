@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.controllers.session_controller import (
     log_quiz_answer,
 )
-from bot.handlers.lesson_handlers import common_processing
+from bot.handlers.lesson_handlers import lesson_routine
 from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
 from bot.middlewares.session_middlewares import SessionMiddleware
@@ -40,7 +40,7 @@ async def slide_callback_processing(
     await callback.message.delete_reply_markup()
     lesson_id = callback_data.lesson_id
     next_slide_id = callback_data.next_slide_id
-    await common_processing(
+    await lesson_routine(
         bot=bot,
         user=user,
         lesson_id=lesson_id,
@@ -96,7 +96,7 @@ async def quiz_callback_processing(
                 ),
             )
             return
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
@@ -124,7 +124,7 @@ async def quiz_callback_processing(
             slide=slide,
             db_session=db_session,
         )
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
@@ -165,7 +165,7 @@ async def hint_callback(
             db_session=db_session,
         )
         await asyncio.sleep(2)
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=callback_data.lesson_id,
@@ -187,7 +187,7 @@ async def hint_callback(
         slide=slide,
         db_session=db_session,
     )
-    await common_processing(
+    await lesson_routine(
         bot=bot,
         user=user,
         lesson_id=callback_data.lesson_id,
@@ -237,7 +237,7 @@ async def check_input_word(
                 ),
             )
             return
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
@@ -270,7 +270,7 @@ async def check_input_word(
             slide=slide,
             db_session=db_session,
         )
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
@@ -311,7 +311,7 @@ async def check_input_phrase(
             slide=slide,
             db_session=db_session,
         )
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
@@ -330,7 +330,7 @@ async def check_input_phrase(
             slide=slide,
             db_session=db_session,
         )
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
@@ -361,7 +361,7 @@ async def check_input_phrase(
                 ),
             )
             return
-        await common_processing(
+        await lesson_routine(
             bot=bot,
             user=user,
             lesson_id=lesson_id,
