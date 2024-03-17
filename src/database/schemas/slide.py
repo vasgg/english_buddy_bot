@@ -65,7 +65,7 @@ def get_image_slide_data_model(slide: Slide = None, lesson_id: int = None) -> Ty
             json_schema_extra={'search_url': f'/api/files/{lesson_id if lesson_id else slide.lesson_id}/'},
         )
         upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=10_000_000)] | None = Field(
-            description='Загрузите файл с вашего копьютера. Поддерживаются только изображения размером до 10мб. Необязательное поле.',
+            description='Загрузите файл с вашего компьютера. Поддерживаются только изображения до 10мб. Необязательное поле.',
             title='загрузка картинки',
         )
         delay: float | None = Field(

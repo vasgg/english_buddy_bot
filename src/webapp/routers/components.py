@@ -27,6 +27,11 @@ def get_common_content(
                     on_click=GoToEvent(url='/reactions'),
                     active='startswith:/reactions',
                 ),
+                c.Link(
+                    components=[c.Text(text='Рассылка')],
+                    on_click=GoToEvent(url='/newsletter'),
+                    active='startswith:/newsletter',
+                ),
             ],
         ),
         c.Page(
