@@ -189,7 +189,9 @@ async def reminders_callback_processing(
                 assert False, 'unexpected frequency'
     else:
         message = await get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
-    await set_user_reminders(user_id=user.id, reminder_freq=frequency, db_session=db_session)
+    await set_user_reminders(
+        user_id=user.id, reminder_freq=frequency if frequency > 0 else None, db_session=db_session
+    )
     await callback.message.answer(text=message)
     await callback.answer()
     # TODO: вот тут нужен правильный флаг, чтобы после команды не показывать старт меню
