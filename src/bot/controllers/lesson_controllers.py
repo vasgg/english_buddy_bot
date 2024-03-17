@@ -29,8 +29,6 @@ async def session_routine(
     if not slide:
         logger.error(f'Slide {slide_id} not found')
         return
-    if not slide.text:
-        slide.text = 'System message. Please add slide text in admin panel.'
     await update_session(
         user_id=user.id,
         lesson_id=session.lesson_id,

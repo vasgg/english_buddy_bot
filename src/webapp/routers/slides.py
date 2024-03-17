@@ -10,6 +10,7 @@ from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
+from config import settings
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.db import AsyncDBSession
@@ -312,9 +313,8 @@ async def edit_image_slide(
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
-    allowed_image_formats = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
     if form.upload_new_picture.filename != '':
-        if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
+        if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
             directory = Path(f"src/webapp/static/lessons_images/{slide.lesson_id}")
             directory.mkdir(parents=True, exist_ok=True)
             image = Image.open(io.BytesIO(image_file))

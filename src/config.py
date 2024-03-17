@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     SENTRY_AIOGRAM_DSN: SecretStr
     SENTRY_FASTAPI_DSN: SecretStr
     db_echo: bool = False
+    allowed_image_formats: list[str] = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
 
     @property
     def aiosqlite_db_url(self) -> str:

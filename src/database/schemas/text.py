@@ -23,14 +23,21 @@ class TextsTableSchema(TextsSchema):
         from_attributes = True
 
 
-def get_text_data_model(data: Text) -> Type[BaseModel]:
+def get_text_data_model(data: Text | None = None) -> Type[BaseModel]:
     class TextDataModel(BaseModel):
         description: str = Field(
-            default=data.description,
+            default=data.description if data else '',
             description='Введите описание. Обязательное поле.',
             title='description',
         )
-        text: str = Field(default=data.text, description='Введите текст. Обязательное поле.', title='text')
+        text: str = Field(
+            initial=data.text if data else '',
+            description='Введите текст. Обязательное поле.',
+            format='textarea',
+            title='text',
+            rows=5,
+            cols=None,
+        )
 
         class Config:
             from_attributes = True

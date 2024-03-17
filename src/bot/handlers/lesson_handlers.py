@@ -1,4 +1,5 @@
 from aiogram import Bot, Router, types
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,7 +56,10 @@ async def lesson_callback_processing(
     user: User,
     db_session: AsyncSession,
 ) -> None:
-    await callback.message.delete()
+    try:
+        await callback.message.delete()
+    except TelegramBadRequest:
+        pass
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
     slides_count = await get_lesson_slides_count(path=lesson.path)
@@ -106,7 +110,10 @@ async def lesson_start_from_callback_processing(
     state: FSMContext,
     db_session: AsyncSession,
 ) -> None:
-    await callback.message.delete()
+    try:
+        await callback.message.delete()
+    except TelegramBadRequest:
+        pass
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
     attr = callback_data.attr
@@ -164,7 +171,10 @@ async def reminders_callback_processing(
     user: User,
     db_session: AsyncSession,
 ) -> None:
-    await callback.message.delete()
+    try:
+        await callback.message.delete()
+    except TelegramBadRequest:
+        pass
     frequency = callback_data.frequency
     text = await get_text_by_prompt(prompt='set_reminder_message', db_session=db_session)
     if frequency > 0:

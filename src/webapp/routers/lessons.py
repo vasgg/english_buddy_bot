@@ -96,6 +96,7 @@ async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
         title=f'edit | lesson {lesson.index} | {lesson.title}',
     )
 
+
 @router.get("/edit/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def show_lesson(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     lesson = await get_lesson_by_id(lesson_id, db_session)
@@ -222,6 +223,7 @@ async def delete_slide(
     lesson: Lesson = await get_lesson_by_index(index, db_session)
     lesson.is_active = False
     lesson.index = None
+    db_session.add(lesson)
     await db_session.flush()
     lessons = await get_lessons_with_greater_index(index, db_session)
     for lesson in lessons:

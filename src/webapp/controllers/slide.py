@@ -13,11 +13,16 @@ async def get_all_slides_from_lesson_by_order_fastui(path: str, db_session: Asyn
     ordered_slides = []
     for index, slide_id in enumerate(slides_ids, start=1):
         slide = await get_slide_by_id(slide_id, db_session)
+        slide_text = (
+            slide.slide_type.value.replace('_', ' ').capitalize()
+            if 'sticker' in slide.slide_type.value
+            else slide.text
+        )
         slide_data = {
             'id': slide.id,
             'index': index,
             'emoji': get_slide_emoji(slide.slide_type),
-            'text': slide.picture if slide.slide_type.value == 'image' else slide.text,
+            'text': slide.picture if slide.slide_type.value == 'image' else slide_text,
             'details': get_slide_details(slide),
             'is_exam_slide': '🎓' if slide.is_exam_slide else ' ',
             'edit_button': '✏️',

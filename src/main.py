@@ -1,5 +1,6 @@
 import asyncio
 import logging.config
+from pathlib import Path
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -20,6 +21,8 @@ from database.db import db
 
 
 async def main():
+    logs_directory = Path(f"logs")
+    logs_directory.mkdir(parents=True, exist_ok=True)
     logging_config = get_logging_config(__name__)
     logging.config.dictConfig(logging_config)
 

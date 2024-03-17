@@ -193,7 +193,6 @@ async def slides_routine(
             await state.set_state(state_)
         case _:
             assert False, f'Unexpected slide type: {slide.slide_type}'
-    return
 
 
 async def last_slide_processing(bot: Bot, user: User, path: list, state, session, db_session: AsyncSession) -> None:

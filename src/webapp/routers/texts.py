@@ -57,7 +57,7 @@ async def edit_text_page(text_id: int, db_session: AsyncDBSession) -> list[AnyCo
 
 
 @router.post('/edit/{text_id}/', response_model=FastUI, response_model_exclude_none=True)
-async def edit_lesson_form(
+async def edit_text_form(
     text_id: int,
     db_session: AsyncDBSession,
     form: Annotated[EditTextDataModel, fastui_form(EditTextDataModel)],
