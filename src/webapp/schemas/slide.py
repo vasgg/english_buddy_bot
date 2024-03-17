@@ -2,10 +2,11 @@ from typing import Annotated, Type
 
 from fastapi import UploadFile
 from fastui.forms import FormFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from pydantic_core import PydanticCustomError
 
 from database.models.slide import Slide
-from enums import KeyboardType, StickerType
+from enums import KeyboardType
 
 
 class SlidesSchema(BaseModel):
@@ -99,7 +100,7 @@ def get_pin_dict_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
 def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class QuizOptionsSlideDataModel(BaseModel):
         text: str = Field(
-            slide.text if slide else None,
+            slide.text if slide else '',
             description='Введите текст вопроса. Обязательное поле.',
             title='текст вопроса',
         )
@@ -118,6 +119,12 @@ def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
             description='Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.',
             title='exam slide',
         )
+
+        @field_validator('text')
+        def text_validator(cls, v: str) -> str:
+            if v and v[0].islower():
+                raise PydanticCustomError('lower', 'Name must start with a capital letter')
+            return v
 
     return QuizOptionsSlideDataModel
 
@@ -206,21 +213,33 @@ class EditDictSlideData(BaseModel):
     text: str
 
 
-class EditStickerSlideData(BaseModel):
-    sticker_type: StickerType
-
-
 class EditQuizOptionsSlideData(BaseModel):
     text: str
     right_answers: str
     keyboard: str
     is_exam_slide: bool = False
 
+    @field_validator('text')
+    def text_validator(cls, v: str) -> str:
+        if '…' not in v:
+            raise PydanticCustomError(
+                'missing_symbol', 'Текст вопроса должен содержать символ "…" для подстановки правильного значения.'
+            )
+        return v
+
 
 class EditQuizInputWordSlideData(BaseModel):
     text: str
     right_answers: str
     is_exam_slide: bool = False
+
+    @field_validator('text')
+    def text_validator(cls, v: str) -> str:
+        if '…' not in v:
+            raise PydanticCustomError(
+                'missing_symbol', 'Текст вопроса должен содержать символ "…" для подстановки правильного значения.'
+            )
+        return v
 
 
 class EditQuizInputPhraseSlideData(BaseModel):
@@ -235,6 +254,4 @@ class EditImageSlideData(BaseModel):
     delay: float | None = None
     select_picture: str | None = None
     keyboard_type: bool = False
-    upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=16_000_000)] | None = Field(
-        description='Upload a profile picture, must not be more than 16kb'
-    )
+    upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=10_000_000)] | None
