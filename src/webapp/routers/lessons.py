@@ -10,16 +10,16 @@ from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
 from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons, get_lessons_with_greater_index
-from database.db import AsyncDBSession
 from database.models.lesson import Lesson
-from database.schemas.lesson import (
+from webapp.controllers.lesson import get_lessons_fastui
+from webapp.db import AsyncDBSession
+from webapp.routers.components import get_common_content
+from webapp.schemas.lesson import (
     EditLessonDataModel,
     NewLessonDataModel,
     get_lesson_data_model,
     get_new_lesson_data_model,
 )
-from webapp.controllers.lesson import get_lessons_fastui
-from webapp.routers.components import get_common_content
 
 router = APIRouter()
 logger = logging.getLogger()
@@ -242,7 +242,6 @@ async def new_slide(
     lessons = await get_lessons(db_session)
     for lesson in reversed(lessons[index:]):
         lesson.index += 1
-        await db_session.flush()
     await db_session.commit()
 
     new_lesson: Lesson = Lesson(

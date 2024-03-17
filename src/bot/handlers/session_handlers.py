@@ -112,7 +112,7 @@ async def quiz_callback_processing(
                 message_id=data['quiz_options_msg_id'],
                 text=slide.text.replace('…', f'<u>{slide.right_answers}</u>')
                 if "…" in slide.text
-                else slide.text + '\n\nВ тексте с вопросом к квизу "выбери правильный ответ" '
+                else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "выбери правильный ответ" '
                 'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного варианта.',
             )
         except KeyError:
@@ -256,7 +256,7 @@ async def check_input_word(
                 message_id=data["quiz_word_msg_id"],
                 text=slide.text.replace("…", f"<u>{slide.right_answers}</u>")
                 if "…" in slide.text
-                else slide.text + '\n\nВ тексте с вопросом к квизу "впиши слово" '
+                else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
                 'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного варианта.',
             )
         except KeyError:

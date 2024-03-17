@@ -13,10 +13,14 @@ from fastui.forms import fastui_form
 from config import settings
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
-from database.db import AsyncDBSession
 from database.models.lesson import Lesson
 from database.models.slide import Slide
-from database.schemas.slide import (
+from enums import KeyboardType, SlideType, StickerType
+from webapp.controllers.misc import extract_img_from_form
+from webapp.controllers.slide import get_all_slides_from_lesson_by_order_fastui
+from webapp.db import AsyncDBSession
+from webapp.routers.components import get_common_content
+from webapp.schemas.slide import (
     EditDictSlideData,
     EditImageSlideData,
     EditQuizInputPhraseSlideData,
@@ -30,11 +34,7 @@ from database.schemas.slide import (
     get_quiz_options_slide_data_model,
     get_text_slide_data_model,
 )
-from database.schemas.sticker import EditStickerSlideDataModel, get_sticker_slide_data_model
-from enums import KeyboardType, SlideType, StickerType
-from webapp.controllers.misc import extract_img_from_form
-from webapp.controllers.slide import get_all_slides_from_lesson_by_order_fastui
-from webapp.routers.components import get_common_content
+from webapp.schemas.sticker import EditStickerSlideDataModel, get_sticker_slide_data_model
 
 router = APIRouter()
 logger = logging.getLogger()

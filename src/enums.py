@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum, auto
 
 from aiogram.filters.state import State, StatesGroup
 
@@ -9,75 +9,65 @@ class States(StatesGroup):
     INPUT_CUSTOM_SLIDE_ID = State()
 
 
-class SlideType(Enum):
-    TEXT = 'text'
-    IMAGE = 'image'
-    SMALL_STICKER = 'small_sticker'
-    BIG_STICKER = 'big_sticker'
-    PIN_DICT = 'pin_dict'
-    QUIZ_OPTIONS = 'quiz_options'
-    QUIZ_INPUT_WORD = 'quiz_input_word'
-    QUIZ_INPUT_PHRASE = 'quiz_input_phrase'
+class SlideType(StrEnum):
+    TEXT = auto()
+    IMAGE = auto()
+    SMALL_STICKER = auto()
+    BIG_STICKER = auto()
+    PIN_DICT = auto()
+    QUIZ_OPTIONS = auto()
+    QUIZ_INPUT_WORD = auto()
+    QUIZ_INPUT_PHRASE = auto()
 
 
-class LessonLevel(Enum):
-    BEGINNER = 'beginner'
-    INTERMEDIATE = 'intermediate'
-    ADVANCED = 'advanced'
+class LessonLevel(StrEnum):
+    BEGINNER = auto()
+    INTERMEDIATE = auto()
+    ADVANCED = auto()
 
 
-class KeyboardType(Enum):
-    FURTHER = 'further'
-    QUIZ = 'quiz'
+class KeyboardType(StrEnum):
+    FURTHER = auto()
+    QUIZ = auto()
 
 
-class UserLessonProgress(Enum):
-    NO_PROGRESS = 'no_progress'
-    IN_PROGRESS = 'in_progress'
+class UserLessonProgress(StrEnum):
+    NO_PROGRESS = auto()
+    IN_PROGRESS = auto()
 
 
-class SessionStartsFrom(Enum):
-    BEGIN = 'begin'
-    EXAM = 'exam'
+class SessionStartsFrom(StrEnum):
+    BEGIN = auto()
+    EXAM = auto()
 
 
-class ReactionType(Enum):
-    RIGHT = 'right'
-    WRONG = 'wrong'
+class ReactionType(StrEnum):
+    RIGHT = auto()
+    WRONG = auto()
 
 
-class StickerType(Enum):
-    BIG = 'big'
-    SMALL = 'small'
+class StickerType(StrEnum):
+    BIG = auto()
+    SMALL = auto()
 
 
-class SessionStatus(Enum):
-    IN_PROGRESS = 'in_progress'
-    COMPLETED = 'completed'
-    ABORTED = 'aborted'
+class SessionStatus(StrEnum):
+    IN_PROGRESS = auto()
+    COMPLETED = auto()
+    ABORTED = auto()
 
 
-class LessonStartsFrom(Enum):
-    BEGIN = 'begin'
-    EXAM = 'exam'
-    CONTINUE = 'continue'
+class LessonStartsFrom(StrEnum):
+    BEGIN = auto()
+    EXAM = auto()
+    CONTINUE = auto()
 
 
-class EventType(Enum):
+class EventType(StrEnum):
     MESSAGE = 'message'
     CALLBACK_QUERY = 'callback_query'
     HINT = 'hint'
     CONTINUE = 'continue'
-
-
-class NavigationObjectType(Enum):
-    SLIDES = 'slides'
-    LESSONS = 'lessons'
-
-
-class Times(Enum):
-    UTC_STARTING_MARK = 14
-    ONE_HOUR = 3600
 
 
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:

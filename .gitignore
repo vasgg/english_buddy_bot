@@ -10,6 +10,7 @@ venv2
 build/
 __pycache__/
 __pypackages__/
+logs
 
 .ipynb_checkpoints
 

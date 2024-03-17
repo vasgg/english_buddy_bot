@@ -41,7 +41,7 @@ async def add_completed_lesson_to_db(user_id: int, lesson_id: int, session_id: i
         session_id=session_id,
     )
     db_session.add(completed_lesson)
-    await db_session.commit()
+    await db_session.flush()
 
 
 async def get_completed_lessons(user_id: int, db_session: AsyncSession) -> set[int]:

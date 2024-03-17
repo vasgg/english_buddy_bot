@@ -11,10 +11,10 @@ from fastui.forms import fastui_form
 
 from config import settings
 from database.crud.user import get_all_users_with_reminders
-from database.db import AsyncDBSession
-from database.schemas.newsletter import get_newsletter_data_model
 from webapp.controllers.misc import extract_img_from_form, send_newsletter_to_users
+from webapp.db import AsyncDBSession
 from webapp.routers.components import get_common_content
+from webapp.schemas.newsletter import get_newsletter_data_model
 
 router = APIRouter()
 logger = logging.getLogger()

@@ -97,11 +97,6 @@ async def send_newsletter(user_id: int, message: str, image_path: Path = None) -
 
 
 async def send_newsletter_to_users(users: list[int], message: str, image_path: Path = None) -> None:
-    if image_path is not None:
-        for user in users:
-            await send_newsletter(user, message, image_path)
-            await asyncio.sleep(0.3)
-    else:
-        for user in users:
-            await send_newsletter(user, message)
-            await asyncio.sleep(0.3)
+    for user in users:
+        await send_newsletter(user, message, image_path)
+        await asyncio.sleep(1)

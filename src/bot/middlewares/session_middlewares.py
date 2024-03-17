@@ -7,7 +7,7 @@ from sqlalchemy.exc import PendingRollbackError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.crud.session import get_session
-from database.db import db
+from webapp.db import db
 
 
 class DBSessionMiddleware(BaseMiddleware):

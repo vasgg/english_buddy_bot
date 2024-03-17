@@ -2,9 +2,9 @@ import logging
 
 from sqlalchemy import select
 
-from database.db import AsyncDBSession
 from database.models.text import Text
-from database.schemas.text import TextsTableSchema
+from webapp.db import AsyncDBSession
+from webapp.schemas.text import TextsTableSchema
 
 logger = logging.getLogger()
 

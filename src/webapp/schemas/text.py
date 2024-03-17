@@ -49,7 +49,3 @@ def get_text_data_model(data: Text | None = None) -> Type[BaseModel]:
 class EditTextDataModel(BaseModel):
     description: str
     text: str
-
-
-class DeleteTextDataModel(BaseModel):
-    confirmation: bool

@@ -17,7 +17,7 @@ from bot.middlewares.auth_middleware import AuthMiddleware
 from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
 from config import get_logging_config, settings
-from database.db import db
+from webapp.db import db
 
 
 async def main():

@@ -1,9 +1,9 @@
 import logging
 
 from database.crud.slide import get_slide_by_id
-from database.db import AsyncDBSession
-from database.schemas.slide import SlidesTableSchema
 from webapp.controllers.misc import get_slide_details, get_slide_emoji
+from webapp.db import AsyncDBSession
+from webapp.schemas.slide import SlidesTableSchema
 
 logger = logging.getLogger()
 
