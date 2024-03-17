@@ -34,15 +34,16 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
     while True:
         await asyncio.sleep(Times.ONE_HOUR.value)
         utcnow = datetime.utcnow()
-        if utcnow.hour == Times.UTC_STARTING_MARK.value:
+        if utcnow.hour == Times.UTC_STARTING_MARK.value - 1:
+            await asyncio.sleep(Times.ONE_HOUR.value - utcnow.minute * 60 - utcnow.second)
             async with db_connector.session_factory() as session:
                 for user in await get_all_users_with_reminders(session):
-                    delta = utcnow - user.last_reminded_at
+                    delta = datetime.utcnow() - user.last_reminded_at
                     if delta > timedelta(days=user.reminder_freq):
                         await bot.send_message(
                             chat_id=user.telegram_id,
                             text=await get_text_by_prompt(prompt='reminder_text', db_session=session),
                         )
-                        logging.info(f"{'=' * 10} {'reminder sended to ' + str(user)}")
-                        await update_last_reminded_at(user_id=user.id, timestamp=utcnow, db_session=session)
+                        logging.info(f"{'reminder sended to ' + str(user)}")
+                        await update_last_reminded_at(user_id=user.id, timestamp=datetime.utcnow(), db_session=session)
                         await session.commit()
