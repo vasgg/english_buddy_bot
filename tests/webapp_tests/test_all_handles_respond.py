@@ -35,4 +35,5 @@ class TestAllHandlesRespond(IsolatedAsyncioTestCase):
     async def test_get(self):
         xs = ['/api/lessons', '/api/texts', '/api/reactions', '/api/newsletter']
         for url in xs:
-            self.client.get(url).raise_for_status()
+            resp = self.client.get(url)
+            resp.raise_for_status()

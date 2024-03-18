@@ -7,17 +7,20 @@ from sqlalchemy.exc import PendingRollbackError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.crud.session import get_session
-from webapp.db import db
+from database.database_connector import DatabaseConnector
 
 
 class DBSessionMiddleware(BaseMiddleware):
+    def __init__(self, db: DatabaseConnector):
+        self.db = db
+
     async def __call__(
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
         event: Message,
         data: Dict[str, Any],
     ) -> Any:
-        async with db.session_factory() as db_session:
+        async with self.db.session_factory() as db_session:
             # TODO: mb change to db_session factory
             data['db_session'] = db_session
             res = await handler(event, data)

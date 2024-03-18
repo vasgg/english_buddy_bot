@@ -19,6 +19,10 @@ from database.models.user import User
 # TODO: разобраться как обходить констраинты
 
 
+def rand_bool() -> bool:
+    return random.random() < 0.5
+
+
 @dataclass
 class User:
     id: int
@@ -88,7 +92,7 @@ class TestUserCrud(IsolatedAsyncioTestCase):
                 user = await add_user_to_db(
                     User(id=i, first_name="aba", last_name="caba", username="@capybara"), session
                 )
-                if random.random() < 0.5:
+                if rand_bool():
                     expected_users_with_reminders.add(user.id)
                     await set_user_reminders(user.id, 1, session)
 

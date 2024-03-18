@@ -16,8 +16,8 @@ from bot.internal.notify_admin import on_shutdown_notify, on_startup_notify
 from bot.middlewares.auth_middleware import AuthMiddleware
 from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
-from config import get_logging_config, settings
-from webapp.db import db
+from config import get_logging_config, get_settings
+from database.tables_helper import get_db
 
 
 async def main():
@@ -25,6 +25,7 @@ async def main():
     logs_directory.mkdir(parents=True, exist_ok=True)
     logging_config = get_logging_config(__name__)
     logging.config.dictConfig(logging_config)
+    settings = get_settings()
 
     if settings.SENTRY_AIOGRAM_DSN:
         sentry_sdk.init(
@@ -43,8 +44,9 @@ async def main():
     # TODO: change to persistent storage
     storage = MemoryStorage()
     dispatcher = Dispatcher(storage=storage)
-    dispatcher.message.middleware(DBSessionMiddleware())
-    dispatcher.callback_query.middleware(DBSessionMiddleware())
+    db_session_middleware = DBSessionMiddleware(get_db())
+    dispatcher.message.middleware(db_session_middleware)
+    dispatcher.callback_query.middleware(db_session_middleware)
     dispatcher.message.middleware(AuthMiddleware())
     dispatcher.callback_query.middleware(AuthMiddleware())
     dispatcher.update.outer_middleware(UpdatesDumperMiddleware())
