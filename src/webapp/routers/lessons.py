@@ -242,6 +242,7 @@ async def new_slide(
     lessons = await get_lessons(db_session)
     for lesson in reversed(lessons[index:]):
         lesson.index += 1
+        await db_session.flush()
     await db_session.commit()
 
     new_lesson = Lesson(
