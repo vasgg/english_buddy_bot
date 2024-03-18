@@ -1,3 +1,5 @@
+from os.path import realpath, join, dirname, exists
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -8,10 +10,13 @@ from webapp.routers.root import router as root_fastui_router
 from webapp.routers.slides import router as slides_fastui_router
 from webapp.routers.texts import router as texts_fastui_router
 
+static_files_path = join(dirname(realpath(__file__)), 'static')
+assert exists(static_files_path)
+
 
 def create_app():
     app = FastAPI()
-    app.mount("/static", StaticFiles(directory="src/webapp/static"), name="static")
+    app.mount("/static", StaticFiles(directory=static_files_path), name="static")
     app.include_router(slides_fastui_router, prefix="/api/slides")
     app.include_router(lessons_fastui_router, prefix="/api/lessons")
     app.include_router(texts_fastui_router, prefix="/api/texts")

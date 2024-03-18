@@ -3,7 +3,7 @@ import logging.config
 import sentry_sdk
 
 from config import get_logging_config, get_settings
-from webapp.setup_app import create_app
+from webapp.create_app import create_app
 
 logging_config = get_logging_config(__name__)
 logging.config.dictConfig(logging_config)

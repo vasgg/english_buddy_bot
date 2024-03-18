@@ -25,7 +25,7 @@ async def favicon():
 @router.get("/api/", response_model=FastUI, response_model_exclude_none=True)
 async def root_page() -> list[AnyComponent]:
     logger.info('root router called')
-    return get_common_content(c.Paragraph(text=f'test {randint(0, 1000)}'), title='Администрация')
+    return get_common_content(title='English Buddy Bot Admin Panel')
 
 
 @router.get('/api/files/{lesson_id}/', response_model=SelectSearchResponse)

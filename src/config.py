@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     BOT_TOKEN: SecretStr
     ADMINS: list[int]
     DB_NAME: str
-    SENTRY_AIOGRAM_DSN: SecretStr | None
-    SENTRY_FASTAPI_DSN: SecretStr | None
+    SENTRY_AIOGRAM_DSN: SecretStr | None = None
+    SENTRY_FASTAPI_DSN: SecretStr | None = None
     db_echo: bool = False
     allowed_image_formats: list[str] = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
 
