@@ -9,7 +9,7 @@ from fastui import AnyComponent, FastUI, components as c
 from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 
-from config import settings
+from config import get_settings, Settings
 from database.crud.user import get_all_users_with_reminders
 from webapp.controllers.misc import extract_img_from_form, send_newsletter_to_users
 from webapp.db import AsyncDBSession
@@ -47,6 +47,7 @@ async def send_newsletter(
     image_file: Annotated[bytes, Depends(extract_img_from_form)],
     db_session: AsyncDBSession,
     form: Annotated[get_newsletter_data_model(), fastui_form(get_newsletter_data_model())],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> list[AnyComponent]:
     users_with_reminders = [user.telegram_id for user in await get_all_users_with_reminders(db_session)]
     text = form.text

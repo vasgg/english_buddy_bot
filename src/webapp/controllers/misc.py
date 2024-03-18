@@ -7,7 +7,7 @@ import aiohttp
 from aiohttp import FormData
 import fastapi
 
-from config import settings
+from config import get_settings
 from database.models.slide import Slide
 from enums import SlideType
 
@@ -64,7 +64,7 @@ async def extract_img_from_form(request: fastapi.Request):
 async def send_newsletter(user_id: int, message: str, image_path: Path = None) -> None:
     async with aiohttp.ClientSession() as session:
         if image_path is not None:
-            url = f"https://api.telegram.org/bot{settings.BOT_TOKEN.get_secret_value()}/sendPhoto"
+            url = f"https://api.telegram.org/bot{get_settings().BOT_TOKEN.get_secret_value()}/sendPhoto"
             data = FormData()
             data.add_field('chat_id', str(user_id))
             data.add_field('caption', message)

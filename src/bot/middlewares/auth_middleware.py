@@ -17,7 +17,7 @@ class AuthMiddleware(BaseMiddleware):
         user = await get_user_from_db(event, session)
         data['is_new_user'] = False
         if not user:
-            user = await add_user_to_db(event, session)
+            user = await add_user_to_db(event.from_user, session)
             data['is_new_user'] = True
         data['user'] = user
         return await handler(event, data)

@@ -10,7 +10,7 @@ from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
-from config import settings
+from config import get_settings, Settings
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
@@ -309,6 +309,7 @@ async def edit_image_slide(
     slide_id: int,
     db_session: AsyncDBSession,
     form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)

@@ -128,7 +128,6 @@ async def lesson_start_from_callback_processing(
                 lesson_id=lesson_id,
                 current_slide_id=slide_id,
                 starts_from=lesson_to_session(attr),
-                total_slides=total_slides,
                 path=lesson.path,
             )
             db_session.add(session)

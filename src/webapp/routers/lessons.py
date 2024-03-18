@@ -244,7 +244,7 @@ async def new_slide(
         lesson.index += 1
     await db_session.commit()
 
-    new_lesson: Lesson = Lesson(
+    new_lesson = Lesson(
         index=index + 1,
         title=form.title,
         path='1.' if form.is_paid else '0.',

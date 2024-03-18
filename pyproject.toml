@@ -27,19 +27,7 @@ dependencies = [
     'sentry-sdk>=1.40.3',
     'Pillow>=10.2.0'
 ]
-requires-python = ">=3.11"
-
-[tool.setuptools]
-zip-safe = false
-include-package-data = false
-
-[options]
-zip_safe = false
-include_package_data = true
-
-[options.packages.find]
-namespace = true
-include = ["src*"]
+requires-python = ">=3.10"
 
 [project.scripts]
 bot-run = "main:run_main"
