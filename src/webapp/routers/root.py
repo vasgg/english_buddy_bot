@@ -32,6 +32,7 @@ async def root_page() -> list[AnyComponent]:
 async def files_search_view(lesson_id: int) -> SelectSearchResponse:
     files = defaultdict(list)
     directory = Path(f"src/webapp/static/lessons_images/{lesson_id}")
+    directory.mkdir(parents=True, exist_ok=True)
     for file in directory.iterdir():
         mime_type = mimetypes.guess_type(file)[0]
         if mime_type in ['image/png', 'image/jpeg', 'image/gif', 'image/heic', 'image/tiff', 'image/webp']:

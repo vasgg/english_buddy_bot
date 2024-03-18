@@ -101,7 +101,7 @@ def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class QuizOptionsSlideDataModel(BaseModel):
         text: str = Field(
             slide.text if slide else '',
-            description='Введите текст вопроса. Обязательное поле.',
+            description='Введите текст вопроса с пропущенным словом, отмеченным "…". Обязательное поле.',
             title='текст вопроса',
         )
         right_answers: str = Field(
@@ -119,12 +119,6 @@ def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
             description='Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.',
             title='exam slide',
         )
-
-        @field_validator('text')
-        def text_validator(cls, v: str) -> str:
-            if v and v[0].islower():
-                raise PydanticCustomError('lower', 'Name must start with a capital letter')
-            return v
 
     return QuizOptionsSlideDataModel
 
