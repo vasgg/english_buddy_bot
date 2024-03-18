@@ -4,8 +4,8 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
-import fastapi
 from aiohttp import FormData
+import fastapi
 
 from database.models.slide import Slide
 from enums import SlideType
@@ -25,7 +25,7 @@ def get_slide_emoji(slide_type: SlideType) -> str:
         'quiz_input_phrase': '💬',
         'final_slide': '🎉',
     }
-    return slide_type_to_emoji.get(slide_type.value(), '')
+    return slide_type_to_emoji.get(slide_type.value, '')
 
 
 def get_slide_details(slide: Slide) -> str:

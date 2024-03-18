@@ -4,7 +4,6 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.lesson_controllers import find_first_exam_slide, session_routine
-from bot.controllers.slide_controllers import get_steps_to_current_slide
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_builders import (
     LessonStartsFromCallbackFactory,
@@ -135,17 +134,12 @@ async def lesson_start_from_callback_processing(
         case LessonStartsFrom.EXAM:
             if session:
                 await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
-            steps = await get_steps_to_current_slide(
-                first_slide_id=int(lesson.path.split('.')[1]), target_slide_id=first_exam_slide, path=lesson.path
-            )
-            total_slides = total_slides - steps
             slides = lesson.path.split('.')
             session = Session(
                 user_id=user.id,
                 lesson_id=lesson_id,
                 current_slide_id=slide_id,
                 starts_from=lesson_to_session(attr),
-                total_slides=total_slides,
                 path=lesson.path[:2] + '.'.join(slides[slides.index(str(first_exam_slide)) :]),
             )
             db_session.add(session)

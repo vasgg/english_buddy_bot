@@ -43,8 +43,9 @@ async def main():
 
     # TODO: change to persistent storage
     storage = MemoryStorage()
+    db = get_db()
     dispatcher = Dispatcher(storage=storage)
-    db_session_middleware = DBSessionMiddleware(get_db())
+    db_session_middleware = DBSessionMiddleware(db)
     dispatcher.message.middleware(db_session_middleware)
     dispatcher.callback_query.middleware(db_session_middleware)
     dispatcher.message.middleware(AuthMiddleware())

@@ -9,8 +9,6 @@ def get_common_content(
     return [
         c.PageTitle(text=f"English buddy — {title}" if title else "admin panel"),
         c.Navbar(
-            # title="English buddy",
-            # title_event=GoToEvent(url="/"),
             start_links=[
                 c.Link(
                     components=[c.Text(text='Уроки')],

@@ -13,7 +13,7 @@ from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_less
 from database.models.lesson import Lesson
 from webapp.controllers.lesson import get_lessons_fastui
 from webapp.db import AsyncDBSession
-from webapp.routers.components import get_common_content
+from webapp.routers.components.components import get_common_content
 from webapp.schemas.lesson import (
     EditLessonDataModel,
     NewLessonDataModel,

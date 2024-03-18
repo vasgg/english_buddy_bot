@@ -2,14 +2,13 @@ from collections import defaultdict
 import logging
 import mimetypes
 from pathlib import Path
-from random import randint
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
-from fastui import AnyComponent, FastUI, components as c, prebuilt_html
+from fastui import AnyComponent, FastUI, prebuilt_html
 from fastui.forms import SelectSearchResponse
 
-from webapp.routers.components import get_common_content
+from webapp.routers.components.components import get_common_content
 
 router = APIRouter()
 logger = logging.getLogger()
