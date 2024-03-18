@@ -14,10 +14,10 @@ class AuthMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         session = data['db_session']
-        user = await get_user_from_db(event, session)
+        user = await get_user_from_db(event.from_user.id, session)
         data['is_new_user'] = False
         if not user:
-            user = await add_user_to_db(event, session)
+            user = await add_user_to_db(event.from_user, session)
             data['is_new_user'] = True
         data['user'] = user
         return await handler(event, data)

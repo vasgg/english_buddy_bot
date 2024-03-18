@@ -7,7 +7,6 @@ import aiohttp
 from aiohttp import FormData
 import fastapi
 
-from config import settings
 from database.models.slide import Slide
 from enums import SlideType
 
@@ -61,10 +60,10 @@ async def extract_img_from_form(request: fastapi.Request):
         return data
 
 
-async def send_newsletter(user_id: int, message: str, image_path: Path = None) -> None:
+async def send_newsletter(bot_token: str, user_id: int, message: str, image_path: Path = None) -> None:
     async with aiohttp.ClientSession() as session:
         if image_path is not None:
-            url = f"https://api.telegram.org/bot{settings.BOT_TOKEN.get_secret_value()}/sendPhoto"
+            url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
             data = FormData()
             data.add_field('chat_id', str(user_id))
             data.add_field('caption', message)
@@ -80,7 +79,7 @@ async def send_newsletter(user_id: int, message: str, image_path: Path = None) -
                 + '{}. {}'
             )
         else:
-            url = f"https://api.telegram.org/bot{settings.BOT_TOKEN.get_secret_value()}/sendMessage"
+            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
             data = {
                 'chat_id': str(user_id),
                 'text': message,
@@ -96,7 +95,7 @@ async def send_newsletter(user_id: int, message: str, image_path: Path = None) -
                 logger.info(text_error.format(response.status, error_text))
 
 
-async def send_newsletter_to_users(users: list[int], message: str, image_path: Path = None) -> None:
+async def send_newsletter_to_users(bot_token: str, users: list[int], message: str, image_path: Path = None) -> None:
     for user in users:
-        await send_newsletter(user, message, image_path)
+        await send_newsletter(bot_token, user, message, image_path)
         await asyncio.sleep(1)

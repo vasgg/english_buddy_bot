@@ -9,10 +9,9 @@ class Session(Base):
     __tablename__ = 'sessions'
 
     lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id'))
-    path: Mapped[str | None]
+    path: Mapped[str]
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
     current_slide_id: Mapped[int] = mapped_column(ForeignKey('slides.id', ondelete='CASCADE'))
     current_step: Mapped[int] = mapped_column(default=1, server_default='1')
     starts_from: Mapped[SessionStartsFrom] = mapped_column()
     status: Mapped[SessionStatus] = mapped_column(default=SessionStatus.IN_PROGRESS)
-    total_slides: Mapped[int]

@@ -6,12 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.models.user import User
 
 
-async def add_user_to_db(event, db_session) -> User:
+async def add_user_to_db(user, db_session) -> User:
     new_user = User(
-        telegram_id=event.from_user.id,
-        first_name=event.from_user.first_name,
-        last_name=event.from_user.last_name,
-        username=event.from_user.username,
+        telegram_id=user.id,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        username=user.username,
         paywall_access=False,
         reminder_freq=None,
         last_reminded_at=datetime.utcnow(),
@@ -21,8 +21,8 @@ async def add_user_to_db(event, db_session) -> User:
     return new_user
 
 
-async def get_user_from_db(event, db_session: AsyncSession) -> User:
-    query = select(User).filter(User.telegram_id == event.from_user.id)
+async def get_user_from_db(telegram_id: int, db_session: AsyncSession) -> User:
+    query = select(User).filter(User.telegram_id == telegram_id)
     result: Result = await db_session.execute(query)
     user = result.scalar()
     return user

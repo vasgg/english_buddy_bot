@@ -2,14 +2,13 @@ from collections import defaultdict
 import logging
 import mimetypes
 from pathlib import Path
-from random import randint
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
-from fastui import AnyComponent, FastUI, components as c, prebuilt_html
+from fastui import AnyComponent, FastUI, prebuilt_html
 from fastui.forms import SelectSearchResponse
 
-from webapp.routers.components import get_common_content
+from webapp.routers.components.components import get_common_content
 
 router = APIRouter()
 logger = logging.getLogger()
@@ -25,7 +24,7 @@ async def favicon():
 @router.get("/api/", response_model=FastUI, response_model_exclude_none=True)
 async def root_page() -> list[AnyComponent]:
     logger.info('root router called')
-    return get_common_content(c.Paragraph(text=f'test {randint(0, 1000)}'), title='Администрация')
+    return get_common_content(title='English Buddy Bot Admin Panel')
 
 
 @router.get('/api/files/{lesson_id}/', response_model=SelectSearchResponse)

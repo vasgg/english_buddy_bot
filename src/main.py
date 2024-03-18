@@ -16,8 +16,8 @@ from bot.internal.notify_admin import on_shutdown_notify, on_startup_notify
 from bot.middlewares.auth_middleware import AuthMiddleware
 from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
-from config import get_logging_config, settings
-from webapp.db import db
+from config import get_logging_config, get_settings
+from database.tables_helper import get_db
 
 
 async def main():
@@ -25,25 +25,29 @@ async def main():
     logs_directory.mkdir(parents=True, exist_ok=True)
     logging_config = get_logging_config(__name__)
     logging.config.dictConfig(logging_config)
+    settings = get_settings()
 
-    sentry_sdk.init(
-        dsn=settings.SENTRY_AIOGRAM_DSN.get_secret_value(),
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        traces_sample_rate=1.0,
-        # Set profiles_sample_rate to 1.0 to profile 100%
-        # of sampled transactions.
-        # We recommend adjusting this value in production.
-        profiles_sample_rate=1.0,
-    )
+    if settings.SENTRY_AIOGRAM_DSN:
+        sentry_sdk.init(
+            dsn=settings.SENTRY_AIOGRAM_DSN.get_secret_value(),
+            # Set traces_sample_rate to 1.0 to capture 100%
+            # of transactions for performance monitoring.
+            traces_sample_rate=1.0,
+            # Set profiles_sample_rate to 1.0 to profile 100%
+            # of sampled transactions.
+            # We recommend adjusting this value in production.
+            profiles_sample_rate=1.0,
+        )
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
     logging.info("bot started")
 
     # TODO: change to persistent storage
     storage = MemoryStorage()
+    db = get_db()
     dispatcher = Dispatcher(storage=storage)
-    dispatcher.message.middleware(DBSessionMiddleware())
-    dispatcher.callback_query.middleware(DBSessionMiddleware())
+    db_session_middleware = DBSessionMiddleware(db)
+    dispatcher.message.middleware(db_session_middleware)
+    dispatcher.callback_query.middleware(db_session_middleware)
     dispatcher.message.middleware(AuthMiddleware())
     dispatcher.callback_query.middleware(AuthMiddleware())
     dispatcher.update.outer_middleware(UpdatesDumperMiddleware())
