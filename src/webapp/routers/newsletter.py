@@ -63,8 +63,8 @@ async def send_newsletter(
             with open(file_path, "wb") as buffer:
                 image_format = form.upload_new_picture.content_type
                 image.save(buffer, format=image_format.split("/")[1])
-            await send_newsletter_to_users(users_with_reminders, text, file_path)
+            await send_newsletter_to_users(settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text, file_path)
 
     else:
-        await send_newsletter_to_users(users_with_reminders, text)
+        await send_newsletter_to_users(settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text)
     return [c.FireEvent(event=GoToEvent(url='/newsletter/sent/'))]
