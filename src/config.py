@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     SENTRY_AIOGRAM_DSN: SecretStr | None = None
     SENTRY_FASTAPI_DSN: SecretStr | None = None
+    STAGE: str
     db_echo: bool = False
     allowed_image_formats: list[str] = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
 
@@ -26,6 +27,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()
+
 
 def get_logging_config(app_name: str):
     return {

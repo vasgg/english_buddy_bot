@@ -10,7 +10,7 @@ logging.config.dictConfig(logging_config)
 logger = logging.getLogger()
 settings = get_settings()
 
-if settings.SENTRY_FASTAPI_DSN:
+if settings.SENTRY_FASTAPI_DSN and settings.STAGE == 'prod':
     sentry_sdk.init(
         dsn=settings.SENTRY_FASTAPI_DSN.get_secret_value(),
         # Set traces_sample_rate to 1.0 to capture 100%
