@@ -37,7 +37,7 @@ async def session_routine(
         session_id=session.id,
         db_session=db_session,
     )
-    if current_step != len(path) + 1:
+    if current_step != len(path) + 2:
         await slides_routine(
             slide=slide,
             bot=bot,
@@ -60,7 +60,7 @@ async def session_routine(
 
 
 async def find_first_exam_slide(slide_ids, db_session: AsyncSession) -> int | None:
-    for slide_id in slide_ids[1:]:
+    for slide_id in slide_ids:
         slide: Slide = await get_slide_by_id(slide_id, db_session)
         if slide.is_exam_slide:
             return slide_id

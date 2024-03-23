@@ -13,7 +13,7 @@ from config import Settings, get_settings
 from database.crud.user import get_all_users_with_reminders
 from webapp.controllers.misc import extract_img_from_form, send_newsletter_to_users
 from webapp.db import AsyncDBSession
-from webapp.routers.components.components import get_common_content
+from webapp.routers.components.main_component import get_common_content
 from webapp.schemas.newsletter import get_newsletter_data_model
 
 router = APIRouter()
@@ -63,7 +63,9 @@ async def send_newsletter(
             with open(file_path, "wb") as buffer:
                 image_format = form.upload_new_picture.content_type
                 image.save(buffer, format=image_format.split("/")[1])
-            await send_newsletter_to_users(settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text, file_path)
+            await send_newsletter_to_users(
+                settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text, file_path
+            )
 
     else:
         await send_newsletter_to_users(settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text)

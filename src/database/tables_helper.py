@@ -1,5 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from config import get_settings
+from database.database_connector import DatabaseConnector
+from database.models.base import Base
+
 # noinspection PyUnresolvedReferences
 import database.models.complete_lesson
 
@@ -26,9 +30,6 @@ import database.models.text
 
 # noinspection PyUnresolvedReferences
 import database.models.user
-from config import get_settings
-from database.database_connector import DatabaseConnector
-from database.models.base import Base
 
 
 async def create_or_drop_db(engine: AsyncEngine):

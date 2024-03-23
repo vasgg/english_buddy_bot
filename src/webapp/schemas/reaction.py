@@ -8,7 +8,7 @@ from enums import ReactionType
 
 class ReactionsSchema(BaseModel):
     id: int = Field(title='id')
-    text: str | None = Field(title='text')
+    text: str | None = Field(title='Текст')
 
     class Config:
         from_attributes = True
