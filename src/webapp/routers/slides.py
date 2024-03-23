@@ -13,7 +13,7 @@ from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from enums import KeyboardType, SlideType, SlidesMenuType, StickerType
-from webapp.controllers.misc import extract_img_from_form, image_upload
+from webapp.controllers.misc import extract_img_from_form
 from webapp.controllers.slide import (
     get_all_slides_from_lesson_by_order_fastui,
 )
@@ -489,7 +489,7 @@ async def create_slide(
                     lesson.path_extra = path
                 else:
                     slides_ids = [int(slideid) for slideid in lesson.path_extra.split('.')]
-                    slides_ids.insert(index, new_slide.id)
+                    slides_ids.insert(index + 1, new_slide.id)
                     path = '.'.join([str(slideid) for slideid in slides_ids])
                     lesson.path_extra = path
                 lesson.errors_threshold = default_errors_threshold
@@ -507,8 +507,8 @@ async def create_slide(
                 path = str(new_slide.id)
                 lesson.path = path
             else:
-                slides_ids = [int(slideid) for slideid in lesson.path.split('.')]
-                slides_ids.insert(index, new_slide.id)
+                slides_ids = [int(slideid) for slideid in lesson.path_extra.split('.')]
+                slides_ids.insert(index + 1, new_slide.id)
                 path = '.'.join([str(slideid) for slideid in slides_ids])
                 lesson.path = path
             lesson.errors_threshold = default_errors_threshold
@@ -607,6 +607,7 @@ async def new_image_slide_form(
     db_session: AsyncDBSession,
     form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
     settings: Annotated[Settings, Depends(get_settings)],
+
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
