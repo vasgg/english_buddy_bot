@@ -9,7 +9,7 @@ from fastui.forms import fastui_form
 
 from webapp.controllers.text import get_text_by_id, get_texts_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.components import get_common_content
+from webapp.routers.components.main_component import get_common_content
 from webapp.schemas.text import EditTextDataModel, get_text_data_model
 
 router = APIRouter()

@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastui import AnyComponent, FastUI, prebuilt_html
 from fastui.forms import SelectSearchResponse
 
-from webapp.routers.components.components import get_common_content
+from webapp.routers.components.main_component import get_common_content
 
 router = APIRouter()
 logger = logging.getLogger()
