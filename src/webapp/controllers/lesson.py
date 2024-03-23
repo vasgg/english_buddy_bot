@@ -20,8 +20,10 @@ async def get_lessons_fastui(db_session: AsyncDBSession):
             'index': lesson.index,
             'title': lesson.title,
             'level': lesson.level if lesson.level else None,
-            'is_paid': '☑️' if lesson.path.split('.')[0] == '1' else ' ',
-            'total_slides': str(len(lesson.path.split('.')) - 1) if lesson.path else ' ',
+            'is_paid': '☑️' if lesson.is_paid else ' ',
+            'total_slides': str(len(lesson.path.split('.'))) if lesson.path else ' ',
+            'extra_slides': str(len(lesson.path_extra.split('.'))) if lesson.path_extra else ' ',
+            'errors_threshold': str(lesson.errors_threshold) + '%' if lesson.errors_threshold else ' ',
             'slides': '📖',
             'edit_button': '✏️',
             'up_button': '🔼',
@@ -31,5 +33,5 @@ async def get_lessons_fastui(db_session: AsyncDBSession):
         }
         validated_lesson = LessonsTableSchema.model_validate(lesson_data)
         validated_lessons.append(validated_lesson)
-        logger.info(f"Processed lessons: {len(validated_lessons)}")
+    logger.info(f"Processed lessons: {len(validated_lessons)}")
     return validated_lessons

@@ -43,14 +43,6 @@ def get_slide_details(slide: Slide) -> str:
     return slide_type_to_str.get(slide.slide_type.value, ' ')
 
 
-def get_lesson_details(is_paid: bool) -> str:
-    lesson_is_paid_to_str = {
-        True: '☑️',
-        False: ' ',
-    }
-    return lesson_is_paid_to_str.get(is_paid, ' ')
-
-
 async def extract_img_from_form(request: fastapi.Request):
     async with request.form() as form_data:
         data = None
