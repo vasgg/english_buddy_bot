@@ -13,7 +13,7 @@ from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_less
 from database.models.lesson import Lesson
 from webapp.controllers.lesson import get_lessons_fastui
 from webapp.db import AsyncDBSession
-from webapp.routers.components.components import get_common_content
+from webapp.routers.components.main_component import get_common_content
 from webapp.schemas.lesson import (
     EditLessonDataModel,
     NewLessonDataModel,
@@ -42,12 +42,16 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                     field='title',
                 ),
                 DisplayLookup(
-                    field='exam_slide_id',
-                    table_width_percent=13,
+                    field='total_slides',
+                    table_width_percent=8,
                 ),
                 DisplayLookup(
-                    field='total_slides',
-                    table_width_percent=13,
+                    field='extra_slides',
+                    table_width_percent=8,
+                ),
+                DisplayLookup(
+                    field='errors_threshold',
+                    table_width_percent=3,
                 ),
                 DisplayLookup(
                     field='is_paid',
@@ -171,8 +175,8 @@ async def edit_lesson_form(
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     lesson.title = form.title
-    lesson.exam_slide_id = form.exam_slide_id if form.exam_slide_id else None
-    slides_ids[0] = 1 if form.is_paid else 0
+    lesson.errors_threshold = form.errors_threshold
+    lesson.is_paid = True if form.is_paid else False
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
     await db_session.commit()
@@ -223,6 +227,8 @@ async def delete_slide(
     lesson: Lesson = await get_lesson_by_index(index, db_session)
     lesson.is_active = False
     lesson.index = None
+    lesson.path = None
+    lesson.path_extra = None
     db_session.add(lesson)
     await db_session.flush()
     lessons = await get_lessons_with_greater_index(index, db_session)
@@ -246,9 +252,7 @@ async def new_slide(
     await db_session.commit()
 
     new_lesson = Lesson(
-        index=index + 1,
-        title=form.title,
-        path='1.' if form.is_paid else '0.',
+        index=index + 1, title=form.title, errors_threshold=form.errors_threshold, is_paid=form.is_paid
     )
     db_session.add(new_lesson)
     await db_session.flush()

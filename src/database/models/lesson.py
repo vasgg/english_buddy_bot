@@ -11,5 +11,8 @@ class Lesson(Base):
     title: Mapped[str] = mapped_column(default='NEW LESSON TEMPLATE', server_default='NEW LESSON TEMPLATE')
     # TODO: maybe not opt
     level: Mapped[LessonLevel | None]
-    path: Mapped[str]
+    path: Mapped[str | None]
+    path_extra: Mapped[str | None]
+    errors_threshold: Mapped[int | None]
     is_active: Mapped[bool] = mapped_column(default=True, server_default='1')
+    is_paid: Mapped[bool] = mapped_column(default=False, server_default='0')

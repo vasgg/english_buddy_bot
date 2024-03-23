@@ -59,13 +59,12 @@ async def lesson_callback_processing(
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
     slides_count = await get_lesson_slides_count(path=lesson.path)
-    is_paid = int(lesson.path.split('.')[0]) == 1
     if slides_count == 0:
         await callback.message.answer(text='no slides yet')
         return
     slide_ids = [int(elem) for elem in lesson.path.split(".")]
     first_exam_slide = await find_first_exam_slide(slide_ids, db_session)
-    if is_paid and user.paywall_access is False:
+    if lesson.is_paid and user.paywall_access is False:
         await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
         return
     if session:
@@ -115,7 +114,6 @@ async def lesson_start_from_callback_processing(
     attr = callback_data.attr
     session = await get_current_session(user.id, lesson_id, db_session)
     lesson = await get_lesson_by_id(lesson_id, db_session)
-    total_slides = len(lesson.path.split('.')) - 1
     slide_ids = [int(elem) for elem in lesson.path.split(".")]
     first_exam_slide = await find_first_exam_slide(slide_ids, db_session)
     match attr:
@@ -140,7 +138,9 @@ async def lesson_start_from_callback_processing(
                 lesson_id=lesson_id,
                 current_slide_id=slide_id,
                 starts_from=lesson_to_session(attr),
-                path=lesson.path[:2] + '.'.join(slides[slides.index(str(first_exam_slide)) :]),
+                # fmt: off
+                path='.'.join(slides[slides.index(str(first_exam_slide)):]),
+                # fmt: on
             )
             db_session.add(session)
             await db_session.flush()
