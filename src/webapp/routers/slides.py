@@ -10,7 +10,6 @@ from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
-from config import Settings, get_settings
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
@@ -302,6 +301,20 @@ async def edit_quiz_input_phrase_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
+def image_upload(image_file: bytes, form: EditImageSlideData, lesson_id: int):
+    # if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
+    directory = Path(f"src/webapp/static/lessons_images/{lesson_id}")
+    directory.mkdir(parents=True, exist_ok=True)
+    image = Image.open(io.BytesIO(image_file))
+    if image.width > 800:
+        new_height = int((800 / image.width) * image.height)
+        image = image.resize((800, new_height), Image.Resampling.LANCZOS)
+    file_path = directory / form.upload_new_picture.filename
+    with open(file_path, "wb") as buffer:
+        image_format = form.upload_new_picture.content_type
+        image.save(buffer, format=image_format.split("/")[1])
+
+
 @router.post('/edit/image/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_image_slide(
     image_file: Annotated[bytes, Depends(extract_img_from_form)],
@@ -309,24 +322,13 @@ async def edit_image_slide(
     slide_id: int,
     db_session: AsyncDBSession,
     form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
-    settings: Annotated[Settings, Depends(get_settings)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
     if form.upload_new_picture.filename != '':
-        if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
-            directory = Path(f"src/webapp/static/lessons_images/{slide.lesson_id}")
-            directory.mkdir(parents=True, exist_ok=True)
-            image = Image.open(io.BytesIO(image_file))
-            if image.width > 800:
-                new_height = int((800 / image.width) * image.height)
-                image = image.resize((800, new_height), Image.Resampling.LANCZOS)
-            file_path = directory / form.upload_new_picture.filename
-            with open(file_path, "wb") as buffer:
-                image_format = form.upload_new_picture.content_type
-                image.save(buffer, format=image_format.split("/")[1])
-            slide.picture = form.upload_new_picture.filename
+        image_upload(image_file, form, lesson.id)
+        slide.picture = form.upload_new_picture.filename
     else:
         slide_picture = form.select_picture if form.select_picture else slide.picture
         new_slide: Slide = Slide(
@@ -443,6 +445,7 @@ async def new_text_slide_form(
 
 @router.post('/new/image/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_image_slide_form(
+    image_file: Annotated[bytes, Depends(extract_img_from_form)],
     index: int,
     slide_id: int,
     db_session: AsyncDBSession,
@@ -450,13 +453,16 @@ async def new_image_slide_form(
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if form.upload_new_picture.filename != '':
+        image_upload(image_file, form, lesson.id)
     if index == 0:
         lesson: Lesson = await get_lesson_by_id(slide_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
+    slide_picture = form.upload_new_picture.filename if form.upload_new_picture else form.select_picture
     new_slide: Slide = Slide(
         slide_type=SlideType.IMAGE,
         lesson_id=lesson.id,
-        picture=form.select_picture,
+        picture=slide_picture,
         delay=form.delay,
         keyboard_type=KeyboardType.FURTHER if form.keyboard_type else None,
     )
