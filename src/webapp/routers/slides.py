@@ -1,21 +1,19 @@
-import io
 import logging
-from pathlib import Path
 from typing import Annotated
 
-from PIL import Image
 from fastapi import APIRouter, Depends, HTTPException
 from fastui import AnyComponent, FastUI, components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 
+from config import Settings, get_settings
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from enums import KeyboardType, SlideType, SlidesMenuType, StickerType
-from webapp.controllers.misc import extract_img_from_form
+from webapp.controllers.misc import extract_img_from_form, image_upload
 from webapp.controllers.slide import (
     get_all_slides_from_lesson_by_order_fastui,
 )
@@ -417,23 +415,10 @@ async def edit_quiz_input_phrase_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-def image_upload(image_file: bytes, form: EditImageSlideData, lesson_id: int):
-    # if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
-    directory = Path(f"src/webapp/static/lessons_images/{lesson_id}")
-    directory.mkdir(parents=True, exist_ok=True)
-    image = Image.open(io.BytesIO(image_file))
-    if image.width > 800:
-        new_height = int((800 / image.width) * image.height)
-        image = image.resize((800, new_height), Image.Resampling.LANCZOS)
-    file_path = directory / form.upload_new_picture.filename
-    with open(file_path, "wb") as buffer:
-        image_format = form.upload_new_picture.content_type
-        image.save(buffer, format=image_format.split("/")[1])
-
-
 @router.post('/edit/image/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_image_slide(
     image_file: Annotated[bytes, Depends(extract_img_from_form)],
+    settings: Annotated[Settings, Depends(get_settings)],
     source: SlidesMenuType,
     index: int,
     slide_id: int,
@@ -444,7 +429,7 @@ async def edit_image_slide(
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
     slides_ids = [int(slideid) for slideid in lesson.path.split('.')]
     if form.upload_new_picture.filename != '':
-        image_upload(image_file, form, lesson.id)
+        image_upload(image_file, form, lesson.id, settings)
         slide.picture = form.upload_new_picture.filename
     else:
         slide_picture = form.select_picture if form.select_picture else slide.picture
@@ -622,22 +607,13 @@ async def new_image_slide_form(
     db_session: AsyncDBSession,
     form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
     settings: Annotated[Settings, Depends(get_settings)],
-
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    slide_picture = form.select_picture if form.select_picture else form.upload_new_picture.filename
     if form.upload_new_picture.filename != '':
-        if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
-            directory = Path(f"src/webapp/static/lessons_images/{lesson.id}")
-            directory.mkdir(parents=True, exist_ok=True)
-            image = Image.open(io.BytesIO(image_file))
-            if image.width > 800:
-                new_height = int((800 / image.width) * image.height)
-                image = image.resize((800, new_height), Image.Resampling.LANCZOS)
-            file_path = directory / form.upload_new_picture.filename
-            with open(file_path, "wb") as buffer:
-                image_format = form.upload_new_picture.content_type
-                image.save(buffer, format=image_format.split("/")[1])
+        image_upload(image_file, form, lesson.id, settings)
+        slide.picture = form.upload_new_picture.filename
     else:
         slide_picture = form.select_picture if form.select_picture else slide.picture
     if source == SlidesMenuType.EXTRA:
@@ -646,7 +622,7 @@ async def new_image_slide_form(
         new_slide: Slide = Slide(
             slide_type=SlideType.IMAGE,
             lesson_id=lesson.id,
-            picture=form.select_picture if form.select_picture else form.upload_new_picture.filename,
+            picture=slide_picture,
             delay=form.delay,
             keyboard_type=KeyboardType.FURTHER if form.keyboard_type else None,
         )

@@ -79,9 +79,8 @@ async def slides_routine(
         next_slide_id = session.current_slide_id
     match slide.slide_type:
         case SlideType.TEXT:
-            slide_text = slide.text
             if not slide.keyboard_type:
-                await bot.send_message(chat_id=user.telegram_id, text=slide_text)
+                await bot.send_message(chat_id=user.telegram_id, text=slide.text)
                 if slide.delay:
                     # noinspection PyTypeChecker
                     await asyncio.sleep(slide.delay)
@@ -98,7 +97,7 @@ async def slides_routine(
                 match slide.keyboard_type:
                     case KeyboardType.FURTHER:
                         markup = get_furher_button(current_lesson=session.lesson_id, next_slide=next_slide_id)
-                        await bot.send_message(chat_id=user.telegram_id, text=slide_text, reply_markup=markup)
+                        await bot.send_message(chat_id=user.telegram_id, text=slide.text, reply_markup=markup)
                     case _:
                         assert False, f'Unknown keyboard type: {slide.keyboard_type}'
 
