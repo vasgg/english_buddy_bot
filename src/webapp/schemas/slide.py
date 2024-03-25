@@ -2,7 +2,7 @@ from typing import Annotated, Type
 
 from fastapi import UploadFile
 from fastui.forms import FormFile
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from pydantic_core import PydanticCustomError
 
 from database.models.slide import Slide
@@ -15,9 +15,7 @@ class SlidesSchema(BaseModel):
     details: str | None = Field(title='context')
     is_exam_slide: str = Field(title=' ')
 
-    class Config:
-        from_attributes = True
-        extra = 'allow'
+    model_config = ConfigDict(extra='allow', from_attributes=True)
 
 
 class SlidesTableSchema(SlidesSchema):
@@ -29,8 +27,7 @@ class SlidesTableSchema(SlidesSchema):
     plus_button: str = Field(title=' ')
     minus_button: str = Field(title=' ')
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 def get_text_slide_data_model(slide: Slide = None) -> Type[BaseModel]:

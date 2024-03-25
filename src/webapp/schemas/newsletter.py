@@ -2,7 +2,7 @@ from typing import Annotated, Type
 
 from fastapi import UploadFile
 from fastui.forms import FormFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 def get_newsletter_data_model() -> Type[BaseModel]:
@@ -19,8 +19,6 @@ def get_newsletter_data_model() -> Type[BaseModel]:
             title='Тут можно добавить к рассылке картинку.',
         )
 
-        class Config:
-            from_attributes = True
-            extra = 'allow'
+        model_config = ConfigDict(extra='allow', from_attributes=True)
 
     return NewsletterDataModel

@@ -1,7 +1,8 @@
 import random
 from dataclasses import dataclass
 from datetime import datetime
-from unittest import IsolatedAsyncioTestCase
+
+import pytest
 
 from database.crud.user import (
     add_user_to_db,
@@ -11,9 +12,7 @@ from database.crud.user import (
     get_all_users_with_reminders,
     update_last_reminded_at,
 )
-from database.database_connector import DatabaseConnector
-from database.models.base import Base
-from database.models.user import User
+from database.models.user import User as UserDbModel
 
 
 # TODO: разобраться как обходить констраинты
@@ -31,82 +30,75 @@ class User:
     username: str
 
 
-class TestUserCrud(IsolatedAsyncioTestCase):
-    u = User(id=123, first_name="aba", last_name="caba", username="@capybara")
+@pytest.fixture
+async def user() -> User:
+    return User(id=123, first_name="aba", last_name="caba", username="@capybara")
 
-    async def asyncSetUp(self):
-        self.test_database = DatabaseConnector(url=f"sqlite+aiosqlite://", echo=False)
 
-        async with self.test_database.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all, checkfirst=True)
+@pytest.fixture
+async def user_db_model(db, user: User) -> UserDbModel:
+    async with db.session_factory.begin() as session:
+        return await add_user_to_db(user, session)
 
-    async def asyncTearDown(self):
-        await self.test_database.engine.dispose()
 
-    async def createTestUser(self):
-        async with self.test_database.session_factory.begin() as session:
-            return await add_user_to_db(self.u, session)
+async def test_user_cr_single_session(db, user: User):
+    async with db.session_factory.begin() as session:
+        db_user = await add_user_to_db(user, session)
+        selected_user = await get_user_from_db(user.id, session)
 
-    async def test_user_cr_single_session(self):
-        async with self.test_database.session_factory.begin() as session:
-            db_user = await add_user_to_db(self.u, session)
-            selected_user = await get_user_from_db(self.u.id, session)
+    assert db_user == selected_user
 
-        self.assertEqual(db_user, selected_user)
 
-    async def test_user_cr_separate_sessions(self):
-        db_user = await self.createTestUser()
+async def test_user_cr_separate_sessions(user_db_model: UserDbModel, db, user: User):
+    async with db.session_factory.begin() as session:
+        selected_user = await get_user_from_db(user.id, session)
 
-        async with self.test_database.session_factory.begin() as session:
-            selected_user = await get_user_from_db(self.u.id, session)
+    assert user_db_model.id == selected_user.id
 
-        self.assertEqual(db_user.id, selected_user.id)
 
-    async def test_toggle_user_paywall_access(self):
-        db_user = await self.createTestUser()
+async def test_toggle_user_paywall_access(user_db_model: UserDbModel, db, user: User):
 
-        async with self.test_database.session_factory.begin() as session:
-            await toggle_user_paywall_access(db_user.id, session)
-            selected_user = await get_user_from_db(self.u.id, session)
+    async with db.session_factory.begin() as session:
+        await toggle_user_paywall_access(user_db_model.id, session)
+        selected_user = await get_user_from_db(user.id, session)
 
-        self.assertNotEqual(db_user.paywall_access, selected_user.paywall_access)
+    assert user_db_model.paywall_access is not selected_user.paywall_access
 
-    async def test_set_user_reminders(self):
-        new_reminder_freq = random.randint(1, 1000)
-        db_user = await self.createTestUser()
 
-        self.assertIsNone(db_user.reminder_freq)
+async def test_set_user_reminders(user_db_model: UserDbModel, db, user: User):
+    new_reminder_freq = random.randint(1, 1000)
 
-        async with self.test_database.session_factory.begin() as session:
-            await set_user_reminders(db_user.id, new_reminder_freq, session)
+    assert user_db_model.reminder_freq is None
 
-        async with self.test_database.session_factory.begin() as session:
-            selected_user = await get_user_from_db(self.u.id, session)
+    async with db.session_factory.begin() as session:
+        await set_user_reminders(user_db_model.id, new_reminder_freq, session)
 
-        self.assertEqual(selected_user.reminder_freq, new_reminder_freq)
+    async with db.session_factory.begin() as session:
+        selected_user = await get_user_from_db(user.id, session)
 
-    async def test_get_all_users_with_reminders(self):
-        expected_users_with_reminders = set()
-        async with self.test_database.session_factory.begin() as session:
-            for i in range(1, 100):
-                user = await add_user_to_db(
-                    User(id=i, first_name="aba", last_name="caba", username="@capybara"), session
-                )
-                if rand_bool():
-                    expected_users_with_reminders.add(user.id)
-                    await set_user_reminders(user.id, 1, session)
+    assert selected_user.reminder_freq == new_reminder_freq
 
-        async with self.test_database.session_factory.begin() as session:
-            actual_list = set(u.id for u in await get_all_users_with_reminders(session))
 
-        self.assertSetEqual(expected_users_with_reminders, actual_list)
+async def test_get_all_users_with_reminders(db, user: User):
+    expected_users_with_reminders = set()
+    async with db.session_factory.begin() as session:
+        for i in range(1, 100):
+            user = await add_user_to_db(User(id=i, first_name="aba", last_name="caba", username="@capybara"), session)
+            if rand_bool():
+                expected_users_with_reminders.add(user.id)
+                await set_user_reminders(user.id, 1, session)
 
-    async def test_update_last_reminded_at(self):
-        db_user = await self.createTestUser()
-        dt = datetime.utcnow()
-        self.assertNotEqual(db_user.last_reminded_at, dt)
-        async with self.test_database.session_factory.begin() as session:
-            await update_last_reminded_at(db_user.id, dt, session)
-            selected_user = await get_user_from_db(self.u.id, session)
+    async with db.session_factory.begin() as session:
+        actual = set(u.id for u in await get_all_users_with_reminders(session))
 
-        self.assertEqual(selected_user.last_reminded_at, dt)
+    assert expected_users_with_reminders == actual
+
+
+async def test_update_last_reminded_at(user_db_model: UserDbModel, db, user: User):
+    dt = datetime.utcnow()
+    assert user_db_model.last_reminded_at != dt
+    async with db.session_factory.begin() as session:
+        await update_last_reminded_at(user_db_model.id, dt, session)
+        selected_user = await get_user_from_db(user.id, session)
+
+    assert selected_user.last_reminded_at == dt

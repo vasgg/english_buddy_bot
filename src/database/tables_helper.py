@@ -1,13 +1,15 @@
+from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 # noinspection PyUnresolvedReferences
 import database.models.complete_lesson
 
 # noinspection PyUnresolvedReferences
-import database.models.lesson
+from database.models.lesson import Lesson
 
 # noinspection PyUnresolvedReferences
-import database.models.reaction
+from database.models.reaction import Reaction, ReactionType
 
 # noinspection PyUnresolvedReferences
 import database.models.session
@@ -16,7 +18,7 @@ import database.models.session
 import database.models.session_log
 
 # noinspection PyUnresolvedReferences
-import database.models.slide
+from database.models.slide import Slide, SlideType
 
 # noinspection PyUnresolvedReferences
 import database.models.sticker
@@ -25,16 +27,30 @@ import database.models.sticker
 import database.models.text
 
 # noinspection PyUnresolvedReferences
-import database.models.user
+from database.models.user import User
 from config import get_settings
 from database.database_connector import DatabaseConnector
 from database.models.base import Base
 
 
-async def create_or_drop_db(engine: AsyncEngine):
+async def create_or_drop_db(engine: AsyncEngine, create: bool = True):
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all, checkfirst=True)
-        # await conn.run_sync(Base.metadata.drop_all)
+        if create:
+            await conn.run_sync(Base.metadata.create_all, checkfirst=True)
+        else:
+            await conn.run_sync(Base.metadata.drop_all)
+
+
+async def populate_db(dc: DatabaseConnector):
+    target_slide_id = 1050
+
+    async with dc.session_factory.begin() as session:
+        session.add(Lesson(title="abacaba", path=f"{target_slide_id}", index=1))
+        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.utcnow()))
+        session.add(Slide(lesson_id=1, slide_type=SlideType.TEXT, id=target_slide_id))
+        session.add(Reaction(type=ReactionType.WRONG, text="wrong"))
+        session.add(Reaction(type=ReactionType.RIGHT, text="right"))
+        await session.commit()
 
 
 def get_db() -> DatabaseConnector:
@@ -47,3 +63,4 @@ if __name__ == '__main__':
 
     db = get_db()
     asyncio.run(create_or_drop_db(db.engine))
+    asyncio.run(populate_db(db))

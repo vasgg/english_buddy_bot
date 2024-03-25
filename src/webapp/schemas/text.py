@@ -1,6 +1,6 @@
 from typing import Type
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from database.models.text import Text
 
@@ -10,17 +10,14 @@ class TextsSchema(BaseModel):
     description: str | None = Field(title='description')
     text: str | None = Field(title='text')
 
-    class Config:
-        from_attributes = True
-        extra = 'allow'
+    model_config = ConfigDict(extra='allow', from_attributes=True)
 
 
 class TextsTableSchema(TextsSchema):
     edit_button: str = Field("✏️", title=" ")
     minus_button: str = Field("➖", title=" ")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 def get_text_data_model(data: Text | None = None) -> Type[BaseModel]:
@@ -39,9 +36,7 @@ def get_text_data_model(data: Text | None = None) -> Type[BaseModel]:
             cols=None,
         )
 
-        class Config:
-            from_attributes = True
-            extra = 'allow'
+        model_config = ConfigDict(extra='allow', from_attributes=True)
 
     return TextDataModel
 
