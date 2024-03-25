@@ -13,7 +13,7 @@ from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from enums import KeyboardType, SlideType, SlidesMenuType, StickerType
-from webapp.controllers.misc import extract_img_from_form
+from webapp.controllers.misc import extract_img_from_form, image_upload
 from webapp.controllers.slide import (
     get_all_slides_from_lesson_by_order_fastui,
 )
@@ -607,7 +607,6 @@ async def new_image_slide_form(
     db_session: AsyncDBSession,
     form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
     settings: Annotated[Settings, Depends(get_settings)],
-
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
