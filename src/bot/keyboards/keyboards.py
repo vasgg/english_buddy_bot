@@ -70,7 +70,7 @@ def get_quiz_keyboard(words: list[str], answer: str, lesson_id: int, slide_id: i
 async def get_lesson_progress_keyboard(
     mode: UserLessonProgress, lesson: Lesson, exam_slide_id: int | None = None, current_slide_id: int | None = None
 ) -> InlineKeyboardMarkup:
-    first_slide_id = lesson.path.split('.')[1]
+    first_slide_id = lesson.path.split('.')[0]
     match mode:
         case UserLessonProgress.NO_PROGRESS:
             if exam_slide_id:

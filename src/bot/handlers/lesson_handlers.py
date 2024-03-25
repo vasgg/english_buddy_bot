@@ -26,17 +26,19 @@ router = Router()
 async def lesson_routine(
     bot: Bot,
     user: User,
-    lesson_id: int,
     slide_id: int,
     session: Session,
     state: FSMContext,
     db_session: AsyncSession,
     skip_step_increment: bool = False,
 ) -> None:
-    current_step = session.current_step + 1 if not skip_step_increment else session.current_step
+    if session.current_step == 1:
+        current_step = 1
+    else:
+        current_step = session.current_step + 1 if not skip_step_increment else session.current_step
     await update_session(
-        user.id,
-        lesson_id,
+        user_id=user.id,
+        lesson_id=session.lesson_id,
         current_slide_id=slide_id,
         current_step=current_step,
         session_id=session.id,
@@ -149,7 +151,7 @@ async def lesson_start_from_callback_processing(
         case _:
             assert False, 'invalid attr'
 
-    await lesson_routine(bot, user, lesson_id, slide_id, session, state, db_session)
+    await lesson_routine(bot, user, slide_id, session, state, db_session)
     await state.update_data(session_id=session.id)
     await callback.answer()
 

@@ -20,5 +20,5 @@ async def get_extra_slide_by_id(slide_id: int, db_session: AsyncSession) -> Slid
 
 async def get_lesson_slides_count(path: str) -> int:
     slide_ids_str = path.split(".")
-    slides_count = len(slide_ids_str) - 1
+    slides_count = len(slide_ids_str)
     return slides_count
