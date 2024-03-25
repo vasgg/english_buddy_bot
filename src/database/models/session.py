@@ -10,8 +10,15 @@ class Session(Base):
 
     lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id'))
     path: Mapped[str]
+    path_extra: Mapped[str | None]
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
     current_slide_id: Mapped[int] = mapped_column(ForeignKey('slides.id', ondelete='CASCADE'))
     current_step: Mapped[int] = mapped_column(default=1, server_default='1')
     starts_from: Mapped[SessionStartsFrom] = mapped_column()
     status: Mapped[SessionStatus] = mapped_column(default=SessionStatus.IN_PROGRESS)
+    in_extra: Mapped[bool] = mapped_column(default=False, server_default='0')
+
+    def get_path(self):
+        if self.in_extra:
+            return [int(elem) for elem in self.path_extra.split(".")]
+        return [int(elem) for elem in self.path.split(".")]
