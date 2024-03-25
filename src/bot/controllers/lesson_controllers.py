@@ -25,7 +25,7 @@ async def session_routine(
     from bot.controllers.slide_controllers import last_slide_processing, slides_routine
 
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
-    # path = [int(elem) for elem in session.path.split(".")]
+    path = [int(elem) for elem in session.path.split(".")]
     if not slide:
         logger.error(f'Slide {slide_id} not found')
         return
