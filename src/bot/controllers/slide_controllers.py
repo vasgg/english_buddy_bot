@@ -1,14 +1,15 @@
 import asyncio
 import logging
-import os
 from pathlib import Path
 from random import sample
 
 from aiogram import Bot, types
+from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import find_first_exam_slide, session_routine
+from bot.controllers.lesson_controllers import find_first_exam_slide
+from bot.controllers.session_controller import session_routine
 from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
 from database.crud.answer import get_random_sticker_id, get_text_by_prompt
 from database.crud.lesson import (
@@ -24,6 +25,7 @@ from database.crud.session import (
     get_hints_shown_counter_in_session,
     update_session_status,
 )
+from database.models.session import Session
 from database.models.slide import Slide
 from database.models.user import User
 from enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
@@ -51,27 +53,16 @@ async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, 
     return steps
 
 
-async def set_new_slide_image(slide_id: int, image_name: str, db_session: AsyncSession):
-    stmt = select(Slide).filter(Slide.id == slide_id)
-    result = await db_session.execute(stmt)
-    slide = result.scalar_one()
-    slide.picture = image_name
-    await db_session.commit()
-
-
-def get_image_files_list(lesson_id: int) -> list[str]:
-    directory = f'src/webapp/static/lessons_images/{lesson_id}'
-    allowed_image_formats = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
-    files = []
-    for filename in os.listdir(directory):
-        if filename.rsplit('.', 1)[1].lower() in allowed_image_formats:
-            files.append(filename)
-    return files
-
-
 async def slides_routine(
-    slide: Slide, bot: Bot, user: User, path: list[int], current_step: int, state, session, db_session: AsyncSession
+    slide: Slide,
+    bot: Bot,
+    user: User,
+    current_step: int,
+    state: FSMContext,
+    session: Session,
+    db_session: AsyncSession,
 ) -> None:
+    path = session.get_path()
     next_step = current_step + 1
     try:
         next_slide_id = path[path.index(slide.id) + 1]
