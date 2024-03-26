@@ -8,7 +8,7 @@ from bot.controllers.session_controller import (
     log_quiz_answer,
 )
 from bot.handlers.lesson_handlers import lesson_routine
-from bot.keyboards.callback_builders import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
+from bot.keyboards.callback_data import HintCallbackFactory, QuizCallbackFactory, SlideCallbackFactory
 from bot.keyboards.keyboards import get_hint_keyaboard
 from bot.middlewares.session_middlewares import SessionMiddleware
 from database.crud.answer import get_random_answer, get_text_by_prompt
@@ -61,7 +61,7 @@ async def quiz_callback_processing(
     slide_id = callback_data.slide_id
     answer = callback_data.answer
     slide: Slide = await get_slide_by_id(slide_id=slide_id, db_session=db_session)
-    slide_ids = [int(elem) for elem in session.path.split(".")]
+    path = session.get_path()
     data = await state.get_data()
     if 'wrong_answer' in answer:
         try:
@@ -124,7 +124,7 @@ async def quiz_callback_processing(
         await lesson_routine(
             bot=bot,
             user=user,
-            slide_id=slide_ids[slide_ids.index(slide.id) + 1],
+            slide_id=path[path.index(slide.id) + 1],
             state=state,
             session=session,
             db_session=db_session,

@@ -3,10 +3,10 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import find_first_exam_slide
+from bot.controllers.lesson_controllers import find_first_exam_slide_id
 from bot.controllers.session_controller import session_routine
 from bot.controllers.user_controllers import show_start_menu
-from bot.keyboards.callback_builders import (
+from bot.keyboards.callback_data import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
     RemindersCallbackFactory,
@@ -14,8 +14,7 @@ from bot.keyboards.callback_builders import (
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_lesson_by_id
-from database.crud.session import get_current_session, update_session, update_session_status
-from database.crud.slide import get_lesson_slides_count
+from database.crud.session import get_current_session, update_session_status
 from database.crud.user import set_user_reminders
 from database.models.session import Session
 from database.models.user import User
@@ -33,19 +32,8 @@ async def lesson_routine(
     db_session: AsyncSession,
     skip_step_increment: bool = False,
 ) -> None:
-    # if session.current_step == 1:
-    #     current_step = 1
-    # else:
-    current_step = session.current_step + 1 if not skip_step_increment else session.current_step
-    await update_session(
-        user_id=user.id,
-        lesson_id=session.lesson_id,
-        current_slide_id=slide_id,
-        current_step=current_step,
-        session_id=session.id,
-        db_session=db_session,
-    )
-    await session_routine(bot, user, slide_id, current_step, state, session, db_session)
+    step = session.current_step + 1 if not skip_step_increment else session.current_step
+    await session_routine(bot, user, slide_id, step, state, session, db_session)
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
@@ -61,12 +49,12 @@ async def lesson_callback_processing(
         pass
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
-    slides_count = await get_lesson_slides_count(path=lesson.path)
+    slides_count = len(lesson.path.split('.'))
     if slides_count == 0:
         await callback.message.answer(text='no slides yet')
         return
-    slide_ids = [int(elem) for elem in lesson.path.split(".")]
-    first_exam_slide = await find_first_exam_slide(slide_ids, db_session)
+    path: list[int] = [int(elem) for elem in lesson.path.split(".")]
+    first_exam_slide = await find_first_exam_slide_id(path, db_session)
     if lesson.is_paid and user.paywall_access is False:
         await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
         return
@@ -95,7 +83,6 @@ async def lesson_callback_processing(
                     mode=UserLessonProgress.NO_PROGRESS, lesson=lesson, exam_slide_id=first_exam_slide
                 ),
             )
-
     await callback.answer()
 
 
@@ -115,42 +102,31 @@ async def lesson_start_from_callback_processing(
     lesson_id = callback_data.lesson_id
     slide_id = callback_data.slide_id
     attr = callback_data.attr
+
     session = await get_current_session(user.id, lesson_id, db_session)
     lesson = await get_lesson_by_id(lesson_id, db_session)
-    slide_ids = [int(elem) for elem in lesson.path.split(".")]
-    first_exam_slide = await find_first_exam_slide(slide_ids, db_session)
-    match attr:
-        case LessonStartsFrom.BEGIN:
-            if session:
-                await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
-            session = Session(
-                user_id=user.id,
-                lesson_id=lesson_id,
-                current_slide_id=slide_id,
-                starts_from=lesson_to_session(attr),
-                path=lesson.path,
-            )
-            db_session.add(session)
-            await db_session.flush()
-        case LessonStartsFrom.EXAM:
-            if session:
-                await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
-            slides = lesson.path.split('.')
-            session = Session(
-                user_id=user.id,
-                lesson_id=lesson_id,
-                current_slide_id=slide_id,
-                starts_from=lesson_to_session(attr),
-                # fmt: off
-                path='.'.join(slides[slides.index(str(first_exam_slide)):]),
-                # fmt: on
-            )
-            db_session.add(session)
-            await db_session.flush()
-        case LessonStartsFrom.CONTINUE:
-            pass
-        case _:
-            assert False, 'invalid attr'
+
+    if session:
+        await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
+
+    path: list[int] = [int(elem) for elem in lesson.path.split(".")]
+    first_exam_slide_id = await find_first_exam_slide_id(path, db_session)
+
+    if attr == LessonStartsFrom.EXAM:
+        path_start_index = path.index(first_exam_slide_id)
+        path = path[path_start_index:]
+
+    if attr != LessonStartsFrom.CONTINUE:
+        session = Session(
+            user_id=user.id,
+            lesson_id=lesson_id,
+            current_slide_id=slide_id if attr != LessonStartsFrom.EXAM else first_exam_slide_id,
+            starts_from=lesson_to_session(attr),
+            path='.'.join(map(str, path)),
+            path_extra=lesson.path_extra,
+        )
+        db_session.add(session)
+        await db_session.flush()
 
     await lesson_routine(bot, user, slide_id, session, state, db_session)
     await state.update_data(session_id=session.id)

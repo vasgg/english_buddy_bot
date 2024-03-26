@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.keyboards.callback_builders import (
+from bot.keyboards.callback_data import (
     HintCallbackFactory,
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,

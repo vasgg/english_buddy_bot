@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import find_first_exam_slide
+from bot.controllers.lesson_controllers import find_first_exam_slide_id
 from bot.controllers.session_controller import session_routine
 from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
 from database.crud.answer import get_random_sticker_id, get_text_by_prompt
@@ -190,7 +190,7 @@ async def slides_routine(
 
 async def last_slide_processing(bot: Bot, user: User, path: list, state, session, db_session: AsyncSession) -> None:
     lesson = await get_lesson_by_id(lesson_id=session.lesson_id, db_session=db_session)
-    exam_slide_id = await find_first_exam_slide(path, db_session)
+    exam_slide_id = await find_first_exam_slide_id(path, db_session)
     await bot.unpin_all_chat_messages(chat_id=user.telegram_id)
     await add_completed_lesson_to_db(user.id, session.lesson_id, session.id, db_session)
     await update_session_status(

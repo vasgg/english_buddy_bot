@@ -8,7 +8,7 @@ from database.models.slide import Slide
 logger = logging.Logger(__name__)
 
 
-async def find_first_exam_slide(slide_ids, db_session: AsyncSession) -> int | None:
+async def find_first_exam_slide_id(slide_ids: list[int], db_session: AsyncSession) -> int | None:
     for slide_id in slide_ids:
         slide: Slide = await get_slide_by_id(slide_id, db_session)
         if slide.is_exam_slide:
