@@ -3,7 +3,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import find_first_exam_slide_id
+from bot.controllers.lesson_controllers import find_first_exam_slide
 from bot.controllers.session_controller import session_routine
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_data import (

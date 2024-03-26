@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import find_first_exam_slide_id
+from bot.controllers.lesson_controllers import find_first_exam_slide
 from bot.controllers.session_controller import session_routine
 from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
 from database.crud.answer import get_random_sticker_id, get_text_by_prompt
