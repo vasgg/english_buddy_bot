@@ -36,7 +36,7 @@ async def session_routine(
         session_id=session.id,
         db_session=db_session,
     )
-    if current_step != len(path) + 1:
+    if current_step != len(path) + 2:
         await slides_routine(
             slide=slide,
             bot=bot,

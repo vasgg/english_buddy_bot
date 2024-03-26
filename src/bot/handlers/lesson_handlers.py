@@ -33,10 +33,10 @@ async def lesson_routine(
     db_session: AsyncSession,
     skip_step_increment: bool = False,
 ) -> None:
-    if session.current_step == 1:
-        current_step = 1
-    else:
-        current_step = session.current_step + 1 if not skip_step_increment else session.current_step
+    # if session.current_step == 1:
+    #     current_step = 1
+    # else:
+    current_step = session.current_step + 1 if not skip_step_increment else session.current_step
     await update_session(
         user_id=user.id,
         lesson_id=session.lesson_id,
