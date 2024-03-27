@@ -27,7 +27,7 @@ async def main():
     logging.config.dictConfig(logging_config)
     settings = get_settings()
 
-    if settings.SENTRY_AIOGRAM_DSN:
+    if settings.SENTRY_AIOGRAM_DSN and settings.STAGE == 'prod':
         sentry_sdk.init(
             dsn=settings.SENTRY_AIOGRAM_DSN.get_secret_value(),
             # Set traces_sample_rate to 1.0 to capture 100%

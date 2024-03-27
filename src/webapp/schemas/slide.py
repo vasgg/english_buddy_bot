@@ -11,8 +11,8 @@ from enums import KeyboardType
 
 class SlidesSchema(BaseModel):
     id: int
-    text: str | None = Field(title='content')
-    details: str | None = Field(title='context')
+    text: str | None = Field(title='Контент')
+    details: str | None = Field(title='Контекст')
     is_exam_slide: str = Field(title=' ')
 
     model_config = ConfigDict(extra='allow', from_attributes=True)
@@ -108,8 +108,9 @@ def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
         )
         keyboard: str = Field(
             slide.keyboard if slide else '',
-            description='Введите варианты ответов, разделённые "|". Один из них должен совпадать с полем "right answer". Обязательное поле.',
-            title='Варианты ответов',
+            description='Введите варианты неправильных ответов, разделённые "|". '
+            'Квиз будет составлен из неправильных вариантов + правильный ответ. Обязательное поле.',
+            title='неправильные ответы',
         )
         is_exam_slide: bool = Field(
             slide.is_exam_slide if slide else False,

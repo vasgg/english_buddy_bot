@@ -64,10 +64,15 @@ class LessonStartsFrom(StrEnum):
 
 
 class EventType(StrEnum):
-    MESSAGE = 'message'
-    CALLBACK_QUERY = 'callback_query'
-    HINT = 'hint'
-    CONTINUE = 'continue'
+    MESSAGE = auto()
+    CALLBACK_QUERY = auto()
+    HINT = auto()
+    CONTINUE = auto()
+
+
+class SlidesMenuType(StrEnum):
+    REGULAR = auto()
+    EXTRA = auto()
 
 
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:

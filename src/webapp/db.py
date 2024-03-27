@@ -22,4 +22,3 @@ async def get_db_session(connector: AsyncDB) -> AsyncSession:
 
 
 AsyncDBSession = Annotated[AsyncSession, Depends(get_db_session)]
-

@@ -11,7 +11,7 @@ from database.models.reaction import Reaction
 from enums import ReactionType
 from webapp.controllers.reaction import delete_reaction_by_id, get_reaction_by_id, get_reactions_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.components import get_common_content
+from webapp.routers.components.main_component import get_common_content
 from webapp.schemas.reaction import (
     AddReactionDataModel,
     EditReactionDataModel,

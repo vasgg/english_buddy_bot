@@ -9,9 +9,3 @@ async def get_slide_by_id(slide_id: int, db_session: AsyncSession) -> Slide:
     result = await db_session.execute(query)
     slide = result.scalar()
     return slide
-
-
-async def get_lesson_slides_count(path: str) -> int:
-    slide_ids_str = path.split(".")
-    slides_count = len(slide_ids_str) - 1
-    return slides_count

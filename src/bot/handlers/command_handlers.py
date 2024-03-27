@@ -63,7 +63,6 @@ async def set_slide_position_handler(
         await lesson_routine(
             bot=bot,
             user=user,
-            lesson_id=session.lesson_id,
             slide_id=new_slide_id,
             state=state,
             session=session,
