@@ -1,6 +1,6 @@
 from typing import Type
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from database.models.reaction import Reaction
 from enums import ReactionType
@@ -10,24 +10,20 @@ class ReactionsSchema(BaseModel):
     id: int = Field(title='id')
     text: str | None = Field(title='text')
 
-    class Config:
-        from_attributes = True
-        extra = 'allow'
+    model_config = ConfigDict(extra='allow', from_attributes=True)
 
 
 class ReactionsTableSchema(ReactionsSchema):
     edit_button: str = Field("✏️", title=" ")
     minus_button: str = Field("➖", title=" ")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DeleteReaction(BaseModel):
     id: int = Field(title='id')
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 def get_reaction_data_model(data: Reaction) -> Type[BaseModel]:
@@ -39,9 +35,7 @@ def get_reaction_data_model(data: Reaction) -> Type[BaseModel]:
         )
         text: str = Field(default=data.text, description='Введите текст реакции. Обязательное поле.', title='text')
 
-        class Config:
-            from_attributes = True
-            extra = 'allow'
+        model_config = ConfigDict(extra='allow', from_attributes=True)
 
     return ReactionDataModel
 

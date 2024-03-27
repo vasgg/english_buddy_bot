@@ -2,7 +2,7 @@ from functools import lru_cache
 from logging.handlers import RotatingFileHandler
 
 from pydantic import SecretStr
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -18,14 +18,13 @@ class Settings(BaseSettings):
     def aiosqlite_db_url(self) -> str:
         return f'sqlite+aiosqlite:///{self.DB_NAME}.db'
 
-    class Config:
-        env_file = '.env'
-        env_file_encoding = 'utf-8'
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
 
 @lru_cache
 def get_settings():
     return Settings()
+
 
 def get_logging_config(app_name: str):
     return {
