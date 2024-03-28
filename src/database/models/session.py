@@ -22,3 +22,18 @@ class Session(Base):
         if self.in_extra:
             return [int(elem) for elem in self.path_extra.split(".")]
         return [int(elem) for elem in self.path.split(".")]
+
+    def set_extra(self):
+        self.in_extra = True
+        self.current_step = 0
+
+    def get_slide(self):
+        if self.in_extra:
+            return self.path_extra[self.current_step]
+        return self.path[self.current_step]
+
+    def has_next(self):
+        path = self.get_path()
+        if self.current_step < len(path):
+            return True
+        return False
