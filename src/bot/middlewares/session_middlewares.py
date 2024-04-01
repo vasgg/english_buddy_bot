@@ -43,6 +43,7 @@ class SessionMiddleware(BaseMiddleware):
         state: FSMContext = data['state']
         state_data = await state.get_data()
         session_id = state_data['session_id']
+        # TODO: calculate from db in case of missing
         db_session: AsyncSession = data['db_session']
         user_session = await get_session(session_id, db_session)
         data['session'] = user_session

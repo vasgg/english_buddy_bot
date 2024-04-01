@@ -1,9 +1,9 @@
-from aiogram import Bot, Router, types
+from aiogram import Router, types
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import find_first_exam_slide_id
+from bot.controllers.slide_controllers import show_slides
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_data import (
     LessonStartsFromCallbackFactory,
@@ -14,12 +14,24 @@ from bot.keyboards.keyboards import get_lesson_progress_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_lesson_by_id
 from database.crud.session import get_current_session, update_session_status
+from database.crud.slide import get_slide_by_id
 from database.crud.user import set_user_reminders
+from database.models.lesson import Lesson
 from database.models.session import Session
+from database.models.slide import Slide
 from database.models.user import User
 from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
 
 router = Router()
+
+
+# TODO: move to proper place
+async def find_first_exam_slide_id(slide_ids: list[int], db_session: AsyncSession) -> int | None:
+    for slide_id in slide_ids:
+        slide: Slide = await get_slide_by_id(slide_id, db_session)
+        if slide.is_exam_slide:
+            return slide_id
+    return None
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
@@ -41,6 +53,7 @@ async def lesson_callback_processing(
         return
     path: list[int] = [int(elem) for elem in lesson.path.split(".")]
     first_exam_slide = await find_first_exam_slide_id(path, db_session)
+    has_exam_slides = first_exam_slide is not None
     if lesson.is_paid and user.paywall_access is False:
         await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
         return
@@ -50,32 +63,47 @@ async def lesson_callback_processing(
             reply_markup=await get_lesson_progress_keyboard(
                 mode=UserLessonProgress.IN_PROGRESS,
                 lesson=lesson,
-                exam_slide_id=first_exam_slide,
+                has_exam_slides=has_exam_slides,
             ),
         )
     else:
-        if first_exam_slide:
-            await callback.message.answer(
-                text=await get_text_by_prompt(prompt='starts_from_with_exam', db_session=db_session),
-                reply_markup=await get_lesson_progress_keyboard(
-                    mode=UserLessonProgress.NO_PROGRESS, lesson=lesson, exam_slide_id=first_exam_slide
-                ),
-            )
-        else:
-            await callback.message.answer(
-                text=await get_text_by_prompt(prompt='starts_from_without_exam', db_session=db_session),
-                reply_markup=await get_lesson_progress_keyboard(
-                    mode=UserLessonProgress.NO_PROGRESS, lesson=lesson, exam_slide_id=first_exam_slide
-                ),
-            )
+        prompt = 'starts_from_with_exam' if has_exam_slides else 'starts_from_without_exam'
+        text = await get_text_by_prompt(prompt=prompt, db_session=db_session)
+        await callback.message.answer(
+            text=text,
+            reply_markup=await get_lesson_progress_keyboard(
+                mode=UserLessonProgress.NO_PROGRESS,
+                lesson=lesson,
+                has_exam_slides=has_exam_slides,
+            ),
+        )
     await callback.answer()
+
+
+async def prepare_session(lesson: Lesson, db_session: AsyncSession, attr: LessonStartsFrom, user_id: int) -> Session:
+    path = lesson.path
+    if attr == LessonStartsFrom.EXAM:
+        path_list: list[int] = [int(elem) for elem in lesson.path.split(".")]
+        first_exam_slide_id = await find_first_exam_slide_id(path, db_session)
+        path_start_index = path.index(first_exam_slide_id)
+        path = '.'.join(map(str, path_list[path_start_index:]))
+
+    session = Session(
+        user_id=user_id,
+        lesson_id=lesson.id,
+        starts_from=lesson_to_session(attr),
+        path=path,
+        path_extra=lesson.path_extra,
+    )
+    db_session.add(session)
+    await db_session.flush()
+    return session
 
 
 @router.callback_query(LessonStartsFromCallbackFactory.filter())
 async def lesson_start_from_callback_processing(
     callback: types.CallbackQuery,
     callback_data: LessonStartsFromCallbackFactory,
-    bot: Bot,
     user: User,
     state: FSMContext,
     db_session: AsyncSession,
@@ -85,35 +113,18 @@ async def lesson_start_from_callback_processing(
     except TelegramBadRequest:
         pass
     lesson_id = callback_data.lesson_id
-    slide_id = callback_data.slide_id
     attr = callback_data.attr
 
     session = await get_current_session(user.id, lesson_id, db_session)
     lesson = await get_lesson_by_id(lesson_id, db_session)
 
-    if session:
-        await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
-
-    path: list[int] = [int(elem) for elem in lesson.path.split(".")]
-    first_exam_slide_id = await find_first_exam_slide_id(path, db_session)
-
-    if attr == LessonStartsFrom.EXAM:
-        path_start_index = path.index(first_exam_slide_id)
-        path = path[path_start_index:]
-
     if attr != LessonStartsFrom.CONTINUE:
-        session = Session(
-            user_id=user.id,
-            lesson_id=lesson_id,
-            current_slide_id=slide_id if attr != LessonStartsFrom.EXAM else first_exam_slide_id,
-            starts_from=lesson_to_session(attr),
-            path='.'.join(map(str, path)),
-            path_extra=lesson.path_extra,
-        )
-        db_session.add(session)
-        await db_session.flush()
+        if session:
+            await update_session_status(session.id, new_status=SessionStatus.ABORTED, db_session=db_session)
 
-    await lesson_routine(bot, user, slide_id, session, state, db_session)
+        session = await prepare_session(lesson, db_session, attr, user.id)
+
+    await show_slides(callback.message, state, session, db_session)
     await state.update_data(session_id=session.id)
     await callback.answer()
 
@@ -143,10 +154,8 @@ async def reminders_callback_processing(
                 assert False, 'unexpected frequency'
     else:
         message = await get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
-    await set_user_reminders(
-        user_id=user.id, reminder_freq=frequency if frequency > 0 else None, db_session=db_session
-    )
+    await set_user_reminders(user_id=user.id, reminder_freq=frequency if frequency > 0 else None, db_session=db_session)
     await callback.message.answer(text=message)
     await callback.answer()
     # TODO: вот тут нужен правильный флаг, чтобы после команды не показывать старт меню
-    await show_start_menu(user=user, message=callback.message, db_session=db_session)
+    await show_start_menu(event=callback.message, db_session=db_session)

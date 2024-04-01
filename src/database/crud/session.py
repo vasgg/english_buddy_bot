@@ -1,7 +1,7 @@
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models.quiz_answer_log import QuizAnswerLog, SessionLog
+from database.models.quiz_answer_log import QuizAnswerLog
 from database.models.session import Session
 from enums import SessionStatus, SlideType
 
@@ -53,10 +53,10 @@ async def update_session_status(session_id: int, new_status: SessionStatus, db_s
 
 
 async def get_wrong_answers_counter(session_id: int, slide_id: int, db_session: AsyncSession) -> int:
-    query = select(func.count(SessionLog.id)).filter(
-        SessionLog.session_id == session_id,
-        SessionLog.slide_id == slide_id,
-        ~SessionLog.is_correct,
+    query = select(func.count(QuizAnswerLog.id)).filter(
+        QuizAnswerLog.session_id == session_id,
+        QuizAnswerLog.slide_id == slide_id,
+        ~QuizAnswerLog.is_correct,
     )
     result = await db_session.execute(query)
     return result.scalar()
@@ -80,6 +80,7 @@ async def get_hints_shown_counter_in_session(session_id: int, db_session: AsyncS
 
 
 async def count_errors_in_session(session_id, slides_set: set[int], db_session: AsyncSession) -> int:
+    # TODO: QuizAnswerLog.slide_id.in_(slides_set) возможно лишняя фильтрация
     subquery = (
         select(QuizAnswerLog.slide_id)
         .filter(
