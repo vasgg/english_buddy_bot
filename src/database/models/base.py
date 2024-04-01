@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Engine, JSON, func
-from sqlalchemy import event
+from sqlalchemy import JSON, Engine, event, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 

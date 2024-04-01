@@ -1,16 +1,12 @@
 import logging
+from typing import TYPE_CHECKING
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.user_controllers import show_start_menu
-from bot.handlers.lesson_handlers import find_first_exam_slide_id
 from bot.keyboards.keyboards import (
-    get_lesson_picker_keyboard,
     get_extra_slides_keyboard,
+    get_lesson_picker_keyboard,
 )
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import (
@@ -25,11 +21,17 @@ from database.crud.session import (
     get_all_questions_in_session,
     update_session_status,
 )
+from database.crud.slide import find_first_exam_slide_id
 from database.crud.user import get_user_from_db
-from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import SessionStartsFrom, SessionStatus, SlideType
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+if TYPE_CHECKING:
+    from database.models.lesson import Lesson
 
 logger = logging.Logger(__name__)
 
@@ -42,31 +44,31 @@ class UserStats(BaseModel):
 
 
 async def get_all_base_questions_id_in_lesson(
-    lesson_id: int, exam_slides_id: set[int], db_session: AsyncSession
+    lesson_id: int, exam_slides_id: set[int], db_session: AsyncSession,
 ) -> set[int]:
     all_questions_slide_types = [SlideType.QUIZ_OPTIONS, SlideType.QUIZ_INPUT_WORD, SlideType.QUIZ_INPUT_PHRASE]
     query = select(Slide.id).filter(
-        Slide.lesson_id == lesson_id, Slide.slide_type.in_(all_questions_slide_types), ~Slide.id.in_(exam_slides_id)
+        Slide.lesson_id == lesson_id, Slide.slide_type.in_(all_questions_slide_types), ~Slide.id.in_(exam_slides_id),
     )
     result = await db_session.execute(query)
-    return {row for row in result.scalars().all()} if result else {}
+    return set(result.scalars().all()) if result else {}
 
 
 async def calculate_user_stats(session: Session, db_session: AsyncSession) -> UserStats:
     all_exam_slides_in_lesson = await get_all_exam_slides_id_in_lesson(
-        lesson_id=session.lesson_id, db_session=db_session
+        lesson_id=session.lesson_id, db_session=db_session,
     )
     all_questions_slides_in_session = await get_all_questions_in_session(session_id=session.id, db_session=db_session)
     total_exam_questions_in_session = all_exam_slides_in_lesson & all_questions_slides_in_session
     total_exam_questions_errors = await count_errors_in_session(
-        session_id=session.id, slides_set=total_exam_questions_in_session, db_session=db_session
+        session_id=session.id, slides_set=total_exam_questions_in_session, db_session=db_session,
     )
     total_base_questions_in_lesson = await get_all_base_questions_id_in_lesson(
-        lesson_id=session.lesson_id, exam_slides_id=all_exam_slides_in_lesson, db_session=db_session
+        lesson_id=session.lesson_id, exam_slides_id=all_exam_slides_in_lesson, db_session=db_session,
     )
     total_base_questions_in_session = total_base_questions_in_lesson & all_questions_slides_in_session
     total_base_questions_errors = await count_errors_in_session(
-        session_id=session.id, slides_set=total_base_questions_in_lesson, db_session=db_session
+        session_id=session.id, slides_set=total_base_questions_in_lesson, db_session=db_session,
     )
     stats = UserStats(
         regular_exercises=len(total_base_questions_in_session),
@@ -78,7 +80,7 @@ async def calculate_user_stats(session: Session, db_session: AsyncSession) -> Us
 
 
 async def show_stats(
-    event: types.Message, stats: UserStats, state: FSMContext, session: Session, db_session: AsyncSession
+    event: types.Message, stats: UserStats, state: FSMContext, session: Session, db_session: AsyncSession,
 ) -> None:
     lesson = await get_lesson_by_id(lesson_id=session.lesson_id, db_session=db_session)
     lessons = await get_lessons(db_session)
@@ -116,7 +118,8 @@ async def show_stats(
                 reply_markup=lesson_picker_kb,
             )
         case _:
-            assert False, f'Unexpected session starts from: {session.starts_from}'
+            msg = f'Unexpected session starts from: {session.starts_from}'
+            raise AssertionError(msg)
 
 
 async def finish_session(user_id: int, session: Session, db_session: AsyncSession) -> None:

@@ -1,9 +1,8 @@
 from typing import Type
 
-from pydantic import BaseModel, Field, ConfigDict
-
 from database.models.slide import Slide
 from enums import SlideType, StickerType
+from pydantic import BaseModel, ConfigDict, Field
 
 
 def get_sticker_slide_data_model(slide: Slide = None) -> Type[BaseModel]:

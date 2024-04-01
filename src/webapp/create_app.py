@@ -1,8 +1,7 @@
-from os.path import realpath, join, dirname, exists
+from os.path import dirname, exists, join, realpath
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
 from webapp.routers.lessons import router as lessons_fastui_router
 from webapp.routers.newsletter import router as newsletter_fastui_router
 from webapp.routers.reactions import router as reaction_fastui_router

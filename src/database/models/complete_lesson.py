@@ -1,10 +1,9 @@
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
-
 from database.models.base import Base
 from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.user import User
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class CompleteLesson(Base):

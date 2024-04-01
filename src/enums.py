@@ -82,4 +82,5 @@ def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom
         case LessonStartsFrom.EXAM:
             return SessionStartsFrom.EXAM
         case _:
-            assert False, f'Unknown {lesson_starts_from=}'
+            msg = f'Unknown lesson_starts_from={lesson_starts_from!r}'
+            raise AssertionError(msg)

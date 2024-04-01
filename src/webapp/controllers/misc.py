@@ -3,15 +3,14 @@ import io
 import logging
 from pathlib import Path
 
-from PIL import Image
 import aiofiles
 import aiohttp
-from aiohttp import FormData
 import fastapi
-
+from aiohttp import FormData
 from config import Settings
 from database.models.slide import Slide
 from enums import SlideType
+from PIL import Image
 from webapp.schemas.slide import EditImageSlideData
 
 logger = logging.getLogger()

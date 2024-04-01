@@ -1,15 +1,14 @@
 import asyncio
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 
 from aiogram import Bot, types
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_completed_lessons, get_lessons
 from database.crud.user import get_all_users_with_reminders, update_last_reminded_at
 from database.database_connector import DatabaseConnector
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger()
 UTC_STARTING_MARK = 14

@@ -2,10 +2,9 @@ import asyncio
 import logging.config
 from pathlib import Path
 
+import sentry_sdk
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-import sentry_sdk
-
 from bot.controllers.user_controllers import check_user_reminders
 from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
@@ -21,7 +20,7 @@ from database.tables_helper import get_db
 
 
 async def main():
-    logs_directory = Path(f"logs")
+    logs_directory = Path("logs")
     logs_directory.mkdir(parents=True, exist_ok=True)
     logging_config = get_logging_config(__name__)
     logging.config.dictConfig(logging_config)

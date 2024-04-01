@@ -1,10 +1,9 @@
-from sqlalchemy import Result, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.models.complete_lesson import CompleteLesson
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from enums import SlideType
+from sqlalchemy import Result, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_lesson_by_id(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -23,14 +22,14 @@ async def get_lessons(db_session: AsyncSession) -> list[Lesson]:
     query = select(Lesson).filter(Lesson.is_active).group_by(Lesson.index)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
-    return [row for row in lessons]
+    return list(lessons)
 
 
 async def get_lessons_with_greater_index(index: int, db_session: AsyncSession) -> list[Lesson]:
     query = select(Lesson).filter(Lesson.is_active, Lesson.index > index).group_by(Lesson.index)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
-    return [row for row in lessons]
+    return list(lessons)
 
 
 async def add_completed_lesson_to_db(user_id: int, lesson_id: int, session_id: int, db_session: AsyncSession) -> None:
@@ -46,16 +45,16 @@ async def add_completed_lesson_to_db(user_id: int, lesson_id: int, session_id: i
 async def get_completed_lessons(user_id: int, db_session: AsyncSession) -> set[int]:
     query = select(CompleteLesson.lesson_id).filter(CompleteLesson.user_id == user_id)
     result = await db_session.execute(query)
-    return {row for row in result.scalars().all()}
+    return set(result.scalars().all())
 
 
 async def get_all_exam_slides_id_in_lesson(lesson_id: int, db_session: AsyncSession) -> set[int]:
     all_questions_slide_types = [SlideType.QUIZ_OPTIONS, SlideType.QUIZ_INPUT_WORD, SlideType.QUIZ_INPUT_PHRASE]
     query = select(Slide.id).filter(
-        Slide.lesson_id == lesson_id, Slide.is_exam_slide, Slide.slide_type.in_(all_questions_slide_types)
+        Slide.lesson_id == lesson_id, Slide.is_exam_slide, Slide.slide_type.in_(all_questions_slide_types),
     )
     result = await db_session.execute(query)
-    return {row for row in result.scalars().all()} if result else {}
+    return set(result.scalars().all()) if result else {}
 
 
 async def update_lesson_first_slide(lesson_id: int, first_slide_id: int, db_session):

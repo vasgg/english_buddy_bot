@@ -1,13 +1,12 @@
-from collections import defaultdict
 import logging
 import mimetypes
+from collections import defaultdict
 from pathlib import Path
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
 from fastui import AnyComponent, FastUI, prebuilt_html
 from fastui.forms import SelectSearchResponse
-
 from webapp.routers.components.main_component import get_common_content
 
 router = APIRouter()

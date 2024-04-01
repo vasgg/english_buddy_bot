@@ -1,8 +1,7 @@
 from typing import Type
 
-from pydantic import BaseModel, Field, ConfigDict
-
 from database.models.text import Text
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TextsSchema(BaseModel):

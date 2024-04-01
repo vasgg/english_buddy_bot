@@ -1,7 +1,6 @@
 import asyncio
 
 from aiogram import types
-
 from bot.keyboards.keyboards import get_further_button
 from database.models.slide import Slide
 from enums import KeyboardType

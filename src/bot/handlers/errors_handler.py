@@ -4,7 +4,6 @@ import typing
 
 import aiogram
 from aiogram import Router
-
 from config import get_settings
 
 if typing.TYPE_CHECKING:

@@ -1,8 +1,7 @@
 import logging
 
-from sqlalchemy import select
-
 from database.models.lesson import Lesson
+from sqlalchemy import select
 from webapp.db import AsyncDBSession
 from webapp.schemas.lesson import LessonsTableSchema
 

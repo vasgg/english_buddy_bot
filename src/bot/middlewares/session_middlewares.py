@@ -1,13 +1,15 @@
-from typing import Any, Awaitable, Callable, Dict
+import contextlib
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
-from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from sqlalchemy.exc import PendingRollbackError
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.crud.session import get_session
 from database.database_connector import DatabaseConnector
+from sqlalchemy.exc import PendingRollbackError
+
+if TYPE_CHECKING:
+    from aiogram.fsm.context import FSMContext
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class DBSessionMiddleware(BaseMiddleware):
@@ -26,10 +28,9 @@ class DBSessionMiddleware(BaseMiddleware):
             res = await handler(event, data)
             # TODO: probably,check how session handles it
             # check how commit behaves
-            try:
+            with contextlib.suppress(PendingRollbackError):
                 await db_session.commit()
-            except PendingRollbackError:
-                ...
+
             return res
 
 

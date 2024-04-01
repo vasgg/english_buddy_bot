@@ -1,12 +1,11 @@
 from typing import Annotated, Type
 
-from fastapi import UploadFile
-from fastui.forms import FormFile
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from pydantic_core import PydanticCustomError
-
 from database.models.slide import Slide
 from enums import KeyboardType
+from fastapi import UploadFile
+from fastui.forms import FormFile
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic_core import PydanticCustomError
 
 
 class SlidesSchema(BaseModel):
@@ -46,7 +45,7 @@ def get_text_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
             title='задержка',
         )
         keyboard_type: bool | None = Field(
-            True if slide and slide.keyboard_type == KeyboardType.FURTHER else False,
+            bool(slide and slide.keyboard_type == KeyboardType.FURTHER),
             description='Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.',
             title='Кнопка "далее"',
         )
@@ -72,7 +71,7 @@ def get_image_slide_data_model(slide: Slide = None, lesson_id: int = None) -> Ty
             title='задержка',
         )
         keyboard_type: bool | None = Field(
-            True if slide and slide.keyboard_type == KeyboardType.FURTHER else False,
+            bool(slide and slide.keyboard_type == KeyboardType.FURTHER),
             description='Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.',
             title='Кнопка "далее"',
         )
@@ -215,7 +214,7 @@ class EditQuizOptionsSlideData(BaseModel):
     def text_validator(cls, v: str) -> str:
         if '…' not in v:
             raise PydanticCustomError(
-                'missing_symbol', 'Текст вопроса должен содержать символ "…" для подстановки правильного значения.'
+                'missing_symbol', 'Текст вопроса должен содержать символ "…" для подстановки правильного значения.',
             )
         return v
 
@@ -229,7 +228,7 @@ class EditQuizInputWordSlideData(BaseModel):
     def text_validator(cls, v: str) -> str:
         if '…' not in v:
             raise PydanticCustomError(
-                'missing_symbol', 'Текст вопроса должен содержать символ "…" для подстановки правильного значения.'
+                'missing_symbol', 'Текст вопроса должен содержать символ "…" для подстановки правильного значения.',
             )
         return v
 

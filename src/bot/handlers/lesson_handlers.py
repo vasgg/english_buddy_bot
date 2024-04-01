@@ -1,37 +1,28 @@
+import contextlib
+
 from aiogram import Router, types
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.slide_controllers import show_slides
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_data import (
-    LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
+    LessonStartsFromCallbackFactory,
     RemindersCallbackFactory,
 )
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_lesson_by_id
 from database.crud.session import get_current_session, update_session_status
-from database.crud.slide import get_slide_by_id
+from database.crud.slide import find_first_exam_slide_id
 from database.crud.user import set_user_reminders
 from database.models.lesson import Lesson
 from database.models.session import Session
-from database.models.slide import Slide
 from database.models.user import User
 from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
-
-
-# TODO: move to proper place
-async def find_first_exam_slide_id(slide_ids: list[int], db_session: AsyncSession) -> int | None:
-    for slide_id in slide_ids:
-        slide: Slide = await get_slide_by_id(slide_id, db_session)
-        if slide.is_exam_slide:
-            return slide_id
-    return None
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
@@ -41,10 +32,9 @@ async def lesson_callback_processing(
     user: User,
     db_session: AsyncSession,
 ) -> None:
-    try:
+    with contextlib.suppress(TelegramBadRequest):
         await callback.message.delete()
-    except TelegramBadRequest:
-        pass
+
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
     slides_count = len(lesson.path.split('.'))
@@ -108,10 +98,9 @@ async def lesson_start_from_callback_processing(
     state: FSMContext,
     db_session: AsyncSession,
 ) -> None:
-    try:
+    with contextlib.suppress(TelegramBadRequest):
         await callback.message.delete()
-    except TelegramBadRequest:
-        pass
+
     lesson_id = callback_data.lesson_id
     attr = callback_data.attr
 
@@ -136,10 +125,9 @@ async def reminders_callback_processing(
     user: User,
     db_session: AsyncSession,
 ) -> None:
-    try:
+    with contextlib.suppress(TelegramBadRequest):
         await callback.message.delete()
-    except TelegramBadRequest:
-        pass
+
     frequency = callback_data.frequency
     text = await get_text_by_prompt(prompt='set_reminder_message', db_session=db_session)
     if frequency > 0:
@@ -151,7 +139,7 @@ async def reminders_callback_processing(
             case 7:
                 message = text.format('каждую неделю')
             case _:
-                assert False, 'unexpected frequency'
+                raise AssertionError('unexpected frequency')
     else:
         message = await get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
     await set_user_reminders(user_id=user.id, reminder_freq=frequency if frequency > 0 else None, db_session=db_session)

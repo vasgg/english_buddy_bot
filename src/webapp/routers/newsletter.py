@@ -3,14 +3,14 @@ import logging
 from pathlib import Path
 from typing import Annotated
 
-from PIL import Image
-from fastapi import APIRouter, Depends
-from fastui import AnyComponent, FastUI, components as c
-from fastui.events import GoToEvent
-from fastui.forms import fastui_form
-
 from config import Settings, get_settings
 from database.crud.user import get_all_users_with_reminders
+from fastapi import APIRouter, Depends
+from fastui import AnyComponent, FastUI
+from fastui import components as c
+from fastui.events import GoToEvent
+from fastui.forms import fastui_form
+from PIL import Image
 from webapp.controllers.misc import extract_img_from_form, send_newsletter_to_users
 from webapp.db import AsyncDBSession
 from webapp.routers.components.main_component import get_common_content
@@ -53,7 +53,7 @@ async def send_newsletter(
     text = form.text
     if form.upload_new_picture.filename != '':
         if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
-            directory = Path(f"src/webapp/static/uploaded_images/")
+            directory = Path("src/webapp/static/uploaded_images/")
             directory.mkdir(parents=True, exist_ok=True)
             image = Image.open(io.BytesIO(image_file))
             if image.width > 800:
@@ -64,7 +64,7 @@ async def send_newsletter(
                 image_format = form.upload_new_picture.content_type
                 image.save(buffer, format=image_format.split("/")[1])
             await send_newsletter_to_users(
-                settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text, file_path
+                settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text, file_path,
             )
 
     else:

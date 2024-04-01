@@ -1,8 +1,7 @@
 from aiogram import types
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.crud.answer import get_random_sticker_id
 from enums import SlideType, StickerType
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def process_sticker(

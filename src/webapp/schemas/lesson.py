@@ -1,10 +1,9 @@
 from datetime import datetime
 from typing import Type
 
-from pydantic import BaseModel, Field, ConfigDict
-
 from database.models.lesson import Lesson
 from enums import LessonLevel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LessonSchema(BaseModel):
@@ -47,7 +46,7 @@ def get_lesson_data_model(lesson: Lesson) -> Type[BaseModel]:
         )
 
         is_paid: bool = Field(
-            True if lesson.is_paid else False,
+            bool(lesson.is_paid),
             description='Отметьте, если этот урок платный. Необязательное поле.',
             title='платный',
         )

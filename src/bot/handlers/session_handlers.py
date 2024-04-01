@@ -2,21 +2,20 @@ import logging
 
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.final_controllers import finish_session
-from bot.controllers.processors.input_models import UserInputMsg, UserInputHint
+from bot.controllers.processors.input_models import UserInputHint, UserInputMsg
 from bot.controllers.slide_controllers import show_slides
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_data import (
+    ExtraSlidesCallbackFactory,
     HintCallbackFactory,
     QuizCallbackFactory,
     SlideCallbackFactory,
-    ExtraSlidesCallbackFactory,
 )
 from bot.middlewares.session_middlewares import SessionMiddleware
 from database.models.session import Session
 from enums import States
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.Logger(__name__)
 

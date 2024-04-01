@@ -1,18 +1,17 @@
 import logging
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, HTTPException
-from fastui import AnyComponent, FastUI, components as c
-from fastui.components.display import DisplayLookup
-from fastui.events import BackEvent, GoToEvent
-from fastui.forms import fastui_form
+from typing import TYPE_CHECKING, Annotated
 
 from config import Settings, get_settings
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
-from database.models.lesson import Lesson
 from database.models.slide import Slide
-from enums import KeyboardType, SlideType, SlidesMenuType, StickerType
+from enums import KeyboardType, SlidesMenuType, SlideType, StickerType
+from fastapi import APIRouter, Depends, HTTPException
+from fastui import AnyComponent, FastUI
+from fastui import components as c
+from fastui.components.display import DisplayLookup
+from fastui.events import BackEvent, GoToEvent
+from fastui.forms import fastui_form
 from webapp.controllers.misc import extract_img_from_form, image_upload
 from webapp.controllers.slide import (
     get_all_slides_from_lesson_by_order_fastui,
@@ -34,6 +33,9 @@ from webapp.schemas.slide import (
     get_text_slide_data_model,
 )
 from webapp.schemas.sticker import EditStickerSlideDataModel, get_sticker_slide_data_model
+
+if TYPE_CHECKING:
+    from database.models.lesson import Lesson
 
 router = APIRouter()
 logger = logging.getLogger()
@@ -152,7 +154,7 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
 
 @router.get('/edit/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_slide(
-    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession
+    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     optionnal_component = c.Paragraph(text='')
@@ -169,13 +171,11 @@ async def edit_slide(
                     c.Image(
                         src=f'/static/lessons_images/{slide.lesson_id}/{slide.picture}',
                         width=600,
-                        # height=200,
                         loading='lazy',
                         referrer_policy='no-referrer',
-                        # class_name='border rounded',
                     ),
                     c.Paragraph(text=''),
-                ]
+                ],
             )
             submit_url = f'/api/slides/edit/image/{source}/{index}/{slide_id}/'
             form = c.ModelForm(model=get_image_slide_data_model(slide), submit_url=submit_url)
@@ -219,10 +219,7 @@ async def edit_sticker_slide(
         else [int(slideid) for slideid in lesson.path_extra.split('.')]
     )
 
-    if form.sticker_type == StickerType.BIG:
-        slide_type = SlideType.BIG_STICKER
-    else:
-        slide_type = SlideType.SMALL_STICKER
+    slide_type = SlideType.BIG_STICKER if form.sticker_type == StickerType.BIG else SlideType.SMALL_STICKER
     new_slide: Slide = Slide(
         slide_type=slide_type,
         lesson_id=slide.lesson_id,
@@ -342,7 +339,7 @@ async def edit_quiz_option_slide(
 
 
 @router.post(
-    '/edit/quiz_input_word/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True
+    '/edit/quiz_input_word/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True,
 )
 async def edit_quiz_input_word_slide(
     source: SlidesMenuType,
@@ -378,7 +375,7 @@ async def edit_quiz_input_word_slide(
 
 
 @router.post(
-    '/edit/quiz_input_phrase/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True
+    '/edit/quiz_input_phrase/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True,
 )
 async def edit_quiz_input_phrase_slide(
     source: SlidesMenuType,
@@ -524,10 +521,10 @@ async def create_slide(
             submit_url = f'/api/slides/new/quiz_input_phrase/{source}/{index}/{slide_id}/'
             form = c.ModelForm(model=get_quiz_input_phrase_slide_data_model(), submit_url=submit_url)
         case _:
-            assert False, 'Unexpected slide type'
+            raise AssertionError("Unexpected slide type")
     return get_common_content(
         c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
-        c.Paragraph(text=f''),
+        c.Paragraph(text=''),
         form,
         title=f'Создание слайда | {slide_type.value}',
     )
@@ -761,7 +758,7 @@ async def new_quiz_option_slide(
 
 
 @router.post(
-    '/new/quiz_input_word/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True
+    '/new/quiz_input_word/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True,
 )
 async def new_quiz_input_word_slide(
     source: SlidesMenuType,
@@ -828,7 +825,7 @@ async def new_quiz_input_word_slide(
 
 
 @router.post(
-    '/new/quiz_input_phrase/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True
+    '/new/quiz_input_phrase/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True,
 )
 async def new_quiz_input_phrase_slide(
     source: SlidesMenuType,
@@ -967,13 +964,13 @@ async def add_slide(index: int, slide_id: int, source: SlidesMenuType) -> list[A
             class_name='+ ms-2',
             named_style='secondary',
         ),
-        title=f'Добавить новый слайд',
+        title='Добавить новый слайд',
     )
 
 
 @router.get('/up_button/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def slides_up_button(
-    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession
+    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     logger.info(f'pressed slide up button with slide id {slide_id} index {index}. source {source}')
     slide: Slide = await get_slide_by_id(slide_id, db_session)
@@ -998,7 +995,7 @@ async def slides_up_button(
 
 @router.get('/down_button/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def slides_down_button(
-    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession
+    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     logger.info(f'pressed slide down button with slide id {slide_id} index {index}. source {source}')
     slide: Slide = await get_slide_by_id(slide_id, db_session)
@@ -1048,7 +1045,7 @@ async def delete_slide(
 
 @router.get('/confirm_delete/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_slide(
-    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession
+    index: int, slide_id: int, source: SlidesMenuType, db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     return get_common_content(
@@ -1065,7 +1062,7 @@ async def delete_slide(
                     on_click=GoToEvent(url=f'/slides/delete/{source}/{index}/{slide_id}/'),
                     class_name='+ ms-2',
                 ),
-            ]
+            ],
         ),
         title=f'delete | slide {slide_id} | {slide.slide_type.value}',
     )

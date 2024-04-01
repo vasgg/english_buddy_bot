@@ -1,9 +1,8 @@
 from aiogram import types
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.keyboards.keyboards import get_hint_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.session import get_wrong_answers_counter
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_hint_dialog(

@@ -1,7 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.models.quiz_answer_log import QuizAnswerLog
 from enums import SlideType
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def log_quiz_answer(

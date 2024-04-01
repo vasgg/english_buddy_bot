@@ -1,9 +1,8 @@
 import logging
 
-from sqlalchemy import select
-
 from database.models.reaction import Reaction
 from enums import ReactionType
+from sqlalchemy import select
 from webapp.db import AsyncDBSession
 from webapp.schemas.reaction import ReactionsTableSchema
 

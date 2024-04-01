@@ -1,10 +1,9 @@
 from typing import Annotated
 
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.database_connector import DatabaseConnector
 from database.tables_helper import get_db
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 AsyncDB = Annotated[DatabaseConnector, Depends(get_db)]
 

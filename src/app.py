@@ -1,7 +1,6 @@
 import logging.config
 
 import sentry_sdk
-
 from config import get_logging_config, get_settings
 from webapp.create_app import create_app
 

@@ -2,9 +2,7 @@ import logging
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from bot.controllers.final_controllers import finalizing_extra, finalizing
+from bot.controllers.final_controllers import finalizing, finalizing_extra
 from bot.controllers.processors.dict_processor import process_dict
 from bot.controllers.processors.image_processor import process_image
 from bot.controllers.processors.input_models import UserQuizInput
@@ -16,6 +14,7 @@ from bot.controllers.processors.text_processor import process_text
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import SlideType
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.Logger(__name__)
 
@@ -53,7 +52,8 @@ async def process_slide(
         case SlideType.QUIZ_INPUT_PHRASE:
             return await process_quiz_input_phrase(event, state, user_input, slide, session, db_session)
         case _:
-            assert False, f'Unexpected slide type: {slide.slide_type}'
+            msg = f"Unexpected slide type: {slide.slide_type}"
+            raise AssertionError(msg)
 
 
 async def show_slides(

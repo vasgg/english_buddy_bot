@@ -1,8 +1,7 @@
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
-
 from database.models.base import Base
 from enums import SessionStartsFrom, SessionStatus
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Session(Base):

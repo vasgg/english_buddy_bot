@@ -1,7 +1,5 @@
 from datetime import datetime
 
-from sqlalchemy.ext.asyncio import AsyncEngine
-
 from config import get_settings
 from database.database_connector import DatabaseConnector
 from database.models.base import Base
@@ -32,6 +30,7 @@ import database.models.text
 
 # noinspection PyUnresolvedReferences
 from database.models.user import User
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 async def create_or_drop_db(engine: AsyncEngine, create: bool = True):
@@ -64,4 +63,3 @@ if __name__ == '__main__':
 
     db = get_db()
     asyncio.run(create_or_drop_db(db.engine))
-    # asyncio.run(populate_db(db))

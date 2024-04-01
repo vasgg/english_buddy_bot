@@ -1,9 +1,8 @@
 from datetime import datetime
 
+from database.models.user import User
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from database.models.user import User
 
 
 async def add_user_to_db(user, db_session) -> User:
@@ -30,7 +29,7 @@ async def get_user_from_db(telegram_id: int, db_session: AsyncSession) -> User:
 
 async def toggle_user_paywall_access(user_id: int, db_session: AsyncSession) -> None:
     await db_session.execute(
-        update(User).filter(User.id == user_id).values(paywall_access=func.not_(User.paywall_access))
+        update(User).filter(User.id == user_id).values(paywall_access=func.not_(User.paywall_access)),
     )
 
 
