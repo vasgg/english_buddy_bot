@@ -1,6 +1,8 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.keyboards.callback_data import (
+    ExtraSlidesCallbackFactory,
+    FurtherButtonCallbackFactory,
     HintCallbackFactory,
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
@@ -28,11 +30,25 @@ def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int
 
 
 def get_furher_button(current_lesson: int, next_slide: int) -> InlineKeyboardMarkup:
+    # переделать логику. мы не должны зависить от инфы извне. клавиатура ничего не знает!
     button = [
         [
             InlineKeyboardButton(
                 text="Далее",
+                # выкидываем метаданные.
                 callback_data=SlideCallbackFactory(lesson_id=current_lesson, next_slide_id=next_slide).pack(),
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=button)
+
+
+def get_new_furher_button() -> InlineKeyboardMarkup:
+    button = [
+        [
+            InlineKeyboardButton(
+                text="Далее",
+                callback_data=FurtherButtonCallbackFactory(further_requested=True).pack(),
             )
         ]
     ]
@@ -68,7 +84,9 @@ def get_quiz_keyboard(words: list[str], answer: str, lesson_id: int, slide_id: i
 
 
 async def get_lesson_progress_keyboard(
-    mode: UserLessonProgress, lesson: Lesson, exam_slide_id: int | None = None, current_slide_id: int | None = None
+    mode: UserLessonProgress,
+    lesson: Lesson,
+    exam_slide_id: int | None = None,
 ) -> InlineKeyboardMarkup:
     first_slide_id = lesson.path.split('.')[0]
     match mode:
@@ -110,7 +128,6 @@ async def get_lesson_progress_keyboard(
                     ]
                 ]
         case UserLessonProgress.IN_PROGRESS:
-            assert current_slide_id
             buttons = [
                 [
                     InlineKeyboardButton(
@@ -127,7 +144,6 @@ async def get_lesson_progress_keyboard(
                         text='Продолжить урок',
                         callback_data=LessonStartsFromCallbackFactory(
                             lesson_id=lesson.id,
-                            slide_id=current_slide_id,
                             attr=LessonStartsFrom.CONTINUE,
                         ).pack(),
                     )
@@ -138,27 +154,38 @@ async def get_lesson_progress_keyboard(
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_hint_keyaboard(slide_id: int, lesson_id: int) -> InlineKeyboardMarkup:
+def get_hint_keyaboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text='Подсказка',
-                    callback_data=HintCallbackFactory(
-                        lesson_id=lesson_id,
-                        slide_id=slide_id,
-                        payload='show_hint',
-                    ).pack(),
+                    callback_data=HintCallbackFactory(hint_requested=True).pack(),
                 )
             ],
             [
                 InlineKeyboardButton(
                     text='Продолжить',
-                    callback_data=HintCallbackFactory(
-                        lesson_id=lesson_id,
-                        slide_id=slide_id,
-                        payload='continue',
-                    ).pack(),
+                    callback_data=HintCallbackFactory(hint_requested=False).pack(),
+                )
+            ],
+        ]
+    )
+
+
+def get_extra_slides_keyaboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='Да',
+                    callback_data=ExtraSlidesCallbackFactory(show_extra_slides=True).pack(),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Нет',
+                    callback_data=ExtraSlidesCallbackFactory(show_extra_slides=False).pack(),
                 )
             ],
         ]

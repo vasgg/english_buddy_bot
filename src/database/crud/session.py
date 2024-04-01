@@ -1,8 +1,8 @@
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database.models.quiz_answer_log import QuizAnswerLog, SessionLog
 from database.models.session import Session
-from database.models.session_log import SessionLog
 from enums import SessionStatus, SlideType
 
 
@@ -64,16 +64,16 @@ async def get_wrong_answers_counter(session_id: int, slide_id: int, db_session: 
 
 async def get_all_questions_in_session(session_id: int, db_session: AsyncSession) -> set[int]:
     all_questions_slide_types = [SlideType.QUIZ_OPTIONS, SlideType.QUIZ_INPUT_WORD, SlideType.QUIZ_INPUT_PHRASE]
-    query = select(SessionLog.slide_id).filter(
-        SessionLog.session_id == session_id, SessionLog.slide_type.in_(all_questions_slide_types)
+    query = select(QuizAnswerLog.slide_id).filter(
+        QuizAnswerLog.session_id == session_id, QuizAnswerLog.slide_type.in_(all_questions_slide_types)
     )
     result = await db_session.execute(query)
     return {row for row in result.scalars().all()} if result else {}
 
 
 async def get_hints_shown_counter_in_session(session_id: int, db_session: AsyncSession) -> int:
-    query = select(func.count(SessionLog.id)).filter(
-        SessionLog.session_id == session_id, SessionLog.data == 'show_hint'
+    query = select(func.count(QuizAnswerLog.id)).filter(
+        QuizAnswerLog.session_id == session_id, QuizAnswerLog.data == 'show_hint'
     )
     result = await db_session.execute(query)
     return result.scalar()
@@ -81,8 +81,10 @@ async def get_hints_shown_counter_in_session(session_id: int, db_session: AsyncS
 
 async def count_errors_in_session(session_id, slides_set: set[int], db_session: AsyncSession) -> int:
     subquery = (
-        select(SessionLog.slide_id)
-        .filter(SessionLog.session_id == session_id, SessionLog.slide_id.in_(slides_set), ~SessionLog.is_correct)
+        select(QuizAnswerLog.slide_id)
+        .filter(
+            QuizAnswerLog.session_id == session_id, QuizAnswerLog.slide_id.in_(slides_set), ~QuizAnswerLog.is_correct
+        )
         .distinct()
         .subquery()
     )

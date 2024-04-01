@@ -1,11 +1,10 @@
-import logging
-
 from sqlalchemy import Result, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models.complete_lesson import CompleteLesson
 from database.models.lesson import Lesson
 from database.models.slide import Slide
+from enums import SlideType
 
 
 async def get_lesson_by_id(lesson_id: int, db_session: AsyncSession) -> Lesson:
@@ -51,9 +50,11 @@ async def get_completed_lessons(user_id: int, db_session: AsyncSession) -> set[i
 
 
 async def get_all_exam_slides_id_in_lesson(lesson_id: int, db_session: AsyncSession) -> set[int]:
-    query = select(Slide.id).filter(Slide.lesson_id == lesson_id, Slide.is_exam_slide)
+    all_questions_slide_types = [SlideType.QUIZ_OPTIONS, SlideType.QUIZ_INPUT_WORD, SlideType.QUIZ_INPUT_PHRASE]
+    query = select(Slide.id).filter(
+        Slide.lesson_id == lesson_id, Slide.is_exam_slide, Slide.slide_type.in_(all_questions_slide_types)
+    )
     result = await db_session.execute(query)
-    logging.info('Get all exam slides id in lesson')
     return {row for row in result.scalars().all()} if result else {}
 
 

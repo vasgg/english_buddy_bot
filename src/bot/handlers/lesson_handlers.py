@@ -4,7 +4,6 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.lesson_controllers import find_first_exam_slide_id
-from bot.controllers.session_controller import session_routine
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_data import (
     LessonStartsFromCallbackFactory,
@@ -21,19 +20,6 @@ from database.models.user import User
 from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
 
 router = Router()
-
-
-async def lesson_routine(
-    bot: Bot,
-    user: User,
-    slide_id: int,
-    session: Session,
-    state: FSMContext,
-    db_session: AsyncSession,
-    skip_step_increment: bool = False,
-) -> None:
-    step = session.current_step + 1 if not skip_step_increment else session.current_step
-    await session_routine(bot, user, slide_id, step, state, session, db_session)
 
 
 @router.callback_query(LessonsCallbackFactory.filter())
@@ -65,7 +51,6 @@ async def lesson_callback_processing(
                 mode=UserLessonProgress.IN_PROGRESS,
                 lesson=lesson,
                 exam_slide_id=first_exam_slide,
-                current_slide_id=session.current_slide_id,
             ),
         )
     else:

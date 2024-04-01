@@ -35,7 +35,13 @@ async def slide_callback_processing(
     db_session: AsyncSession,
 ) -> None:
     await callback.message.delete_reply_markup()
-    next_slide_id = callback_data.next_slide_id
+
+    # Сюда приходим только в том случае когда у текущего слайда нажата кнопка далее
+    # перед вызовом надо крутануть стэп + 1
+    #
+    swow_slide(...)
+
+    next_slide_id = session.next_slide_id
     await lesson_routine(
         bot=bot,
         user=user,
@@ -45,6 +51,20 @@ async def slide_callback_processing(
         db_session=db_session,
     )
     await callback.answer()
+
+
+@router.callback_query(QuizCallbackFactory.filter())
+async def quiz_callback_processing_new(
+    callback: types.CallbackQuery,
+    bot: Bot,
+    callback_data: QuizCallbackFactory,
+    user: User,
+    state: FSMContext,
+    session: Session,
+    db_session: AsyncSession,
+) -> None:
+    user_input = UserInputMsg(text=callback_data.answer)
+    swow_slide(...)
 
 
 @router.callback_query(QuizCallbackFactory.filter())
@@ -79,7 +99,7 @@ async def quiz_callback_processing(
             slide=slide,
             db_session=db_session,
         )
-        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session) + 1
+        wrong_answers_count = await get_wrong_answers_counter(session.id, slide_id, db_session)
         if wrong_answers_count >= 3:
             await callback.message.answer(
                 text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)).format(
@@ -142,7 +162,12 @@ async def hint_callback(
     session: Session,
     db_session: AsyncSession,
 ) -> None:
+    # сюда переносим функцию def handle_hint_input(msg, session):
+    # тут я конструирую объект,  show_slide(UserInputHint(hint_requested=msg.data), session),
+    # и вызываю фуннкцию шоу слайл (смотри scratch для примера)
+
     await callback.answer()
+    # проверить в этом файле все функции, всю ли логику я уже переписал, если да, всё сношу. если нет, дописываю нужную логику
     slide: Slide = await get_slide_by_id(slide_id=callback_data.slide_id, db_session=db_session)
     slide_ids = [int(elem) for elem in session.path.split(".")]
     right_answer = slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0]
@@ -278,6 +303,8 @@ async def check_input_phrase(
     session: Session,
     db_session: AsyncSession,
 ) -> None:
+    # TODO: тут вызываем функцию handle_user_input
+    # переносим всю логику ниже в эту функцию
     input_phrase = message.text
     data = await state.get_data()
     lesson_id = data["quiz_phrase_lesson_id"]

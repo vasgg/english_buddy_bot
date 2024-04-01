@@ -22,7 +22,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def start_message(
-    message: types.Message, user: User, is_new_user: bool, db_session: AsyncSession, state: FSMContext
+    message: types.Message, user: User, is_new_user: bool, db_session: AsyncSession, state: FSMContext, bot: Bot
 ) -> None:
     if message.from_user.id in get_settings().ADMINS:
         await message.bot.set_my_commands(special_commands, scope=BotCommandScopeChat(chat_id=message.from_user.id))
@@ -30,7 +30,7 @@ async def start_message(
     if is_new_user:
         await propose_reminder_to_user(message, db_session=db_session)
         return
-    await show_start_menu(user=user, message=message, db_session=db_session)
+    await show_start_menu(user.telegram_id, bot, db_session)
 
 
 @router.message(Command('position'))
