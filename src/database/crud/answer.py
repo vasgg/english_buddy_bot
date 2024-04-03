@@ -1,10 +1,9 @@
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.models.reaction import Reaction
 from database.models.sticker import Sticker
 from database.models.text import Text
 from enums import ReactionType, StickerType
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_random_answer(mode: ReactionType, db_session: AsyncSession) -> str:

@@ -1,8 +1,7 @@
 import logging
 
-from sqlalchemy import select
-
 from database.models.text import Text
+from sqlalchemy import select
 from webapp.db import AsyncDBSession
 from webapp.schemas.text import TextsTableSchema
 

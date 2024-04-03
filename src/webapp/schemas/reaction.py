@@ -1,9 +1,8 @@
 from typing import Type
 
-from pydantic import BaseModel, Field, ConfigDict
-
 from database.models.reaction import Reaction
 from enums import ReactionType
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReactionsSchema(BaseModel):

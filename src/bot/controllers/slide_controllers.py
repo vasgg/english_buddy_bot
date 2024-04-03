@@ -1,47 +1,24 @@
-import asyncio
 import logging
-from pathlib import Path
-from random import sample
 
-from aiogram import Bot, types
+from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.controllers.lesson_controllers import find_first_exam_slide_id
-from bot.controllers.session_controller import session_routine
-from bot.keyboards.keyboards import get_furher_button, get_lesson_picker_keyboard, get_quiz_keyboard
-from database.crud.answer import get_random_sticker_id, get_text_by_prompt
-from database.crud.lesson import (
-    add_completed_lesson_to_db,
-    get_all_exam_slides_id_in_lesson,
-    get_completed_lessons,
-    get_lesson_by_id,
-    get_lessons,
-)
-from database.crud.session import (
-    count_errors_in_session,
-    get_all_questions_in_session,
-    get_hints_shown_counter_in_session,
-    update_session_status,
-)
+from bot.controllers.final_controllers import finalizing, finalizing_extra
+from bot.controllers.processors.dict_processor import process_dict
+from bot.controllers.processors.image_processor import process_image
+from bot.controllers.processors.input_models import UserQuizInput
+from bot.controllers.processors.quiz_input_phrase_processor import process_quiz_input_phrase
+from bot.controllers.processors.quiz_input_word_processor import process_quiz_input_word
+from bot.controllers.processors.quiz_options_processor import process_quiz_options
+from bot.controllers.processors.sticker_processor import process_sticker
+from bot.controllers.processors.text_processor import process_text
+from database.crud.slide import get_slide_by_id
 from database.models.session import Session
 from database.models.slide import Slide
-from database.models.user import User
-from enums import KeyboardType, SessionStartsFrom, SessionStatus, SlideType, States, StickerType
+from enums import SlideType
 
-logger = logging.Logger(__name__)
-
-
-async def get_all_base_questions_id_in_lesson(
-    lesson_id: int, exam_slides_id: set[int], db_session: AsyncSession
-) -> set[int]:
-    all_questions_slide_types = [SlideType.QUIZ_OPTIONS, SlideType.QUIZ_INPUT_WORD, SlideType.QUIZ_INPUT_PHRASE]
-    query = select(Slide.id).filter(
-        Slide.lesson_id == lesson_id, Slide.slide_type.in_(all_questions_slide_types), ~Slide.id.in_(exam_slides_id)
-    )
-    result = await db_session.execute(query)
-    return {row for row in result.scalars().all()} if result else {}
+logger = logging.getLogger(__name__)
 
 
 async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, path: str) -> int:
@@ -53,206 +30,59 @@ async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, 
     return steps
 
 
-async def slides_routine(
+async def process_slide(
+    event: types.Message,
+    state: FSMContext,
     slide: Slide,
-    bot: Bot,
-    user: User,
-    current_step: int,
+    session: Session,
+    db_session: AsyncSession,
+    user_input: UserQuizInput | None,
+) -> bool:
+    match slide.slide_type:
+        case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:
+            return await process_sticker(event, slide.slide_type, db_session)
+        case SlideType.TEXT:
+            return await process_text(event, slide)
+        case SlideType.IMAGE:
+            return await process_image(event, slide, session)
+        case SlideType.PIN_DICT:
+            return await process_dict(event, slide.text)
+        case SlideType.QUIZ_OPTIONS:
+            return await process_quiz_options(event, state, user_input, slide, session, db_session)
+        case SlideType.QUIZ_INPUT_WORD:
+            return await process_quiz_input_word(event, state, user_input, slide, session, db_session)
+        case SlideType.QUIZ_INPUT_PHRASE:
+            return await process_quiz_input_phrase(event, state, user_input, slide, session, db_session)
+        case _:
+            msg = f"Unexpected slide type: {slide.slide_type}"
+            raise AssertionError(msg)
+
+
+async def show_slides(
+    event: types.Message,
     state: FSMContext,
     session: Session,
     db_session: AsyncSession,
+    user_input: UserQuizInput | None = None,
 ) -> None:
-    path = session.get_path()
-    next_step = current_step + 1
-    try:
-        next_slide_id = path[path.index(slide.id) + 1]
-    except IndexError:
-        next_slide_id = session.current_slide_id
-    match slide.slide_type:
-        case SlideType.TEXT:
-            if not slide.keyboard_type:
-                await bot.send_message(chat_id=user.telegram_id, text=slide.text)
-                if slide.delay:
-                    # noinspection PyTypeChecker
-                    await asyncio.sleep(slide.delay)
-                await session_routine(
-                    bot=bot,
-                    user=user,
-                    current_step=next_step,
-                    slide_id=next_slide_id,
-                    state=state,
-                    session=session,
-                    db_session=db_session,
-                )
-            else:
-                match slide.keyboard_type:
-                    case KeyboardType.FURTHER:
-                        markup = get_furher_button(current_lesson=session.lesson_id, next_slide=next_slide_id)
-                        await bot.send_message(chat_id=user.telegram_id, text=slide.text, reply_markup=markup)
-                    case _:
-                        assert False, f'Unknown keyboard type: {slide.keyboard_type}'
+    while session.has_next():
+        current_slide_id = session.get_slide()
+        current_slide = await get_slide_by_id(current_slide_id, db_session)
+        logger.info(f"Processing step={session.current_step}, slide_id={current_slide_id}")
+        need_next = await process_slide(event, state, current_slide, session, db_session, user_input)
+        user_input = None
+        if not need_next:
+            logger.info("returning...")
+            return
 
-        case SlideType.IMAGE:
-            image_file = slide.picture
-            image_path = Path(f'src/webapp/static/lessons_images/{session.lesson_id}/{image_file}')
-            if not image_path.exists():
-                image_path = Path(f'src/webapp/static/lessons_images/Image_not_available.png')
-            if not slide.keyboard_type:
-                await bot.send_photo(chat_id=user.telegram_id, photo=types.FSInputFile(path=image_path))
-                if slide.delay:
-                    # noinspection PyTypeChecker
-                    await asyncio.sleep(slide.delay)
-                await session_routine(
-                    bot=bot,
-                    user=user,
-                    current_step=next_step,
-                    slide_id=next_slide_id,
-                    state=state,
-                    session=session,
-                    db_session=db_session,
-                )
-            else:
-                match slide.keyboard_type:
-                    case KeyboardType.FURTHER:
-                        markup = get_furher_button(current_lesson=session.lesson_id, next_slide=next_slide_id)
-                        await bot.send_photo(
-                            chat_id=user.telegram_id,
-                            photo=types.FSInputFile(path=image_path),
-                            reply_markup=markup,
-                        )
-                    case _:
-                        assert False, f'Unknown keyboard type: {slide.keyboard_type}'
-        case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:
-            sticker_type = StickerType.SMALL if slide.slide_type == SlideType.SMALL_STICKER else StickerType.BIG
-            await bot.send_sticker(
-                chat_id=user.telegram_id,
-                sticker=await get_random_sticker_id(mode=sticker_type, db_session=db_session),
-            )
+        logger.info("continuing...")
+        session.current_step += 1
+        await db_session.flush()
 
-            await session_routine(
-                bot=bot,
-                user=user,
-                current_step=next_step,
-                slide_id=next_slide_id,
-                state=state,
-                session=session,
-                db_session=db_session,
-            )
-        case SlideType.PIN_DICT:
-            slide_text = slide.text
-            msg = await bot.send_message(chat_id=user.telegram_id, text=slide_text)
-            await bot.pin_chat_message(
-                chat_id=user.telegram_id,
-                message_id=msg.message_id,
-                disable_notification=True,
-            )
-            await session_routine(
-                bot=bot,
-                user=user,
-                current_step=next_step,
-                slide_id=next_slide_id,
-                state=state,
-                session=session,
-                db_session=db_session,
-            )
-        case SlideType.QUIZ_OPTIONS:
-            text = slide.text
-            right_answer = slide.right_answers
-            wrong_answers = slide.keyboard.split('|')
-            elements = [right_answer, *wrong_answers]
-            options = sample(population=elements, k=len(elements))
-            markup = get_quiz_keyboard(
-                words=options, answer=right_answer, lesson_id=session.lesson_id, slide_id=slide.id
-            )
-            msg = await bot.send_message(chat_id=user.telegram_id, text=text, reply_markup=markup)
-            await state.update_data(quiz_options_msg_id=msg.message_id)
-        case SlideType.QUIZ_INPUT_WORD | SlideType.QUIZ_INPUT_PHRASE:
-            slide_text = slide.text
-            msg = await bot.send_message(chat_id=user.telegram_id, text=slide_text)
-            if slide.slide_type == SlideType.QUIZ_INPUT_WORD:
-                await state.update_data(
-                    quiz_word_msg_id=msg.message_id,
-                    quiz_word_lesson_id=session.lesson_id,
-                    quiz_word_slide_id=slide.id,
-                )
-                state_ = States.INPUT_WORD
-            else:
-                await state.update_data(
-                    quiz_phrase_msg_id=msg.message_id,
-                    quiz_phrase_lesson_id=session.lesson_id,
-                    quiz_phrase_slide_id=slide.id,
-                )
-                state_ = States.INPUT_PHRASE
-            await state.set_state(state_)
-        case _:
-            assert False, f'Unexpected slide type: {slide.slide_type}'
+    if session.in_extra:
+        logger.info("finalizing extra...")
+        await finalizing_extra(event, state, session, db_session)
+        return
 
-
-async def last_slide_processing(bot: Bot, user: User, path: list, state, session, db_session: AsyncSession) -> None:
-    lesson = await get_lesson_by_id(lesson_id=session.lesson_id, db_session=db_session)
-    exam_slide_id = await find_first_exam_slide_id(path, db_session)
-    await bot.unpin_all_chat_messages(chat_id=user.telegram_id)
-    await add_completed_lesson_to_db(user.id, session.lesson_id, session.id, db_session)
-    await update_session_status(
-        session_id=session.id,
-        new_status=SessionStatus.COMPLETED,
-        db_session=db_session,
-    )
-    all_exam_slides_in_lesson = await get_all_exam_slides_id_in_lesson(
-        lesson_id=session.lesson_id, db_session=db_session
-    )
-    all_questions_slides_in_session = await get_all_questions_in_session(session_id=session.id, db_session=db_session)
-    total_exam_questions_in_session = all_exam_slides_in_lesson & all_questions_slides_in_session
-    total_exam_questions_errors = await count_errors_in_session(
-        session_id=session.id, slides_set=total_exam_questions_in_session, db_session=db_session
-    )
-    hints_shown = await get_hints_shown_counter_in_session(session_id=session.id, db_session=db_session)
-    session_starts_from = session.starts_from
-    lessons = await get_lessons(db_session)
-    completed_lessons = await get_completed_lessons(user_id=user.id, db_session=db_session)
-    lesson_picker_kb = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)
-    match session_starts_from:
-        case SessionStartsFrom.BEGIN:
-            if not exam_slide_id:
-                await bot.send_message(
-                    chat_id=user.telegram_id,
-                    text=(
-                        await get_text_by_prompt(prompt='final_report_without_questions', db_session=db_session)
-                    ).format(lesson.title),
-                    reply_markup=lesson_picker_kb,
-                )
-                await state.clear()
-                return
-            total_base_questions_in_lesson = await get_all_base_questions_id_in_lesson(
-                lesson_id=session.lesson_id, exam_slides_id=all_exam_slides_in_lesson, db_session=db_session
-            )
-            total_base_questions_in_session = total_base_questions_in_lesson & all_questions_slides_in_session
-            total_base_questions_errors = await count_errors_in_session(
-                session_id=session.id, slides_set=total_base_questions_in_lesson, db_session=db_session
-            )
-            await bot.send_message(
-                chat_id=user.telegram_id,
-                text=(await get_text_by_prompt(prompt='final_report_from_begin', db_session=db_session)).format(
-                    lesson.title,
-                    len(total_base_questions_in_session) - total_base_questions_errors,
-                    len(total_base_questions_in_session),
-                    len(total_exam_questions_in_session) - total_exam_questions_errors,
-                    len(total_exam_questions_in_session),
-                    hints_shown,
-                ),
-                reply_markup=lesson_picker_kb,
-            )
-        case SessionStartsFrom.EXAM:
-            await bot.send_message(
-                chat_id=user.telegram_id,
-                text=(await get_text_by_prompt(prompt='final_report_from_exam', db_session=db_session)).format(
-                    lesson.title,
-                    len(total_exam_questions_in_session) - total_exam_questions_errors,
-                    len(total_exam_questions_in_session),
-                    hints_shown,
-                ),
-                reply_markup=lesson_picker_kb,
-            )
-        case _:
-            assert False, f'Unexpected session starts from: {session_starts_from}'
-    await state.clear()
+    logger.info("finalizing...")
+    await finalizing(event, state, session, db_session)

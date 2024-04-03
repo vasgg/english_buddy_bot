@@ -7,6 +7,7 @@ from aiogram.types import TelegramObject, Update
 
 
 class UpdatesDumperMiddleware(BaseMiddleware):
+    # TODO: переделать логгинг на дамп в отдельную таблицу
     async def __call__(
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],

@@ -39,7 +39,7 @@ def get_slide_details(slide: Slide) -> str:
         'pin_dict': ' ',
         'small_sticker': ' ',
         'big_sticker': ' ',
-        'quiz_options': slide.keyboard,
+        'quiz_options': f'{slide.right_answers}|{slide.keyboard}',
         'quiz_input_word': slide.right_answers,
         'quiz_input_phrase': slide.right_answers,
         'final_slide': ' ',

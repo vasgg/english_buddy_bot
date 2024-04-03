@@ -1,4 +1,5 @@
-from fastui import AnyComponent, components as c
+from fastui import AnyComponent
+from fastui import components as c
 from fastui.events import GoToEvent
 
 

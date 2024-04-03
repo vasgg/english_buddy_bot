@@ -1,9 +1,8 @@
 from datetime import datetime
 
+from database.models.base import Base
 from sqlalchemy import BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
-
-from database.models.base import Base
 
 
 class User(Base):

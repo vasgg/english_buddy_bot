@@ -2,11 +2,11 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter
-from fastui import AnyComponent, FastUI, components as c
+from fastui import AnyComponent, FastUI
+from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
-
 from webapp.controllers.text import get_text_by_id, get_texts_table_content
 from webapp.db import AsyncDBSession
 from webapp.routers.components.main_component import get_common_content
@@ -21,12 +21,10 @@ async def texts_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('texts router called')
     texts = await get_texts_table_content(db_session)
     return get_common_content(
-        # c.Div(components=components_right),
         c.Paragraph(text=''),
         c.Table(
             data=texts,
             columns=[
-                # DisplayLookup(field='id', table_width_percent=3, on_click=GoToEvent(url='/reactions/{id}/')),
                 DisplayLookup(field='description', title='description'),
                 DisplayLookup(field='text', title='text'),
                 DisplayLookup(
@@ -36,7 +34,6 @@ async def texts_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                     table_width_percent=3,
                 ),
             ],
-            # class_name='text-decoration-none',
         ),
         c.Paragraph(text=''),
         title='Тексты',
@@ -63,10 +60,10 @@ async def edit_text_form(
     form: Annotated[EditTextDataModel, fastui_form(EditTextDataModel)],
 ):
     text = await get_text_by_id(text_id, db_session)
-    for field in form.model_fields.keys():
+    for field in form.model_fields:
         form_value = getattr(form, field, None)
         if form_value is not None:
             setattr(text, field, form_value)
     await db_session.commit()
     logger.info(f'text {text.id} updated. data: {form.dict()}')
-    return [c.FireEvent(event=GoToEvent(url=f'/texts'))]
+    return [c.FireEvent(event=GoToEvent(url='/texts'))]

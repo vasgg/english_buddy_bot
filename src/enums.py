@@ -75,6 +75,16 @@ class SlidesMenuType(StrEnum):
     EXTRA = auto()
 
 
+class QuizType(StrEnum):
+    REGULAR = auto()
+    EXAM = auto()
+
+
+class Stage(StrEnum):
+    DEV = auto()
+    PROD = auto()
+
+
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:
     match lesson_starts_from:
         case LessonStartsFrom.BEGIN:
@@ -82,4 +92,5 @@ def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom
         case LessonStartsFrom.EXAM:
             return SessionStartsFrom.EXAM
         case _:
-            assert False, f'Unknown {lesson_starts_from=}'
+            msg = f'Unknown lesson_starts_from={lesson_starts_from!r}'
+            raise AssertionError(msg)

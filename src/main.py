@@ -18,16 +18,17 @@ from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
 from config import get_logging_config, get_settings
 from database.tables_helper import get_db
+from enums import Stage
 
 
 async def main():
-    logs_directory = Path(f"logs")
+    logs_directory = Path("logs")
     logs_directory.mkdir(parents=True, exist_ok=True)
     logging_config = get_logging_config(__name__)
     logging.config.dictConfig(logging_config)
     settings = get_settings()
 
-    if settings.SENTRY_AIOGRAM_DSN and settings.STAGE == 'prod':
+    if settings.SENTRY_AIOGRAM_DSN and settings.STAGE == Stage.PROD:
         sentry_sdk.init(
             dsn=settings.SENTRY_AIOGRAM_DSN.get_secret_value(),
             # Set traces_sample_rate to 1.0 to capture 100%
