@@ -1,7 +1,9 @@
 import logging.config
 
 import sentry_sdk
+
 from config import get_logging_config, get_settings
+from enums import Stage
 from webapp.create_app import create_app
 
 logging_config = get_logging_config(__name__)
@@ -9,7 +11,7 @@ logging.config.dictConfig(logging_config)
 logger = logging.getLogger()
 settings = get_settings()
 
-if settings.SENTRY_FASTAPI_DSN and settings.STAGE == 'prod':
+if settings.SENTRY_FASTAPI_DSN and settings.STAGE == Stage.PROD:
     sentry_sdk.init(
         dsn=settings.SENTRY_FASTAPI_DSN.get_secret_value(),
         # Set traces_sample_rate to 1.0 to capture 100%

@@ -4,6 +4,8 @@ from logging.handlers import RotatingFileHandler
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from enums import Stage
+
 
 class Settings(BaseSettings):
     BOT_TOKEN: SecretStr
@@ -11,7 +13,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     SENTRY_AIOGRAM_DSN: SecretStr | None = None
     SENTRY_FASTAPI_DSN: SecretStr | None = None
-    STAGE: str
+    STAGE: Stage
     db_echo: bool = False
     allowed_image_formats: list[str] = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
 

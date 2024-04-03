@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards.keyboards import (
@@ -21,10 +20,9 @@ from database.crud.session import (
     get_error_counter_from_slides,
     update_session_status,
 )
-from database.crud.slide import find_first_exam_slide_id, get_quiz_slides_by_mode
+from database.crud.slide import find_first_exam_slide_id
 from database.models.session import Session
-from database.models.slide import Slide
-from enums import QuizType, SessionStartsFrom, SessionStatus, SlideType
+from enums import SessionStartsFrom, SessionStatus
 
 if TYPE_CHECKING:
     from database.models.lesson import Lesson
@@ -42,21 +40,6 @@ class UserStats(BaseModel):
     exam_exercises: int | None = None
     correct_regular_answers: int | None
     correct_exam_answers: int | None = None
-
-
-async def get_all_base_questions_id_in_lesson(
-    lesson_id: int,
-    exam_slides_id: set[int],
-    db_session: AsyncSession,
-) -> set[int]:
-    all_questions_slide_types = [SlideType.QUIZ_OPTIONS, SlideType.QUIZ_INPUT_WORD, SlideType.QUIZ_INPUT_PHRASE]
-    query = select(Slide.id).filter(
-        Slide.lesson_id == lesson_id,
-        Slide.slide_type.in_(all_questions_slide_types),
-        ~Slide.id.in_(exam_slides_id),
-    )
-    result = await db_session.execute(query)
-    return set(result.scalars().all()) if result else {}
 
 
 async def calculate_user_stats_from_slides(
@@ -119,7 +102,7 @@ async def show_stats(
 
 async def show_stats_extra(
     event: types.Message,
-    stats: UserStats,
+    stats: StatsCalculationResults,
     session: Session,
     db_session: AsyncSession,
 ) -> None:
@@ -130,8 +113,8 @@ async def show_stats_extra(
     await event.answer(
         text=(await get_text_by_prompt(prompt='final_report_extra', db_session=db_session)).format(
             lesson.title,
-            stats.correct_regular_answers,
-            stats.regular_exercises,
+            stats.correct_answers,
+            stats.exercises,
         ),
         reply_markup=lesson_picker_kb,
     )
@@ -158,8 +141,10 @@ async def show_extra_slides_dialog(
 async def finalizing(event: types.Message, state: FSMContext, session: Session, db_session: AsyncSession):
     await event.bot.unpin_all_chat_messages(chat_id=event.from_user.id)
     slides_ids = session.get_path()
-    regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
-    exam_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.EXAM, db_session=db_session)
+    first_exam_slide_id = await find_first_exam_slide_id(slides_ids, db_session)
+    first_exam_slide_index = slides_ids.index(first_exam_slide_id)
+    regular_quiz_slides = slides_ids[:first_exam_slide_index]
+    exam_quiz_slides = slides_ids[first_exam_slide_index:]
     results_regular = await calculate_user_stats_from_slides(regular_quiz_slides, session.id, db_session)
     results_exam = await calculate_user_stats_from_slides(exam_quiz_slides, session.id, db_session)
     user_stats = UserStats(
@@ -185,12 +170,10 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
 
 async def finalizing_extra(event: types.Message, state: FSMContext, session: Session, db_session: AsyncSession):
     slides_ids = session.get_path()
-    regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
+    first_exam_slide_id = await find_first_exam_slide_id(slides_ids, db_session)
+    first_exam_slide_index = slides_ids.index(first_exam_slide_id)
+    regular_quiz_slides = slides_ids[:first_exam_slide_index]
     results_regular = await calculate_user_stats_from_slides(regular_quiz_slides, session.id, db_session)
-    user_stats = UserStats(
-        regular_exercises=len(regular_quiz_slides),
-        correct_regular_answers=results_regular.correct_answers,
-    )
-    await show_stats_extra(event, user_stats, session, db_session)
+    await show_stats_extra(event, results_regular, session, db_session)
     await finish_session(session, db_session)
     await state.clear()

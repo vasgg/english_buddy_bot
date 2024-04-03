@@ -80,6 +80,11 @@ class QuizType(StrEnum):
     EXAM = auto()
 
 
+class Stage(StrEnum):
+    DEV = auto()
+    PROD = auto()
+
+
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:
     match lesson_starts_from:
         case LessonStartsFrom.BEGIN:
