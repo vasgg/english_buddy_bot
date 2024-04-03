@@ -2,6 +2,8 @@ from aiogram import Bot, Router, types
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BotCommandScopeChat
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu
 from bot.internal.commands import special_commands
 from config import get_settings
@@ -10,14 +12,17 @@ from database.crud.session import get_last_session_with_progress
 from database.crud.user import toggle_user_paywall_access
 from database.models.user import User
 from enums import States
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
 
 
 @router.message(CommandStart())
 async def start_message(
-    message: types.Message, is_new_user: bool, db_session: AsyncSession, state: FSMContext,
+    message: types.Message,
+    user: User,
+    is_new_user: bool,
+    db_session: AsyncSession,
+    state: FSMContext,
 ) -> None:
     if message.from_user.id in get_settings().ADMINS:
         await message.bot.set_my_commands(special_commands, scope=BotCommandScopeChat(chat_id=message.from_user.id))
@@ -25,7 +30,7 @@ async def start_message(
     if is_new_user:
         await propose_reminder_to_user(message, db_session=db_session)
         return
-    await show_start_menu(message, db_session)
+    await show_start_menu(message, user.id, db_session)
 
 
 @router.message(Command('position'))
@@ -43,7 +48,11 @@ async def set_slide_position(message: types.Message, user: User, state: FSMConte
 
 @router.message(States.INPUT_CUSTOM_SLIDE_ID)
 async def set_slide_position_handler(
-    message: types.Message, state: FSMContext, bot: Bot, user: User, db_session: AsyncSession,
+    message: types.Message,
+    state: FSMContext,
+    bot: Bot,
+    user: User,
+    db_session: AsyncSession,
 ) -> None:
     await message.answer("Disabled")
     # data = await state.get_data()
