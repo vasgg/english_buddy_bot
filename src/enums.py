@@ -75,6 +75,11 @@ class SlidesMenuType(StrEnum):
     EXTRA = auto()
 
 
+class QuizType(StrEnum):
+    REGULAR = auto()
+    EXAM = auto()
+
+
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:
     match lesson_starts_from:
         case LessonStartsFrom.BEGIN:
