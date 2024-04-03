@@ -22,7 +22,7 @@ from database.crud.session import (
 )
 from database.crud.slide import find_first_exam_slide_id
 from database.models.session import Session
-from enums import SessionStartsFrom, SessionStatus
+from enums import QuizType, SessionStartsFrom, SessionStatus
 
 if TYPE_CHECKING:
     from database.models.lesson import Lesson
@@ -58,7 +58,6 @@ async def calculate_user_stats_from_slides(
 async def show_stats(
     event: types.Message,
     stats: UserStats,
-    state: FSMContext,
     session: Session,
     db_session: AsyncSession,
     markup: types.InlineKeyboardMarkup | None = None,
@@ -69,12 +68,13 @@ async def show_stats(
         case SessionStartsFrom.BEGIN:
             if not exam_slide_id:
                 await event.answer(
-                    text=(await get_text_by_prompt(prompt='final_report_without_questions', db_session=db_session)).format(
-                        lesson.title
+                    text=(await get_text_by_prompt(prompt='final_report_without_exam', db_session=db_session)).format(
+                        lesson.title,
+                        stats.correct_regular_answers,
+                        stats.regular_exercises,
                     ),
                     reply_markup=markup,
                 )
-                await state.clear()
                 return
             await event.answer(
                 text=(await get_text_by_prompt(prompt='final_report_from_begin', db_session=db_session)).format(
@@ -163,7 +163,7 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
     lessons = await get_lessons(db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=session.user_id, db_session=db_session)
     markup = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)
-    await show_stats(event, user_stats, state, session, db_session, markup=markup)
+    await show_stats(event, user_stats, session, db_session, markup=markup)
     await finish_session(session, db_session)
     await state.clear()
 
