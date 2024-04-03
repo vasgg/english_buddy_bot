@@ -3,6 +3,8 @@ import logging
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
 from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
 from database.crud.answer import get_random_answer, get_text_by_prompt
@@ -10,7 +12,6 @@ from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType, States
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_quiz_input_word(
@@ -92,6 +93,7 @@ async def process_quiz_input_word(
     match user_input:
         case UserInputHint() as hint_msg:
             if hint_msg.hint_requested:
+                await event.delete_reply_markup()
                 await event.answer(
                     text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
                         slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0],
@@ -100,10 +102,13 @@ async def process_quiz_input_word(
                 await asyncio.sleep(2)
                 return True
             else:
+                await event.delete_reply_markup()
                 return await show_quiz_input_word(event, state, slide)
         case UserInputMsg() as input_msg:
             answers_lower = [answer.lower() for answer in slide.right_answers.split("|")]
-            almost_right_answers_lower = [answer.lower() for answer in slide.almost_right_answers.split("|")]
+            almost_right_answers_lower = []
+            if slide.almost_right_answers:
+                almost_right_answers_lower = [answer.lower() for answer in slide.almost_right_answers.split("|")]
             if input_msg.text.lower() in answers_lower:
                 await response_input_word_correct(event, slide, input_msg.text, state, session, db_session)
                 return True
@@ -112,11 +117,10 @@ async def process_quiz_input_word(
                 return True
 
             await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)
+            await event.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
 
-            if error_count_exceeded(session.id, slide.id, db_session):
-                await event.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
+            if await error_count_exceeded(session.id, slide.id, db_session):
                 await show_hint_dialog(event, db_session)
                 return False
-            await event.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
             await show_quiz_input_word(event, state, slide)
             return False

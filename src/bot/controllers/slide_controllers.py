@@ -2,6 +2,8 @@ import logging
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.final_controllers import finalizing, finalizing_extra
 from bot.controllers.processors.dict_processor import process_dict
 from bot.controllers.processors.image_processor import process_image
@@ -11,12 +13,12 @@ from bot.controllers.processors.quiz_input_word_processor import process_quiz_in
 from bot.controllers.processors.quiz_options_processor import process_quiz_options
 from bot.controllers.processors.sticker_processor import process_sticker
 from bot.controllers.processors.text_processor import process_text
+from database.crud.slide import get_slide_by_id
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import SlideType
-from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, path: str) -> int:
@@ -64,21 +66,22 @@ async def show_slides(
     user_input: UserQuizInput | None = None,
 ) -> None:
     while session.has_next():
-        current_slide = session.get_slide()
-        logger.info(f"Processing step={session.current_step}, slide_id={current_slide}")
+        current_slide_id = session.get_slide()
+        current_slide = await get_slide_by_id(current_slide_id, db_session)
+        logger.info(f"Processing step={session.current_step}, slide_id={current_slide_id}")
         need_next = await process_slide(event, state, current_slide, session, db_session, user_input)
+        user_input = None
         if not need_next:
-            logger.info("breaking...")
-            break
+            logger.info("returning...")
+            return
 
         logger.info("continuing...")
-
         session.current_step += 1
         await db_session.flush()
 
     if session.in_extra:
         logger.info("finalizing extra...")
-        await finalizing_extra()
+        await finalizing_extra(event, state, session, db_session)
         return
 
     logger.info("finalizing...")

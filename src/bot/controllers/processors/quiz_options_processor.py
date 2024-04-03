@@ -4,6 +4,8 @@ from random import sample
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
 from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
 from bot.keyboards.keyboards import get_quiz_keyboard
@@ -12,7 +14,6 @@ from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_quiz_options(
@@ -33,15 +34,11 @@ async def show_quiz_options(
 async def response_options_correct(
     event: types.Message,
     slide: Slide,
-    state: FSMContext,
     session: Session,
     db_session: AsyncSession,
 ) -> None:
-    data = await state.get_data()
     try:
-        await event.bot.edit_message_text(
-            chat_id=event.from_user.id,
-            message_id=data['quiz_options_msg_id'],
+        await event.edit_text(
             text=(
                 slide.text.replace('…', f'<u>{slide.right_answers}</u>')
                 if "…" in slide.text
@@ -63,11 +60,6 @@ async def response_options_wrong(
     session: Session,
     db_session: AsyncSession,
 ) -> None:
-    data = await state.get_data()
-    try:
-        await event.bot.edit_message_reply_markup(chat_id=event.from_user.id, message_id=data['quiz_options_msg_id'])
-    except KeyError:
-        logging.exception('something went wrong with quiz_options')
     await event.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
     await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)
     await show_quiz_options(event, state, slide)
@@ -86,6 +78,7 @@ async def process_quiz_options(
     match user_input:
         case UserInputHint() as hint_msg:
             if hint_msg.hint_requested:
+                await event.delete_reply_markup()
                 await event.answer(
                     text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
                         slide.right_answers,
@@ -94,16 +87,17 @@ async def process_quiz_options(
                 await asyncio.sleep(2)
                 return True
             else:
-                await event.edit_reply_markup()
+                await event.delete_reply_markup()
                 return await show_quiz_options(event, state, slide)
         case UserInputMsg() as input_msg:
             if input_msg.text.lower() == slide.right_answers.lower():
-                await response_options_correct(event, slide, state, session, db_session)
+                await response_options_correct(event, slide, session, db_session)
                 return True
-            if error_count_exceeded(session.id, slide.id, db_session):
+            await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)
+            if await error_count_exceeded(session.id, slide.id, db_session):
                 await event.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
-                await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)
                 await show_hint_dialog(event, db_session)
                 return False
-            await response_options_wrong(event, slide, state, session, db_session)
+            await event.answer(text=await get_random_answer(mode=ReactionType.WRONG, db_session=db_session))
+            await show_quiz_options(event, state, slide)
             return False
