@@ -20,7 +20,7 @@ from database.crud.session import (
     get_error_counter_from_slides,
     update_session_status,
 )
-from database.crud.slide import find_first_exam_slide_id
+from database.crud.slide import find_first_exam_slide_id, get_quiz_slides_by_mode
 from database.models.session import Session
 from enums import QuizType, SessionStartsFrom, SessionStatus
 
@@ -141,10 +141,8 @@ async def show_extra_slides_dialog(
 async def finalizing(event: types.Message, state: FSMContext, session: Session, db_session: AsyncSession):
     await event.bot.unpin_all_chat_messages(chat_id=event.from_user.id)
     slides_ids = session.get_path()
-    first_exam_slide_id = await find_first_exam_slide_id(slides_ids, db_session)
-    first_exam_slide_index = slides_ids.index(first_exam_slide_id)
-    regular_quiz_slides = slides_ids[:first_exam_slide_index]
-    exam_quiz_slides = slides_ids[first_exam_slide_index:]
+    regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
+    exam_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.EXAM, db_session=db_session)
     results_regular = await calculate_user_stats_from_slides(regular_quiz_slides, session.id, db_session)
     results_exam = await calculate_user_stats_from_slides(exam_quiz_slides, session.id, db_session)
     user_stats = UserStats(
@@ -157,7 +155,7 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
     if lesson.errors_threshold is not None:
         percentage = (user_stats.correct_exam_answers / user_stats.exam_exercises) * 100
         if percentage < lesson.errors_threshold:
-            await show_stats(event, user_stats, state, session, db_session)
+            await show_stats(event, user_stats, session, db_session)
             await show_extra_slides_dialog(event, db_session)
             return
     lessons = await get_lessons(db_session)

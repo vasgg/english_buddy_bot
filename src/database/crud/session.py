@@ -73,7 +73,6 @@ async def get_all_questions_in_session(session_id: int, db_session: AsyncSession
 
 
 async def get_error_counter_from_slides(session_id, slides_set: set[int], db_session: AsyncSession) -> int:
-    # TODO: QuizAnswerLog.slide_id.in_(slides_set) возможно лишняя фильтрация
     subquery = (
         select(QuizAnswerLog.slide_id)
         .filter(
