@@ -168,9 +168,7 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
 
 async def finalizing_extra(event: types.Message, state: FSMContext, session: Session, db_session: AsyncSession):
     slides_ids = session.get_path()
-    first_exam_slide_id = await find_first_exam_slide_id(slides_ids, db_session)
-    first_exam_slide_index = slides_ids.index(first_exam_slide_id)
-    regular_quiz_slides = slides_ids[:first_exam_slide_index]
+    regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
     results_regular = await calculate_user_stats_from_slides(regular_quiz_slides, session.id, db_session)
     await show_stats_extra(event, results_regular, session, db_session)
     await finish_session(session, db_session)

@@ -113,7 +113,7 @@ async def process_quiz_input_word(
                 await response_input_word_correct(event, slide, input_msg.text, state, session, db_session)
                 return True
             elif input_msg.text.lower() in almost_right_answers_lower:
-                await response_input_word_almost_correct(event, slide, user_input, state, session, db_session)
+                await response_input_word_almost_correct(event, slide, user_input.text, state, session, db_session)
                 return True
 
             await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)
