@@ -3,11 +3,13 @@ import contextlib
 from aiogram import Router, types
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.slide_controllers import show_slides
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_data import (
-    LessonsCallbackFactory,
     LessonStartsFromCallbackFactory,
+    LessonsCallbackFactory,
     RemindersCallbackFactory,
 )
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
@@ -20,7 +22,6 @@ from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.user import User
 from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
 
@@ -74,9 +75,10 @@ async def prepare_session(lesson: Lesson, db_session: AsyncSession, attr: Lesson
     path = lesson.path
     if attr == LessonStartsFrom.EXAM:
         path_list: list[int] = [int(elem) for elem in lesson.path.split(".")]
-        first_exam_slide_id = await find_first_exam_slide_id(path, db_session)
-        path_start_index = path.index(first_exam_slide_id)
-        path = '.'.join(map(str, path_list[path_start_index:]))
+        first_exam_slide_id = await find_first_exam_slide_id(path_list, db_session)
+        if first_exam_slide_id:
+            path_start_index = path_list.index(first_exam_slide_id)
+            path = '.'.join(map(str, path_list[path_start_index:]))
 
     session = Session(
         user_id=user_id,
@@ -146,4 +148,4 @@ async def reminders_callback_processing(
     await callback.message.answer(text=message)
     await callback.answer()
     # TODO: вот тут нужен правильный флаг, чтобы после команды не показывать старт меню
-    await show_start_menu(event=callback.message, db_session=db_session)
+    await show_start_menu(event=callback.message, user_id=user.id, db_session=db_session)

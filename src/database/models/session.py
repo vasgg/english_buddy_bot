@@ -1,7 +1,8 @@
-from database.models.base import Base
-from enums import SessionStartsFrom, SessionStatus
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
+
+from database.models.base import Base
+from enums import SessionStartsFrom, SessionStatus
 
 
 class Session(Base):
@@ -26,9 +27,7 @@ class Session(Base):
         self.current_step = 0
 
     def get_slide(self):
-        if self.in_extra:
-            return self.path_extra[self.current_step]
-        return self.path[self.current_step]
+        return self.get_path()[self.current_step]
 
     def has_next(self):
         path = self.get_path()

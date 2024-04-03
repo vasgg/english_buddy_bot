@@ -1,10 +1,10 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 from bot.keyboards.callback_data import (
     ExtraSlidesCallbackFactory,
-    FurtherButtonCallbackFactory,
     HintCallbackFactory,
-    LessonsCallbackFactory,
     LessonStartsFromCallbackFactory,
+    LessonsCallbackFactory,
     QuizCallbackFactory,
     RemindersCallbackFactory,
 )
@@ -32,7 +32,7 @@ def get_further_button() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text="Далее",
-                callback_data=FurtherButtonCallbackFactory(further_requested=True).pack(),
+                callback_data='further_button',
             ),
         ],
     ]
@@ -46,7 +46,7 @@ def get_quiz_keyboard(words: list[str]) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text=word,
-                    callback_data=QuizCallbackFactory(text=word).pack(),
+                    callback_data=QuizCallbackFactory(answer=word).pack(),
                 ),
             ],
         )
@@ -54,7 +54,9 @@ def get_quiz_keyboard(words: list[str]) -> InlineKeyboardMarkup:
 
 
 async def get_lesson_progress_keyboard(
-    mode: UserLessonProgress, lesson: Lesson, has_exam_slides: bool,
+    mode: UserLessonProgress,
+    lesson: Lesson,
+    has_exam_slides: bool,
 ) -> InlineKeyboardMarkup:
     buttons = [
         [
@@ -72,15 +74,13 @@ async def get_lesson_progress_keyboard(
             if has_exam_slides:
                 buttons.append(
                     [
-                        [
-                            InlineKeyboardButton(
-                                text='Начать с экзамена',
-                                callback_data=LessonStartsFromCallbackFactory(
-                                    lesson_id=lesson.id,
-                                    attr=LessonStartsFrom.EXAM,
-                                ).pack(),
-                            ),
-                        ],
+                        InlineKeyboardButton(
+                            text='Начать с экзамена',
+                            callback_data=LessonStartsFromCallbackFactory(
+                                lesson_id=lesson.id,
+                                attr=LessonStartsFrom.EXAM,
+                            ).pack(),
+                        ),
                     ],
                 )
         case UserLessonProgress.IN_PROGRESS:
@@ -126,13 +126,13 @@ def get_extra_slides_keyboard() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text='Да',
-                    callback_data=ExtraSlidesCallbackFactory(show_extra_slides=True).pack(),
+                    callback_data=ExtraSlidesCallbackFactory(extra_slides_requested=True).pack(),
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text='Нет',
-                    callback_data=ExtraSlidesCallbackFactory(show_extra_slides=False).pack(),
+                    callback_data=ExtraSlidesCallbackFactory(extra_slides_requested=False).pack(),
                 ),
             ],
         ],

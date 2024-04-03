@@ -3,14 +3,15 @@ import io
 import logging
 from pathlib import Path
 
+from PIL import Image
 import aiofiles
 import aiohttp
-import fastapi
 from aiohttp import FormData
+import fastapi
+
 from config import Settings
 from database.models.slide import Slide
 from enums import SlideType
-from PIL import Image
 from webapp.schemas.slide import EditImageSlideData
 
 logger = logging.getLogger()
@@ -38,7 +39,7 @@ def get_slide_details(slide: Slide) -> str:
         'pin_dict': ' ',
         'small_sticker': ' ',
         'big_sticker': ' ',
-        'quiz_options': slide.keyboard,
+        'quiz_options': f'{slide.right_answers}|{slide.keyboard}',
         'quiz_input_word': slide.right_answers,
         'quiz_input_phrase': slide.right_answers,
         'final_slide': ' ',

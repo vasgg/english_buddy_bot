@@ -1,14 +1,15 @@
 import asyncio
-import logging
 from datetime import datetime, timedelta
+import logging
 
 from aiogram import Bot, types
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
 from database.crud.answer import get_text_by_prompt
-from database.crud.lesson import get_completed_lessons, get_lessons
+from database.crud.lesson import get_completed_lessons_from_sessions, get_lessons
 from database.crud.user import get_all_users_with_reminders, update_last_reminded_at
 from database.database_connector import DatabaseConnector
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger()
 UTC_STARTING_MARK = 14
@@ -22,9 +23,9 @@ async def propose_reminder_to_user(message: types.Message, db_session: AsyncSess
     )
 
 
-async def show_start_menu(event: types.Message, db_session: AsyncSession) -> None:
+async def show_start_menu(event: types.Message, user_id: int, db_session: AsyncSession) -> None:
     lessons = await get_lessons(db_session)
-    completed_lessons = await get_completed_lessons(user_id=event.from_user.id, db_session=db_session)
+    completed_lessons = await get_completed_lessons_from_sessions(user_id=user_id, db_session=db_session)
     await event.answer(
         text=await get_text_by_prompt(prompt='start_message', db_session=db_session),
         reply_markup=get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons),

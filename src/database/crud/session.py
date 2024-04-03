@@ -1,8 +1,9 @@
+from sqlalchemy import Result, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.models.quiz_answer_log import QuizAnswerLog
 from database.models.session import Session
 from enums import SessionStatus, SlideType
-from sqlalchemy import Result, func, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_lesson_progress(user_id: int, lesson_id: int, db_session: AsyncSession) -> int:
@@ -64,26 +65,21 @@ async def get_wrong_answers_counter(session_id: int, slide_id: int, db_session: 
 async def get_all_questions_in_session(session_id: int, db_session: AsyncSession) -> set[int]:
     all_questions_slide_types = [SlideType.QUIZ_OPTIONS, SlideType.QUIZ_INPUT_WORD, SlideType.QUIZ_INPUT_PHRASE]
     query = select(QuizAnswerLog.slide_id).filter(
-        QuizAnswerLog.session_id == session_id, QuizAnswerLog.slide_type.in_(all_questions_slide_types),
+        QuizAnswerLog.session_id == session_id,
+        QuizAnswerLog.slide_type.in_(all_questions_slide_types),
     )
     result = await db_session.execute(query)
     return set(result.scalars().all()) if result else {}
 
 
-async def get_hints_shown_counter_in_session(session_id: int, db_session: AsyncSession) -> int:
-    query = select(func.count(QuizAnswerLog.id)).filter(
-        QuizAnswerLog.session_id == session_id, QuizAnswerLog.data == 'show_hint',
-    )
-    result = await db_session.execute(query)
-    return result.scalar()
-
-
-async def count_errors_in_session(session_id, slides_set: set[int], db_session: AsyncSession) -> int:
+async def get_error_counter_from_slides(session_id, slides_set: set[int], db_session: AsyncSession) -> int:
     # TODO: QuizAnswerLog.slide_id.in_(slides_set) возможно лишняя фильтрация
     subquery = (
         select(QuizAnswerLog.slide_id)
         .filter(
-            QuizAnswerLog.session_id == session_id, QuizAnswerLog.slide_id.in_(slides_set), ~QuizAnswerLog.is_correct,
+            QuizAnswerLog.session_id == session_id,
+            QuizAnswerLog.slide_id.in_(slides_set),
+            ~QuizAnswerLog.is_correct,
         )
         .distinct()
         .subquery()
@@ -91,23 +87,3 @@ async def count_errors_in_session(session_id, slides_set: set[int], db_session: 
     query = select(func.count()).select_from(subquery)
     result = await db_session.execute(query)
     return result.scalar()
-
-
-async def update_session(
-    user_id: int,
-    lesson_id: int,
-    current_slide_id: int,
-    current_step: int,
-    db_session: AsyncSession,
-    session_id: int,
-) -> None:
-    query = (
-        update(Session)
-        .filter(
-            Session.user_id == user_id,
-            Session.lesson_id == lesson_id,
-            Session.id == session_id,
-        )
-        .values(current_slide_id=current_slide_id, current_step=current_step)
-    )
-    await db_session.execute(query)
