@@ -152,17 +152,17 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
         correct_exam_answers=results_exam.correct_answers,
     )
     lesson: Lesson = await get_lesson_by_id(session.lesson_id, db_session)
-    if lesson.errors_threshold is not None:
+    if lesson.errors_threshold is not None and user_stats.exam_exercises > 0:
         percentage = (user_stats.correct_exam_answers / user_stats.exam_exercises) * 100
         if percentage < lesson.errors_threshold:
             await show_stats(event, user_stats, session, db_session)
             await show_extra_slides_dialog(event, db_session)
             return
     lessons = await get_lessons(db_session)
+    await finish_session(session, db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=session.user_id, db_session=db_session)
     markup = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)
     await show_stats(event, user_stats, session, db_session, markup=markup)
-    await finish_session(session, db_session)
     await state.clear()
 
 

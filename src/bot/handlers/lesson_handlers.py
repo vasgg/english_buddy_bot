@@ -38,9 +38,13 @@ async def lesson_callback_processing(
 
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
-    slides_count = len(lesson.path.split('.'))
+    try:
+        slides_count = len(lesson.path.split('.'))
+    except AttributeError:
+        await callback.message.answer(text='no slides yet in this lesson')
+        return
     if slides_count == 0:
-        await callback.message.answer(text='no slides yet')
+        await callback.message.answer(text='no slides yet in this lesson')
         return
     path: list[int] = [int(elem) for elem in lesson.path.split(".")]
     first_exam_slide = await find_first_exam_slide_id(path, db_session)
