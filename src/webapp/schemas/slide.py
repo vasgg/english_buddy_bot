@@ -1,12 +1,11 @@
 from typing import Annotated, Type
 
+from database.models.slide import Slide
+from enums import KeyboardType
 from fastapi import UploadFile
 from fastui.forms import FormFile
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_core import PydanticCustomError
-
-from database.models.slide import Slide
-from enums import KeyboardType
 
 
 class SlidesSchema(BaseModel):

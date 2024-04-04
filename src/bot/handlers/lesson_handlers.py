@@ -3,13 +3,11 @@ import contextlib
 from aiogram import Router, types
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.slide_controllers import show_slides
 from bot.controllers.user_controllers import show_start_menu
 from bot.keyboards.callback_data import (
-    LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
+    LessonStartsFromCallbackFactory,
     RemindersCallbackFactory,
 )
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
@@ -22,6 +20,7 @@ from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.user import User
 from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
 

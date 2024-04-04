@@ -1,7 +1,6 @@
 import pytest
-from httpx import AsyncClient
-
 from database.tables_helper import populate_db
+from httpx import AsyncClient
 
 
 @pytest.mark.parametrize(

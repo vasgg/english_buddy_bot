@@ -1,16 +1,16 @@
+from httpx import ASGITransport, AsyncClient
 import pytest
-from httpx import AsyncClient, ASGITransport
 
-from config import get_settings, Settings
+from config import Settings, get_settings
 from database.database_connector import DatabaseConnector
 from database.models.base import Base
 from database.tables_helper import get_db
 from webapp.create_app import create_app
 
 
-@pytest.fixture
+@pytest.fixture()
 async def db():
-    test_database = DatabaseConnector(url=f"sqlite+aiosqlite://", echo=False)
+    test_database = DatabaseConnector(url="sqlite+aiosqlite://")
 
     async with test_database.engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all, checkfirst=True)
@@ -26,7 +26,7 @@ def override_settings():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 async def client(db):
     app = create_app()
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from database.crud.session import get_lesson_progress
 from database.database_connector import DatabaseConnector
@@ -6,7 +6,7 @@ from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.slide import Slide
 from database.models.user import User
-from enums import SlideType, SessionStatus, SessionStartsFrom
+from enums import SessionStartsFrom, SessionStatus, SlideType
 
 
 async def test_session_in_progress(db: 'DatabaseConnector'):
@@ -15,7 +15,7 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
 
     async with db.session_factory.begin() as session:
         session.add(Lesson(title="abacaba", path=path))
-        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.utcnow()))
+        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.now(timezone.utc)))
         session.add(Slide(lesson_id=1, slide_type=SlideType.TEXT, id=target_slide_id))
 
     async with db.session_factory.begin() as session:
@@ -27,7 +27,7 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
                 status=SessionStatus.IN_PROGRESS,
                 starts_from=SessionStartsFrom.BEGIN,
                 path=path,
-            )
+            ),
         )
         session.add(
             Session(
@@ -37,7 +37,7 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
                 status=SessionStatus.ABORTED,
                 starts_from=SessionStartsFrom.BEGIN,
                 path=path,
-            )
+            ),
         )
         session.add(
             Session(
@@ -47,7 +47,7 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
                 status=SessionStatus.COMPLETED,
                 starts_from=SessionStartsFrom.BEGIN,
                 path=path,
-            )
+            ),
         )
 
     async with db.session_factory() as session:

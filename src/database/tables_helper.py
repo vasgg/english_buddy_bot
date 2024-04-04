@@ -1,26 +1,25 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy.ext.asyncio import AsyncEngine
-
+# noinspection PyUnresolvedReferences
+# noinspection PyUnresolvedReferences
+# noinspection PyUnresolvedReferences
+# noinspection PyUnresolvedReferences
 from config import get_settings
 from database.database_connector import DatabaseConnector
 from database.models.base import Base
+
 # noinspection PyUnresolvedReferences
 from database.models.lesson import Lesson
-# noinspection PyUnresolvedReferences
-import database.models.quiz_answer_log
+
 # noinspection PyUnresolvedReferences
 from database.models.reaction import Reaction, ReactionType
-# noinspection PyUnresolvedReferences
-import database.models.session
+
 # noinspection PyUnresolvedReferences
 from database.models.slide import Slide, SlideType
-# noinspection PyUnresolvedReferences
-import database.models.sticker
-# noinspection PyUnresolvedReferences
-import database.models.text
+
 # noinspection PyUnresolvedReferences
 from database.models.user import User
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 
 async def create_or_drop_db(engine: AsyncEngine, create: bool = True):
@@ -36,7 +35,7 @@ async def populate_db(dc: DatabaseConnector):
 
     async with dc.session_factory.begin() as session:
         session.add(Lesson(title="abacaba", path=f"{target_slide_id}", index=1))
-        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.utcnow()))
+        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.now(timezone.utc)))
         session.add(Slide(lesson_id=1, slide_type=SlideType.TEXT, id=target_slide_id))
         session.add(Reaction(type=ReactionType.WRONG, text="wrong"))
         session.add(Reaction(type=ReactionType.RIGHT, text="right"))

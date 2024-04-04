@@ -1,10 +1,9 @@
-from sqlalchemy import Result, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import SessionStatus, SlideType
+from sqlalchemy import Result, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_lesson_by_id(lesson_id: int, db_session: AsyncSession) -> Lesson:

@@ -2,6 +2,7 @@ import asyncio
 import logging.config
 from pathlib import Path
 
+import sentry_sdk
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis

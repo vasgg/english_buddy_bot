@@ -1,9 +1,8 @@
-from sqlalchemy import Result, func, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.models.quiz_answer_log import QuizAnswerLog
 from database.models.session import Session
 from enums import SessionStatus, SlideType
+from sqlalchemy import Result, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_lesson_progress(user_id: int, lesson_id: int, db_session: AsyncSession) -> int:

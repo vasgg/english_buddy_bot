@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from database.models.user import User
 from sqlalchemy import Result, func, select, update
@@ -13,7 +13,7 @@ async def add_user_to_db(user, db_session) -> User:
         username=user.username,
         paywall_access=False,
         reminder_freq=None,
-        last_reminded_at=datetime.utcnow(),
+        last_reminded_at=datetime.now(timezone.utc),
     )
     db_session.add(new_user)
     await db_session.flush()
