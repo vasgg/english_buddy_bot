@@ -106,9 +106,9 @@ async def process_quiz_input_word(
                 return await show_quiz_input_word(event, state, slide)
         case UserInputMsg() as input_msg:
             answers_lower = [answer.lower() for answer in slide.right_answers.split("|")]
-            almost_right_answers_lower = []
-            if slide.almost_right_answers:
-                almost_right_answers_lower = [answer.lower() for answer in slide.almost_right_answers.split("|")]
+            almost_right_answers_lower = (
+                [answer.lower() for answer in slide.almost_right_answers.split("|")] if slide.almost_right_answers else []
+            )
             if input_msg.text.lower() in answers_lower:
                 await response_input_word_correct(event, slide, input_msg.text, state, session, db_session)
                 return True

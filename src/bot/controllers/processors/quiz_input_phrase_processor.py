@@ -50,7 +50,9 @@ async def process_quiz_input_phrase(
                 return await show_quiz_input_phrase(event, state, slide)
         case UserInputMsg() as input_msg:
             answers_lower = [answer.lower() for answer in slide.right_answers.split("|")]
-            almost_right_answers_lower = [answer.lower() for answer in slide.almost_right_answers.split("|")]
+            almost_right_answers_lower = (
+                [answer.lower() for answer in slide.almost_right_answers.split("|")] if slide.almost_right_answers else []
+            )
             if input_msg.text.lower() in answers_lower:
                 await event.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
                 await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
