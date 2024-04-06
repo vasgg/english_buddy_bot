@@ -71,8 +71,8 @@ async def send_newsletter(bot_token: str, user_id: int, message: str, image_path
                 f'Сообщение с рассылкой "{message}" и файлом {image_path.name} было отправлено пользователю {user_id}.'
             )
             text_error = (
-                f'Произошла ошибка при отправке рассылки "{message}" и файлом {image_path.name} пользователю {user_id}: '
-                + '{}. {}'
+                    f'Произошла ошибка при отправке рассылки "{message}" и файлом {image_path.name} пользователю {user_id}: '
+                    + '{}. {}'
             )
         else:
             url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -109,3 +109,15 @@ def image_upload(image_file: bytes, form: EditImageSlideData, lesson_id: int, se
         with open(file_path, "wb") as buffer:
             image_format = form.upload_new_picture.content_type
             image.save(buffer, format=image_format.split("/")[1])
+
+
+def trim_non_alpha(string: str) -> str:
+    start = 0
+    while start < len(string) and not string[start].isalpha():
+        start += 1
+    if start == len(string):
+        return ""
+    end = len(string) - 1
+    while end >= 0 and not string[end].isalpha():
+        end -= 1
+    return string[start:end + 1]
