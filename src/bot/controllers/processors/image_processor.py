@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 
 from aiogram import types
+
 from bot.keyboards.keyboards import get_further_button
 from database.models.session import Session
 from database.models.slide import Slide
@@ -9,9 +10,9 @@ from enums import KeyboardType
 
 
 async def process_image(
-    event: types.Message,
-    slide: Slide,
-    session: Session,
+        event: types.Message,
+        slide: Slide,
+        session: Session,
 ) -> bool:
     markup = None
     image_path = Path(f'src/webapp/static/lessons_images/{session.lesson_id}/{slide.picture}')
@@ -20,7 +21,7 @@ async def process_image(
     if slide.keyboard_type == KeyboardType.FURTHER:
         markup = get_further_button()
     await event.answer_photo(photo=types.FSInputFile(path=image_path), reply_markup=markup)
-    if slide.delay:
+    if slide.delay and slide.keyboard_type != KeyboardType.FURTHER:
         # noinspection PyTypeChecker
         await asyncio.sleep(slide.delay)
     return slide.keyboard_type != KeyboardType.FURTHER
