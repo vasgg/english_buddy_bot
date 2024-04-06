@@ -3,7 +3,8 @@ import logging.config
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
+from redis.asyncio import Redis
 import sentry_sdk
 
 from bot.controllers.user_controllers import check_user_reminders
@@ -41,9 +42,8 @@ async def main():
         )
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
     logging.info("bot started")
-
-    # TODO: change to persistent storage
-    storage = MemoryStorage()
+    redis = Redis(db=1)
+    storage = RedisStorage(redis)
     db = get_db()
     dispatcher = Dispatcher(storage=storage)
     db_session_middleware = DBSessionMiddleware(db)
