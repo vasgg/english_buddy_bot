@@ -26,10 +26,10 @@ router.callback_query.middleware.register(SessionMiddleware())
 
 @router.callback_query(F.data == 'further_button')
 async def further_button_callback_processing(
-    callback: types.CallbackQuery,
-    state: FSMContext,
-    session: Session,
-    db_session: AsyncSession,
+        callback: types.CallbackQuery,
+        state: FSMContext,
+        session: Session,
+        db_session: AsyncSession,
 ) -> None:
     await callback.answer()
     await callback.message.delete_reply_markup()
@@ -39,11 +39,11 @@ async def further_button_callback_processing(
 
 @router.callback_query(QuizCallbackFactory.filter())
 async def quiz_callback_processing(
-    callback: types.CallbackQuery,
-    callback_data: QuizCallbackFactory,
-    state: FSMContext,
-    session: Session,
-    db_session: AsyncSession,
+        callback: types.CallbackQuery,
+        callback_data: QuizCallbackFactory,
+        state: FSMContext,
+        session: Session,
+        db_session: AsyncSession,
 ) -> None:
     await callback.message.delete_reply_markup()
     user_input = UserInputMsg(text=callback_data.answer)
@@ -53,11 +53,11 @@ async def quiz_callback_processing(
 
 @router.callback_query(HintCallbackFactory.filter())
 async def hint_callback(
-    callback: types.CallbackQuery,
-    callback_data: HintCallbackFactory,
-    state: FSMContext,
-    session: Session,
-    db_session: AsyncSession,
+        callback: types.CallbackQuery,
+        callback_data: HintCallbackFactory,
+        state: FSMContext,
+        session: Session,
+        db_session: AsyncSession,
 ) -> None:
     user_input = UserInputHint(hint_requested=callback_data.hint_requested)
     await show_slides(callback.message, state, session, db_session, user_input)
@@ -67,10 +67,10 @@ async def hint_callback(
 @router.message(States.INPUT_PHRASE)
 @router.message(States.INPUT_WORD)
 async def check_input_word(
-    message: types.Message,
-    state: FSMContext,
-    session: Session,
-    db_session: AsyncSession,
+        message: types.Message,
+        state: FSMContext,
+        session: Session,
+        db_session: AsyncSession,
 ) -> None:
     user_input = UserInputMsg(text=message.text)
     await show_slides(message, state, session, db_session, user_input)
@@ -78,11 +78,11 @@ async def check_input_word(
 
 @router.callback_query(ExtraSlidesCallbackFactory.filter())
 async def handle_extra_slide_answer(
-    callback: types.CallbackQuery,
-    callback_data: ExtraSlidesCallbackFactory,
-    state: FSMContext,
-    session: Session,
-    db_session: AsyncSession,
+        callback: types.CallbackQuery,
+        callback_data: ExtraSlidesCallbackFactory,
+        state: FSMContext,
+        session: Session,
+        db_session: AsyncSession,
 ) -> None:
     await callback.message.delete_reply_markup()
     if callback_data.extra_slides_requested:

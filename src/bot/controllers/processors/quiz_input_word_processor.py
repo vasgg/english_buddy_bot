@@ -12,12 +12,13 @@ from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType, States
+from webapp.controllers.misc import trim_non_alpha
 
 
 async def show_quiz_input_word(
-    event: types.Message,
-    state: FSMContext,
-    slide: Slide,
+        event: types.Message,
+        state: FSMContext,
+        slide: Slide,
 ) -> bool:
     msg = await event.answer(text=slide.text)
     await state.update_data(quiz_word_msg_id=msg.message_id)
@@ -26,12 +27,12 @@ async def show_quiz_input_word(
 
 
 async def response_input_word_correct(
-    event: types.Message,
-    slide: Slide,
-    user_input_text: str,
-    state: FSMContext,
-    session: Session,
-    db_session: AsyncSession,
+        event: types.Message,
+        slide: Slide,
+        user_input_text: str,
+        state: FSMContext,
+        session: Session,
+        db_session: AsyncSession,
 ) -> None:
     data = await state.get_data()
     try:
@@ -42,8 +43,8 @@ async def response_input_word_correct(
                 slide.text.replace("…", f"<u>{user_input_text.lower()}</u>")
                 if "…" in slide.text
                 else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
-                'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного '
-                'варианта.'
+                                  'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного '
+                                  'варианта.'
             ),
         )
     except KeyError:
@@ -53,12 +54,12 @@ async def response_input_word_correct(
 
 
 async def response_input_word_almost_correct(
-    event: types.Message,
-    slide: Slide,
-    user_input_text: str,
-    state: FSMContext,
-    session: Session,
-    db_session: AsyncSession,
+        event: types.Message,
+        slide: Slide,
+        user_input_text: str,
+        state: FSMContext,
+        session: Session,
+        db_session: AsyncSession,
 ) -> None:
     data = await state.get_data()
     try:
@@ -69,8 +70,8 @@ async def response_input_word_almost_correct(
                 slide.text.replace("…", f"<u>{user_input_text.lower()}</u>")
                 if "…" in slide.text
                 else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
-                'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного '
-                'варианта.'
+                                  'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного '
+                                  'варианта.'
             ),
         )
     except KeyError:
@@ -80,12 +81,12 @@ async def response_input_word_almost_correct(
 
 
 async def process_quiz_input_word(
-    event: types.Message,
-    state: FSMContext,
-    user_input: UserQuizInput,
-    slide: Slide,
-    session: Session,
-    db_session: AsyncSession,
+        event: types.Message,
+        state: FSMContext,
+        user_input: UserQuizInput,
+        slide: Slide,
+        session: Session,
+        db_session: AsyncSession,
 ) -> bool:
     if not user_input:
         return await show_quiz_input_word(event, state, slide)
@@ -105,15 +106,15 @@ async def process_quiz_input_word(
                 await event.delete_reply_markup()
                 return await show_quiz_input_word(event, state, slide)
         case UserInputMsg() as input_msg:
-            answers_lower = [answer.lower() for answer in slide.right_answers.split("|")]
-            almost_right_answers_lower = (
-                [answer.lower() for answer in slide.almost_right_answers.split("|")] if slide.almost_right_answers else []
-            )
-            if input_msg.text.lower() in answers_lower:
-                await response_input_word_correct(event, slide, input_msg.text, state, session, db_session)
+            trimmed_user_input = trim_non_alpha(input_msg.text).lower()
+            right_answers = [trim_non_alpha(answer.lower()) for answer in slide.right_answers.split("|")]
+            almost_right_answers = [trim_non_alpha(answer.lower()) for answer in (slide.almost_right_answers or '').split("|")]
+
+            if trimmed_user_input in right_answers:
+                await response_input_word_correct(event, slide, trimmed_user_input, state, session, db_session)
                 return True
-            elif input_msg.text.lower() in almost_right_answers_lower:
-                await response_input_word_almost_correct(event, slide, user_input.text, state, session, db_session)
+            elif trimmed_user_input in almost_right_answers:
+                await response_input_word_almost_correct(event, slide, trimmed_user_input, state, session, db_session)
                 return True
 
             await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)
