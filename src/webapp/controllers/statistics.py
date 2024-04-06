@@ -26,7 +26,7 @@ async def get_errors_stats_table_content(db_session: AsyncDBSession) -> list:
             'slide_type': get_slide_emoji(slide.slide_type),
             'is_exam_slide': '🎓' if slide.is_exam_slide else ' ',
             'slide_id': slide.id,
-            'lesson_index': lesson.index,
+            'lesson_title': lesson.title,
             'value': i[1],
             'icon': '✏️',
             'link': link,

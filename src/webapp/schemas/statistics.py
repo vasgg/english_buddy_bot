@@ -25,7 +25,7 @@ class SlidesStatisticsTableSchema(BaseModel):
     slide_type: str
     is_exam_slide: str
     slide_id: int
-    lesson_index: int
+    lesson_title: str
     value: int
     link: str
     icon: str

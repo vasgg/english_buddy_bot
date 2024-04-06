@@ -58,7 +58,7 @@ async def statistics_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                     DisplayLookup(field='slide_type', table_width_percent=3, title=' '),
                     DisplayLookup(field='is_exam_slide', table_width_percent=3, title=' '),
                     DisplayLookup(field='slide_id', title='номер слайда', table_width_percent=30),
-                    DisplayLookup(field='lesson_index', title='номер урока', table_width_percent=30),
+                    DisplayLookup(field='lesson_title', title='название урока', table_width_percent=30),
                     DisplayLookup(field='value', title='количество ошибок'),
                     DisplayLookup(field='icon', table_width_percent=3, title=' ',
                                   on_click=GoToEvent(url='{link}'),
