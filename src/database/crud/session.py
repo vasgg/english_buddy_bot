@@ -1,8 +1,9 @@
+from sqlalchemy import Result, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.models.quiz_answer_log import QuizAnswerLog
 from database.models.session import Session
 from enums import SessionStatus, SlideType
-from sqlalchemy import Result, func, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_lesson_progress(user_id: int, lesson_id: int, db_session: AsyncSession) -> int:
@@ -85,3 +86,16 @@ async def get_error_counter_from_slides(session_id, slides_set: set[int], db_ses
     query = select(func.count()).select_from(subquery)
     result = await db_session.execute(query)
     return result.scalar()
+
+
+async def get_sessions_statistics(
+        db_session: AsyncSession,
+        status: SessionStatus | None = None,
+) -> int:
+    query = select(func.count()).select_from(Session)
+    if status is not None:
+        query = query.filter(Session.status == status)
+
+    result = await db_session.execute(query)
+    count = result.scalar_one()
+    return count

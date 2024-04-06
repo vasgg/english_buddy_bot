@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
-from database.models.user import User
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models.user import User
 
 
 async def add_user_to_db(user, db_session) -> User:
@@ -45,3 +46,9 @@ async def get_all_users_with_reminders(db_session: AsyncSession) -> list[User]:
 
 async def update_last_reminded_at(user_id: int, timestamp: datetime, db_session: AsyncSession) -> None:
     await db_session.execute(update(User).filter(User.id == user_id).values(last_reminded_at=timestamp))
+
+
+async def get_users_count(db_session: AsyncSession) -> int:
+    query = select(func.count()).select_from(User)
+    result = await db_session.execute(query)
+    return result.scalar()

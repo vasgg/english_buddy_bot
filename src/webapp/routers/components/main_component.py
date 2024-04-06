@@ -4,8 +4,8 @@ from fastui.events import GoToEvent
 
 
 def get_common_content(
-    *components: AnyComponent,
-    title: str | None = None,
+        *components: AnyComponent,
+        title: str | None = None,
 ) -> list[AnyComponent]:
     return [
         c.PageTitle(text=f"English buddy — {title}" if title else "admin panel"),
@@ -30,6 +30,11 @@ def get_common_content(
                     components=[c.Text(text='Рассылка')],
                     on_click=GoToEvent(url='/newsletter'),
                     active='startswith:/newsletter',
+                ),
+                c.Link(
+                    components=[c.Text(text='Статистика')],
+                    on_click=GoToEvent(url='/statistics'),
+                    active='startswith:/statistics',
                 ),
             ],
         ),

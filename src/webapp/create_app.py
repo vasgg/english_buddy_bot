@@ -2,11 +2,13 @@ from os.path import dirname, exists, join, realpath
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+
 from webapp.routers.lessons import router as lessons_fastui_router
 from webapp.routers.newsletter import router as newsletter_fastui_router
 from webapp.routers.reactions import router as reaction_fastui_router
 from webapp.routers.root import router as root_fastui_router
 from webapp.routers.slides import router as slides_fastui_router
+from webapp.routers.statistics import router as statistics_fastui_router
 from webapp.routers.texts import router as texts_fastui_router
 
 static_files_path = join(dirname(realpath(__file__)), 'static')
@@ -21,5 +23,6 @@ def create_app():
     app.include_router(texts_fastui_router, prefix="/api/texts")
     app.include_router(reaction_fastui_router, prefix="/api/reactions")
     app.include_router(newsletter_fastui_router, prefix="/api/newsletter")
+    app.include_router(statistics_fastui_router, prefix="/api/statistics")
     app.include_router(root_fastui_router)
     return app
