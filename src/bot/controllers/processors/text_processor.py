@@ -1,19 +1,20 @@
 import asyncio
 
 from aiogram import types
+
 from bot.keyboards.keyboards import get_further_button
 from database.models.slide import Slide
 from enums import KeyboardType
 
 
 async def process_text(
-    event: types.Message,
-    slide: Slide,
+        event: types.Message,
+        slide: Slide,
 ) -> bool:
     markup = None
     if slide.keyboard_type == KeyboardType.FURTHER:
         markup = get_further_button()
-    if slide.delay:
+    if slide.delay and slide.keyboard_type != KeyboardType.FURTHER:
         # noinspection PyTypeChecker
         await asyncio.sleep(slide.delay)
     await event.answer(

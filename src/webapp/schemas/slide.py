@@ -42,7 +42,8 @@ def get_text_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
         )
         delay: float | None = Field(
             slide.delay if slide else None,
-            description='Введите задержку после слайда (например, 1 секунда). Необязательное поле.',
+            description='Введите задержку после слайда (например, 1 секунда). '
+                        'Если в слайде есть кнопка "далее", данное поле будет игнорироваться. Необязательное поле.',
             title='задержка',
         )
         keyboard_type: bool | None = Field(
@@ -68,7 +69,8 @@ def get_image_slide_data_model(slide: Slide = None, lesson_id: int = None) -> Ty
         )
         delay: float | None = Field(
             slide.delay if slide else None,
-            description='Введите задержку после слайда (например, 1 секунда). Необязательное поле.',
+            description='Введите задержку после слайда (например, 1 секунда). '
+                        'Если в слайде есть кнопка "далее", данное поле будет игнорироваться. Необязательное поле.',
             title='задержка',
         )
         keyboard_type: bool | None = Field(
@@ -109,7 +111,7 @@ def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
         keyboard: str = Field(
             slide.keyboard if slide else '',
             description='Введите варианты неправильных ответов, разделённые "|". '
-            'Квиз будет составлен из неправильных вариантов + правильный ответ. Обязательное поле.',
+                        'Квиз будет составлен из неправильных вариантов + правильный ответ. Обязательное поле.',
             title='неправильные ответы',
         )
         is_exam_slide: bool = Field(
