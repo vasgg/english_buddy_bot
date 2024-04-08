@@ -1,10 +1,9 @@
 from functools import lru_cache
 from logging.handlers import RotatingFileHandler
 
+from enums import Stage
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from enums import Stage
 
 
 class Settings(BaseSettings):

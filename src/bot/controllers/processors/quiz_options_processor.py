@@ -4,8 +4,6 @@ from random import sample
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
 from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
 from bot.keyboards.keyboards import get_quiz_keyboard
@@ -14,6 +12,7 @@ from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_quiz_options(

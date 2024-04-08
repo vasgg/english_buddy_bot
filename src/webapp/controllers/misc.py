@@ -27,9 +27,22 @@ def get_slide_emoji(slide_type: SlideType) -> str:
         'quiz_options': '🧩',
         'quiz_input_word': '🗨',
         'quiz_input_phrase': '💬',
-        'final_slide': '🎉',
     }
     return slide_type_to_emoji.get(slide_type)
+
+
+def get_slide_type_text(slide_type: SlideType) -> str:
+    slide_type_to_text = {
+        'text': 'text',
+        'image': 'image',
+        'pin_dict': 'dict',
+        'small_sticker': 'sticker',
+        'big_sticker': 'sticker',
+        'quiz_options': 'quiz_option',
+        'quiz_input_word': 'quiz_input_word',
+        'quiz_input_phrase': 'quiz_input_phrase',
+    }
+    return slide_type_to_text.get(slide_type)
 
 
 def get_slide_details(slide: Slide) -> str:

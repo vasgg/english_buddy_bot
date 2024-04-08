@@ -1,18 +1,17 @@
 import logging
-from typing import Annotated, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
+from config import Settings, get_settings
+from database.crud.lesson import get_lesson_by_id
+from database.crud.slide import get_slide_by_id
+from database.models.slide import Slide
+from enums import KeyboardType, SlidesMenuType, SlideType, StickerType
 from fastapi import APIRouter, Depends, HTTPException
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
-
-from config import Settings, get_settings
-from database.crud.lesson import get_lesson_by_id
-from database.crud.slide import get_slide_by_id
-from database.models.slide import Slide
-from enums import KeyboardType, SlideType, SlidesMenuType, StickerType
 from webapp.controllers.misc import extract_img_from_form, image_upload
 from webapp.controllers.slide import (
     get_all_slides_from_lesson_by_order_fastui,

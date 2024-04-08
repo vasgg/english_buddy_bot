@@ -36,7 +36,7 @@ async def populate_db(dc: DatabaseConnector):
 
     async with dc.session_factory.begin() as session:
         session.add(Lesson(title="abacaba", path=f"{target_slide_id}", index=1))
-        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.utcnow()))
+        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.now(timezone.utc)))
         session.add(Slide(lesson_id=1, slide_type=SlideType.TEXT, id=target_slide_id))
         session.add(Reaction(type=ReactionType.WRONG, text="wrong"))
         session.add(Reaction(type=ReactionType.RIGHT, text="right"))

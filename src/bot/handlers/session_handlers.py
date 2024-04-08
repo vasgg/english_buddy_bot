@@ -2,8 +2,6 @@ import logging
 
 from aiogram import F, Router, types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.final_controllers import finish_session
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg
 from bot.controllers.slide_controllers import show_slides
@@ -16,6 +14,7 @@ from bot.keyboards.callback_data import (
 from bot.middlewares.session_middlewares import SessionMiddleware
 from database.models.session import Session
 from enums import States
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.Logger(__name__)
 

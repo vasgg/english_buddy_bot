@@ -1,19 +1,17 @@
 import random
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
-
 from database.crud.user import (
     add_user_to_db,
-    get_user_from_db,
-    toggle_user_paywall_access,
-    set_user_reminders,
     get_all_users_with_reminders,
+    get_user_from_db,
+    set_user_reminders,
+    toggle_user_paywall_access,
     update_last_reminded_at,
 )
 from database.models.user import User as UserDbModel
-
 
 # TODO: разобраться как обходить констраинты
 
@@ -30,12 +28,12 @@ class User:
     username: str
 
 
-@pytest.fixture
+@pytest.fixture()
 async def user() -> User:
     return User(id=123, first_name="aba", last_name="caba", username="@capybara")
 
 
-@pytest.fixture
+@pytest.fixture()
 async def user_db_model(db, user: User) -> UserDbModel:
     async with db.session_factory.begin() as session:
         return await add_user_to_db(user, session)
@@ -57,7 +55,6 @@ async def test_user_cr_separate_sessions(user_db_model: UserDbModel, db, user: U
 
 
 async def test_toggle_user_paywall_access(user_db_model: UserDbModel, db, user: User):
-
     async with db.session_factory.begin() as session:
         await toggle_user_paywall_access(user_db_model.id, session)
         selected_user = await get_user_from_db(user.id, session)
@@ -95,7 +92,7 @@ async def test_get_all_users_with_reminders(db, user: User):
 
 
 async def test_update_last_reminded_at(user_db_model: UserDbModel, db, user: User):
-    dt = datetime.utcnow()
+    dt = datetime.now(timezone.utc)
     assert user_db_model.last_reminded_at != dt
     async with db.session_factory.begin() as session:
         await update_last_reminded_at(user_db_model.id, dt, session)

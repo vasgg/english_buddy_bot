@@ -1,15 +1,14 @@
 import asyncio
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, types
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_completed_lessons_from_sessions, get_lessons
 from database.crud.user import get_all_users_with_reminders, update_last_reminded_at
 from database.database_connector import DatabaseConnector
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger()
 UTC_STARTING_MARK = 14
@@ -35,17 +34,19 @@ async def show_start_menu(event: types.Message, user_id: int, db_session: AsyncS
 async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
     while True:
         await asyncio.sleep(ONE_HOUR)
-        utcnow = datetime.utcnow()
+        utcnow = datetime.now(timezone.utc)
         if utcnow.hour == UTC_STARTING_MARK - 1:
             await asyncio.sleep(ONE_HOUR - utcnow.minute * 60 - utcnow.second)
             async with db_connector.session_factory() as session:
                 for user in await get_all_users_with_reminders(session):
-                    delta = datetime.utcnow() - user.last_reminded_at
+                    delta = datetime.now(timezone.utc) - user.last_reminded_at
                     if delta > timedelta(days=user.reminder_freq):
                         await bot.send_message(
                             chat_id=user.telegram_id,
                             text=await get_text_by_prompt(prompt='reminder_text', db_session=session),
                         )
                         logger.info(f"{'reminder sended to ' + str(user)}")
-                        await update_last_reminded_at(user_id=user.id, timestamp=datetime.utcnow(), db_session=session)
+                        await update_last_reminded_at(user_id=user.id,
+                                                      timestamp=datetime.now(timezone.utc),
+                                                      db_session=session)
                         await session.commit()

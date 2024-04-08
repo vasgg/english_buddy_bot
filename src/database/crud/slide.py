@@ -1,8 +1,7 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from database.models.slide import Slide
 from enums import QuizType, SlideType
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_slide_by_id(slide_id: int, db_session: AsyncSession) -> Slide:

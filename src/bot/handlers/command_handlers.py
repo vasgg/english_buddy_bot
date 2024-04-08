@@ -2,14 +2,14 @@ from aiogram import Router, types
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BotCommandScopeChat
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.user_controllers import propose_reminder_to_user, show_start_menu
 from bot.internal.commands import special_commands
 from config import get_settings
 from database.crud.answer import get_text_by_prompt
 from database.crud.user import toggle_user_paywall_access
 from database.models.user import User
+from enums import States
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
 

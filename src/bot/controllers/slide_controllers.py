@@ -2,8 +2,6 @@ import logging
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.final_controllers import finalizing, finalizing_extra
 from bot.controllers.processors.dict_processor import process_dict
 from bot.controllers.processors.image_processor import process_image
@@ -17,6 +15,7 @@ from database.crud.slide import get_slide_by_id
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import SlideType
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

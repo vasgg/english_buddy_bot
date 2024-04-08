@@ -2,8 +2,6 @@ import asyncio
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
 from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
 from database.crud.answer import get_random_answer, get_text_by_prompt
@@ -12,6 +10,7 @@ from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType, States
 from webapp.controllers.misc import trim_non_alpha
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_quiz_input_phrase(

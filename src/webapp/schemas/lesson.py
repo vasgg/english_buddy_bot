@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Type
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from database.models.lesson import Lesson
 from enums import LessonLevel
-from pydantic import BaseModel, ConfigDict, Field
 
 
 class LessonSchema(BaseModel):
@@ -14,7 +15,6 @@ class LessonSchema(BaseModel):
     created_at: datetime | None = None
 
     model_config = ConfigDict(extra='allow', from_attributes=True)
-
 
 
 class LessonsTableSchema(LessonSchema):
