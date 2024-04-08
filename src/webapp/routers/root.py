@@ -1,12 +1,13 @@
+from collections import defaultdict
 import logging
 import mimetypes
-from collections import defaultdict
 from pathlib import Path
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
 from fastui import AnyComponent, FastUI, prebuilt_html
 from fastui.forms import SelectSearchResponse
+
 from webapp.routers.components.main_component import get_common_content
 
 router = APIRouter()
@@ -34,8 +35,7 @@ async def files_search_view(lesson_id: int) -> SelectSearchResponse:
     for file in directory.iterdir():
         mime_type = mimetypes.guess_type(file)[0]
         if mime_type in ['image/png', 'image/jpeg', 'image/gif', 'image/heic', 'image/tiff', 'image/webp']:
-            file_name = file.name.replace("-", "_").replace(" ", "_")
-            files['files'].append({'value': file_name, 'label': file_name})
+            files['files'].append({'value': file.name, 'label': file.name})
     options = [{'label': k, 'options': v} for k, v in files.items()]
     return SelectSearchResponse(options=options)
 
