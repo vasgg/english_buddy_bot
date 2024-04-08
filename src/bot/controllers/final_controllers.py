@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.keyboards.keyboards import (
     get_extra_slides_keyboard,
     get_lesson_picker_keyboard,
@@ -20,8 +23,6 @@ from database.crud.session import (
 from database.crud.slide import find_first_exam_slide_id, get_quiz_slides_by_mode
 from database.models.session import Session
 from enums import QuizType, SessionStartsFrom, SessionStatus
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
 if TYPE_CHECKING:
     from database.models.lesson import Lesson
@@ -42,10 +43,14 @@ class UserStats(BaseModel):
 
 
 async def calculate_user_stats_from_slides(
-    slides: set[int], session_id: int, db_session: AsyncSession,
+    slides: set[int],
+    session_id: int,
+    db_session: AsyncSession,
 ) -> StatsCalculationResults:
     all_right_answers_in_slides = len(slides) - await get_error_counter_from_slides(
-        session_id=session_id, slides_set=slides, db_session=db_session,
+        session_id=session_id,
+        slides_set=slides,
+        db_session=db_session,
     )
     stats = StatsCalculationResults(
         exercises=len(slides),
@@ -169,6 +174,6 @@ async def finalizing_extra(event: types.Message, state: FSMContext, session: Ses
     slides_ids = session.get_path()
     regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
     results_regular = await calculate_user_stats_from_slides(regular_quiz_slides, session.id, db_session)
-    await show_stats_extra(event, results_regular, session, db_session)
     await finish_session(session, db_session)
+    await show_stats_extra(event, results_regular, session, db_session)
     await state.clear()
