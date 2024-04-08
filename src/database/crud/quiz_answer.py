@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import Float, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models.quiz_answer_log import QuizAnswerLog
@@ -22,24 +22,18 @@ async def log_quiz_answer(
     await db_session.flush()
 
 
-async def get_errors_count(db_session: AsyncSession) -> int:
-    query = select(func.count()).select_from(QuizAnswerLog).filter(~QuizAnswerLog.is_correct)
-    result = await db_session.execute(query)
-    return result.scalar()
-
-
-async def get_top_error_slides(session: AsyncSession, limit: int = 1000):
+async def get_top_error_slides(session: AsyncSession):
     query = (
         select(
-            QuizAnswerLog.slide_id,
-            func.count(QuizAnswerLog.slide_id).label('error_count'),
+            QuizAnswerLog.slide_id.label('slide_id'),
+            func.count().filter(QuizAnswerLog.is_correct).label('correct'),
+            func.count().filter(~QuizAnswerLog.is_correct).label('wrong'),
+            (func.count().filter(QuizAnswerLog.is_correct) / cast(func.count(), Float)).label('correctness_rate'),
         )
-        .where(~QuizAnswerLog.is_correct)
         .group_by(QuizAnswerLog.slide_id)
-        .order_by(func.count(QuizAnswerLog.slide_id).desc())
-        .limit(limit)
+        .order_by((func.count().filter(QuizAnswerLog.is_correct) / cast(func.count(), Float)))
     )
-
+    print(query)
     result = await session.execute(query)
     slides_with_errors = result.fetchall()
     return slides_with_errors

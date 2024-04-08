@@ -25,9 +25,11 @@ class SlidesStatisticsTableSchema(BaseModel):
     slide_type: str
     is_exam_slide: str
     slide_id: int
+    count_correct: str
+    count_wrong: str
     lesson_title: str
-    value: int
     link: str
     icon: str
+    correctness_rate: str
 
     model_config = ConfigDict(from_attributes=True)
