@@ -3,13 +3,11 @@ import contextlib
 from aiogram import Router, types
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.slide_controllers import show_slides
 from bot.controllers.user_controllers import show_start_menu
-from bot.keyboards.callback_data import (
-    LessonsCallbackFactory,
-    LessonStartsFromCallbackFactory,
-    RemindersCallbackFactory,
-)
+from bot.keyboards.callback_data import LessonStartsFromCallbackFactory, LessonsCallbackFactory, RemindersCallbackFactory
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_lesson_by_id
@@ -20,7 +18,6 @@ from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.user import User
 from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
 
@@ -103,6 +100,7 @@ async def lesson_start_from_callback_processing(
     state: FSMContext,
     db_session: AsyncSession,
 ) -> None:
+    await callback.answer()
     with contextlib.suppress(TelegramBadRequest):
         await callback.message.delete()
 
@@ -120,7 +118,6 @@ async def lesson_start_from_callback_processing(
 
     await show_slides(callback.message, state, session, db_session)
     await state.update_data(session_id=session.id)
-    await callback.answer()
 
 
 @router.callback_query(RemindersCallbackFactory.filter())
