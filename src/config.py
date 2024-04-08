@@ -1,9 +1,10 @@
 from functools import lru_cache
 from logging.handlers import RotatingFileHandler
 
-from enums import Stage
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from enums import Stage
 
 
 class Settings(BaseSettings):
@@ -15,6 +16,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     SENTRY_AIOGRAM_DSN: SecretStr | None = None
     SENTRY_FASTAPI_DSN: SecretStr | None = None
+    TOP_BAD_SLIDES_COUNT: int
     STAGE: Stage
     db_echo: bool = False
     allowed_image_formats: list[str] = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']

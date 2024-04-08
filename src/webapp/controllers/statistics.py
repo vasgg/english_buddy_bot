@@ -7,10 +7,9 @@ from webapp.db import AsyncDBSession
 from webapp.schemas.statistics import SlidesStatisticsTableSchema
 
 
-async def get_errors_stats_table_content(db_session: AsyncDBSession) -> list:
+async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession) -> list:
     slides_by_errors = await get_top_error_slides(db_session)
     stats = []
-    limit = 10
     for i in slides_by_errors:
         slide = await get_slide_by_id(i.slide_id, db_session)
         lesson = await get_lesson_by_id(slide.lesson_id, db_session)

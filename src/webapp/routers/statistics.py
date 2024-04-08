@@ -1,11 +1,13 @@
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
 
+from config import Settings, get_settings
 from database.crud.session import get_sessions_statistics
 from database.crud.user import get_users_count
 from enums import SessionStatus
@@ -19,7 +21,7 @@ logger = logging.getLogger()
 
 
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
-async def statistics_page(db_session: AsyncDBSession) -> list[AnyComponent]:
+async def statistics_page(settings: Annotated[Settings, Depends(get_settings)], db_session: AsyncDBSession) -> list[AnyComponent]:
     users_count = await get_users_count(db_session)
 
     session_stats = SessionStatistics(
@@ -37,7 +39,7 @@ async def statistics_page(db_session: AsyncDBSession) -> list[AnyComponent]:
             'value': await get_sessions_statistics(db_session, status=SessionStatus.ABORTED),
         },
     )
-    errors_stats = await get_errors_stats_table_content(db_session)
+    errors_stats = await get_errors_stats_table_content(limit=settings.TOP_BAD_SLIDES_COUNT, db_session=db_session)
     rows = []
     all_sessions_schema = SessionsStatisticsTableSchema.model_validate(session_stats.all_sessions)
     completed_schema = SessionsStatisticsTableSchema.model_validate(session_stats.completed)
