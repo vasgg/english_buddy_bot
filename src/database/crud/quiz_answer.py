@@ -6,11 +6,11 @@ from enums import SlideType
 
 
 async def log_quiz_answer(
-        session_id: int,
-        slide_id: int,
-        slide_type: SlideType,
-        is_correct: bool,
-        db_session: AsyncSession,
+    session_id: int,
+    slide_id: int,
+    slide_type: SlideType,
+    is_correct: bool,
+    db_session: AsyncSession,
 ):
     session_log = QuizAnswerLog(
         session_id=session_id,
@@ -33,7 +33,6 @@ async def get_top_error_slides(session: AsyncSession):
         .group_by(QuizAnswerLog.slide_id)
         .order_by((func.count().filter(QuizAnswerLog.is_correct) / cast(func.count(), Float)))
     )
-    print(query)
     result = await session.execute(query)
     slides_with_errors = result.fetchall()
     return slides_with_errors

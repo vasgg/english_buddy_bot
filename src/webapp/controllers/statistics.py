@@ -9,19 +9,22 @@ from webapp.schemas.statistics import SlidesStatisticsTableSchema
 
 async def get_errors_stats_table_content(db_session: AsyncDBSession) -> list:
     slides_by_errors = await get_top_error_slides(db_session)
-    print(slides_by_errors)
     stats = []
+    limit = 10
     for i in slides_by_errors:
         slide = await get_slide_by_id(i.slide_id, db_session)
         lesson = await get_lesson_by_id(slide.lesson_id, db_session)
         lesson_path = [int(slide_id) for slide_id in lesson.path.split('.')]
         lesson_path_extra = [int(slide_id) for slide_id in lesson.path_extra.split('.')] if lesson.path_extra else []
-        source = SlidesMenuType.REGULAR if i.slide_id in lesson_path else SlidesMenuType.EXTRA
         try:
-            index = lesson_path.index(i.slide_id) if i.slide_id in lesson_path \
-                else lesson_path_extra.index(i.slide_id)
+            index = lesson_path.index(i.slide_id)
+            source = SlidesMenuType.REGULAR
         except ValueError:
-            continue
+            try:
+                index = lesson_path_extra.index(i.slide_id)
+                source = SlidesMenuType.EXTRA
+            except ValueError:
+                continue
         link = f'/slides/edit/{source}/{index + 1}/{slide.id}/'
         slide_data = {
             'slide_type': get_slide_emoji(slide.slide_type),
@@ -36,7 +39,6 @@ async def get_errors_stats_table_content(db_session: AsyncDBSession) -> list:
         }
         validated_slide = SlidesStatisticsTableSchema.model_validate(slide_data)
         stats.append(validated_slide)
-        limit = 10
         if len(stats) == limit:
             break
     return stats
