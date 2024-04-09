@@ -1,9 +1,10 @@
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.models.reaction import Reaction
 from database.models.sticker import Sticker
 from database.models.text import Text
 from enums import ReactionType, StickerType
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_random_answer(mode: ReactionType, db_session: AsyncSession) -> str:
@@ -21,4 +22,7 @@ async def get_random_sticker_id(mode: StickerType, db_session: AsyncSession) -> 
 async def get_text_by_prompt(prompt: str, db_session: AsyncSession) -> str:
     query = select(Text.text).filter(Text.prompt == prompt)
     result = await db_session.execute(query)
-    return result.scalar()
+    check = result.scalar_one_or_none()
+    if not check:
+        return f'Данные по запросу "{prompt}" отсутствуют в базе.'
+    return check
