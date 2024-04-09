@@ -8,13 +8,13 @@ from enums import KeyboardType
 
 
 async def process_text(
-        event: types.Message,
-        slide: Slide,
+    event: types.Message,
+    slide: Slide,
 ) -> bool:
     markup = None
     if slide.keyboard_type == KeyboardType.FURTHER:
         markup = get_further_button()
-    if slide.delay and slide.keyboard_type != KeyboardType.FURTHER:
+    if slide.delay:
         # noinspection PyTypeChecker
         await asyncio.sleep(slide.delay)
     await event.answer(
