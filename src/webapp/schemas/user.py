@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Type
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -31,7 +31,7 @@ class EditUserModel(BaseModel):
     # noinspection PyMethodParameters
     @field_validator('subscription_expired_at')
     def date_validator(cls, value: date) -> date:
-        if value <= datetime.now().date():
+        if value <= datetime.now(timezone.utc).date():
             raise PydanticCustomError(
                 'date_error',
                 'Дата истечения подписки не может быть меньше или равна текущей дате',
