@@ -143,4 +143,6 @@ def trim_non_alpha(string: str) -> str:
     end = len(string) - 1
     while end >= 0 and not string[end].isalpha():
         end -= 1
-    return string[start : end + 1]
+    # fmt: off
+    return string[start:end + 1]
+    # fmt: on

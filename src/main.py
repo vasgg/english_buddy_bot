@@ -57,7 +57,9 @@ async def main():
     dispatcher.startup.register(on_startup_notify)
     dispatcher.shutdown.register(on_shutdown_notify)
     dispatcher.include_routers(base_router, errors_router, lesson_router, quiz_router, premium_router)
+    # noinspection PyUnusedLocal
     reminders_task = asyncio.create_task(check_user_reminders(bot=bot, db_connector=db))
+    # noinspection PyUnusedLocal
     subscriptions_task = asyncio.create_task(check_user_subscription(bot=bot, db_connector=db))
     await dispatcher.start_polling(bot)
 
