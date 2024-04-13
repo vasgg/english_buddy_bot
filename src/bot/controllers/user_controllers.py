@@ -18,6 +18,15 @@ ONE_HOUR = 3600
 ONE_DAY = 86400
 
 
+def get_seconds_until_starting_mark(current_hour, utcnow):
+    if current_hour >= UTC_STARTING_MARK:
+        hours_to_sleep = 24 - current_hour + UTC_STARTING_MARK
+    else:
+        hours_to_sleep = UTC_STARTING_MARK - current_hour
+    seconds_to_sleep = hours_to_sleep * 3600 - utcnow.minute * 60 - utcnow.second
+    return seconds_to_sleep
+
+
 async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
     await message.answer(
         text=await get_text_by_prompt(prompt='registration_message', db_session=db_session),
@@ -56,11 +65,7 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
 async def check_user_subscription(bot: Bot, db_connector: DatabaseConnector):
     utcnow = datetime.now(timezone.utc)
     current_hour = utcnow.hour
-    if current_hour >= UTC_STARTING_MARK:
-        hours_to_sleep = 24 - current_hour + UTC_STARTING_MARK
-    else:
-        hours_to_sleep = UTC_STARTING_MARK - current_hour
-    seconds_to_sleep = hours_to_sleep * 3600 - utcnow.minute * 60 - utcnow.second
+    seconds_to_sleep = get_seconds_until_starting_mark(current_hour, utcnow)
     await asyncio.sleep(seconds_to_sleep)
     while True:
         async with db_connector.session_factory() as session:
