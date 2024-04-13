@@ -85,6 +85,41 @@ class Stage(StrEnum):
     PROD = auto()
 
 
+class UserSubscriptionType(StrEnum):
+    NO_ACCESS = auto()
+    UNLIMITED_ACCESS = auto()
+    LIMITED_ACCESS = auto()
+    ACCESS_EXPIRED = auto()
+    ACCESS_INFO_REQUESTED = auto()
+
+
+class SubscriptionType(StrEnum):
+    LIMITED = auto()
+    ALLTIME = auto()
+
+
+class SelectOneEnum(StrEnum):
+    ALLTIME_ACCESS = auto()
+    MONTHLY_ACCESS = auto()
+    NO_ACCESS = auto()
+
+
+def sub_status_to_select_one(sub_status: UserSubscriptionType) -> SelectOneEnum:
+    match sub_status:
+        case UserSubscriptionType.UNLIMITED_ACCESS:
+            return SelectOneEnum.ALLTIME_ACCESS
+        case UserSubscriptionType.LIMITED_ACCESS:
+            return SelectOneEnum.MONTHLY_ACCESS
+        case UserSubscriptionType.NO_ACCESS:
+            return SelectOneEnum.NO_ACCESS
+        case UserSubscriptionType.ACCESS_INFO_REQUESTED:
+            return SelectOneEnum.NO_ACCESS
+        case UserSubscriptionType.ACCESS_INFO_REQUESTED:
+            return SelectOneEnum.NO_ACCESS
+        case _:
+            assert False, f'Unexpected sub_status={sub_status!r}'
+
+
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:
     match lesson_starts_from:
         case LessonStartsFrom.BEGIN:

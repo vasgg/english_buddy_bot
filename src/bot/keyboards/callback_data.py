@@ -1,5 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
-from enums import LessonStartsFrom
+
+from enums import LessonStartsFrom, SubscriptionType
 
 
 class LessonsCallbackFactory(CallbackData, prefix='lesson'):
@@ -25,3 +26,11 @@ class HintCallbackFactory(CallbackData, prefix='hint'):
 
 class ExtraSlidesCallbackFactory(CallbackData, prefix='extra_slides'):
     extra_slides_requested: bool
+
+
+class PremiumSubCallbackFactory(CallbackData, prefix='premium'):
+    subscription_type: SubscriptionType
+
+
+class PaymentSentCallbackFactory(CallbackData, prefix='payment_sent'):
+    subscription_type: SubscriptionType

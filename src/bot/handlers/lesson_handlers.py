@@ -17,7 +17,7 @@ from database.crud.user import set_user_reminders
 from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.user import User
-from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, lesson_to_session
+from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, UserSubscriptionType, lesson_to_session
 
 router = Router()
 
@@ -45,7 +45,10 @@ async def lesson_callback_processing(
     path: list[int] = [int(elem) for elem in lesson.path.split(".")]
     first_exam_slide = await find_first_exam_slide_id(path, db_session)
     has_exam_slides = first_exam_slide is not None
-    if lesson.is_paid and user.paywall_access is False:
+    if lesson.is_paid and user.subscription_status not in (
+        UserSubscriptionType.UNLIMITED_ACCESS,
+        UserSubscriptionType.LIMITED_ACCESS,
+    ):
         await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
         return
     if session:
