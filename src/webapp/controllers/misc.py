@@ -11,7 +11,7 @@ import fastapi
 
 from config import Settings
 from database.models.slide import Slide
-from enums import SlideType
+from enums import SlideType, UserSubscriptionType
 from webapp.schemas.slide import EditImageSlideData
 
 logger = logging.getLogger()
@@ -19,30 +19,41 @@ logger = logging.getLogger()
 
 def get_slide_emoji(slide_type: SlideType) -> str:
     slide_type_to_emoji = {
-        'text': '🖋',
-        'image': '🖼',
-        'pin_dict': '📎',
-        'small_sticker': '🧨',
-        'big_sticker': '💣',
-        'quiz_options': '🧩',
-        'quiz_input_word': '🗨',
-        'quiz_input_phrase': '💬',
+        SlideType.TEXT: '🖋',
+        SlideType.IMAGE: '🖼',
+        SlideType.PIN_DICT: '📎',
+        SlideType.SMALL_STICKER: '🧨',
+        SlideType.BIG_STICKER: '💣',
+        SlideType.QUIZ_OPTIONS: '🧩',
+        SlideType.QUIZ_INPUT_WORD: '🗨',
+        SlideType.QUIZ_INPUT_PHRASE: '💬',
     }
     return slide_type_to_emoji.get(slide_type)
 
 
 def get_slide_type_text(slide_type: SlideType) -> str:
     slide_type_to_text = {
-        'text': 'text',
-        'image': 'image',
-        'pin_dict': 'dict',
-        'small_sticker': 'sticker',
-        'big_sticker': 'sticker',
-        'quiz_options': 'quiz_option',
-        'quiz_input_word': 'quiz_input_word',
-        'quiz_input_phrase': 'quiz_input_phrase',
+        SlideType.TEXT: 'text',
+        SlideType.IMAGE: 'image',
+        SlideType.PIN_DICT: 'dict',
+        SlideType.SMALL_STICKER: 'sticker',
+        SlideType.BIG_STICKER: 'sticker',
+        SlideType.QUIZ_OPTIONS: 'quiz_option',
+        SlideType.QUIZ_INPUT_WORD: 'quiz_input_word',
+        SlideType.QUIZ_INPUT_PHRASE: 'quiz_input_phrase',
     }
     return slide_type_to_text.get(slide_type)
+
+
+def get_color_code_emoji(subscription_type: UserSubscriptionType) -> str:
+    subscription_type_to_emoji = {
+        UserSubscriptionType.NO_ACCESS: '⬜',
+        UserSubscriptionType.UNLIMITED_ACCESS: '⭐',
+        UserSubscriptionType.LIMITED_ACCESS: '🟩',
+        UserSubscriptionType.ACCESS_EXPIRED: '🟥',
+        UserSubscriptionType.ACCESS_INFO_REQUESTED: '🟨',
+    }
+    return subscription_type_to_emoji.get(subscription_type)
 
 
 def get_slide_details(slide: Slide) -> str:
@@ -80,12 +91,10 @@ async def send_newsletter(bot_token: str, user_id: int, message: str, image_path
                 photo_data = await photo.read()
                 data.add_field('photo', photo_data, filename=image_path.name)
 
-            text_ok = (
-                f'Сообщение с рассылкой "{message}" и файлом {image_path.name} было отправлено пользователю {user_id}.'
-            )
+            text_ok = f'Сообщение с рассылкой "{message}" и файлом {image_path.name} было отправлено пользователю {user_id}.'
             text_error = (
-                    f'Произошла ошибка при отправке рассылки "{message}" и файлом {image_path.name} пользователю {user_id}: '
-                    + '{}. {}'
+                f'Произошла ошибка при отправке рассылки "{message}" и файлом {image_path.name} пользователю {user_id}: '
+                + '{}. {}'
             )
         else:
             url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -112,12 +121,13 @@ async def send_newsletter_to_users(bot_token: str, users: list[int], message: st
 
 def image_upload(image_file: bytes, form: EditImageSlideData, lesson_id: int, settings: Settings):
     if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
+        optimal_width = 800
         directory = Path(f"src/webapp/static/lessons_images/{lesson_id}")
         directory.mkdir(parents=True, exist_ok=True)
         image = Image.open(io.BytesIO(image_file))
-        if image.width > 800:
-            new_height = int((800 / image.width) * image.height)
-            image = image.resize((800, new_height), Image.Resampling.LANCZOS)
+        if image.width > optimal_width:
+            new_height = int((optimal_width / image.width) * image.height)
+            image = image.resize((optimal_width, new_height), Image.Resampling.LANCZOS)
         file_path = directory / form.upload_new_picture.filename
         with open(file_path, "wb") as buffer:
             image_format = form.upload_new_picture.content_type
@@ -133,4 +143,4 @@ def trim_non_alpha(string: str) -> str:
     end = len(string) - 1
     while end >= 0 and not string[end].isalpha():
         end -= 1
-    return string[start:end + 1]
+    return string[start : end + 1]

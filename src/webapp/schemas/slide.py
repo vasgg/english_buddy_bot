@@ -227,14 +227,15 @@ class EditQuizOptionsSlideData(BaseModel):
     keyboard: str
     is_exam_slide: bool = False
 
+    # noinspection PyMethodParameters
     @field_validator('text')
-    def text_validator(cls, v: str) -> str:
-        if '…' not in v:
+    def text_validator(cls, value: str) -> str:
+        if '…' not in value:
             raise PydanticCustomError(
                 'missing_symbol',
                 'Текст вопроса должен содержать символ "…" для подстановки правильного значения.',
             )
-        return v
+        return value
 
 
 class EditQuizInputWordSlideData(BaseModel):

@@ -28,8 +28,8 @@ class SlidesStatisticsTableSchema(BaseModel):
     count_correct: str
     count_wrong: str
     lesson_title: str
-    link: str
     icon: str
+    link: str
     correctness_rate: str
 
     model_config = ConfigDict(from_attributes=True)
