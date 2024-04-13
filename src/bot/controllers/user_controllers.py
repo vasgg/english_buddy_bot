@@ -88,5 +88,5 @@ async def check_user_subscription(bot: Bot, db_connector: DatabaseConnector):
                         reply_markup=get_premium_keyboard(),
                     )
                     logger.info(f"{'ending subscription notification was sent to ' + str(user)}")
-                    await session.commit()
+            await session.commit()
         await asyncio.sleep(ONE_DAY)
