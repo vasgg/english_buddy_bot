@@ -230,7 +230,7 @@ class EditQuizOptionsSlideData(BaseModel):
     # noinspection PyMethodParameters
     @field_validator('text')
     def text_validator(cls, value: str) -> str:
-        if '…' not in value:
+        if '_' not in value:
             raise PydanticCustomError(
                 'missing_symbol',
                 'Текст вопроса должен содержать символ "_" для подстановки правильного значения.',
@@ -248,7 +248,7 @@ class EditQuizInputWordSlideData(BaseModel):
     # noinspection PyMethodParameters
     @field_validator('text')
     def text_validator(cls, value: str) -> str:
-        if '…' not in value:
+        if '_' not in value:
             raise PydanticCustomError(
                 'missing_symbol',
                 'Текст вопроса должен содержать символ "_" для подстановки правильного значения.',
