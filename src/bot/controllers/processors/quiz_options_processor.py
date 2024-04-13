@@ -4,6 +4,8 @@ from random import sample
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
 from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
 from bot.keyboards.keyboards import get_quiz_keyboard
@@ -12,7 +14,6 @@ from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_quiz_options(
@@ -25,7 +26,7 @@ async def show_quiz_options(
     elements = [right_answer, *wrong_answers]
     options = sample(population=elements, k=len(elements))
     markup = get_quiz_keyboard(words=options)
-    msg = await event.answer(text=slide.text, reply_markup=markup)
+    msg = await event.answer(text=slide.text.replace("_", "…"), reply_markup=markup)
     await state.update_data(quiz_options_msg_id=msg.message_id)
     return False
 
@@ -39,10 +40,10 @@ async def response_options_correct(
     try:
         await event.edit_text(
             text=(
-                slide.text.replace('…', f'<u>{slide.right_answers}</u>')
-                if "…" in slide.text
+                slide.text.replace('_', f'<u>{slide.right_answers}</u>')
+                if "_" in slide.text
                 else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "выбери правильный ответ" '
-                'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного '
+                'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
                 'варианта.'
             ),
         )
