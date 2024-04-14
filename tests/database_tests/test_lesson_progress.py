@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from database.crud.session import get_lesson_progress
+from database.crud.session import get_current_session
 from database.database_connector import DatabaseConnector
 from database.models.lesson import Lesson
 from database.models.session import Session
@@ -10,22 +10,23 @@ from enums import SessionStartsFrom, SessionStatus, SlideType
 
 
 async def test_session_in_progress(db: 'DatabaseConnector'):
-    target_slide_id = 1050
-    path = f"1.{target_slide_id}"
+    slide_id = 1050
+    path = f"1.{slide_id}"
+    target_step = 199
 
     async with db.session_factory.begin() as session:
         session.add(Lesson(title="abacaba", path=path))
-        session.add(User(telegram_id=100500, first_name="Vasya", last_reminded_at=datetime.now(timezone.utc)))
-        session.add(Slide(lesson_id=1, slide_type=SlideType.TEXT, id=target_slide_id))
+        session.add(User(telegram_id=100500, fullname="Vasya", last_reminded_at=datetime.now(timezone.utc)))
+        session.add(Slide(lesson_id=1, slide_type=SlideType.TEXT, id=slide_id))
 
     async with db.session_factory.begin() as session:
         session.add(
             Session(
                 lesson_id=1,
                 user_id=1,
-                current_slide_id=target_slide_id,
                 status=SessionStatus.IN_PROGRESS,
                 starts_from=SessionStartsFrom.BEGIN,
+                current_step=target_step,
                 path=path,
             ),
         )
@@ -33,7 +34,6 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
             Session(
                 lesson_id=1,
                 user_id=1,
-                current_slide_id=target_slide_id,
                 status=SessionStatus.ABORTED,
                 starts_from=SessionStartsFrom.BEGIN,
                 path=path,
@@ -43,7 +43,6 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
             Session(
                 lesson_id=1,
                 user_id=1,
-                current_slide_id=target_slide_id,
                 status=SessionStatus.COMPLETED,
                 starts_from=SessionStartsFrom.BEGIN,
                 path=path,
@@ -51,6 +50,6 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
         )
 
     async with db.session_factory() as session:
-        session_slide_id = await get_lesson_progress(1, 1, session)
+        current_session = await get_current_session(1, 1, session)
 
-    assert target_slide_id == session_slide_id
+    assert target_step   == current_session.current_step

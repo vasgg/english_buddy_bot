@@ -15,6 +15,7 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(String(32))
     reminder_freq: Mapped[int | None]
     last_reminded_at: Mapped[datetime]
+    # noinspection PyTypeChecker
     subscription_status: Mapped[UserSubscriptionType] = mapped_column(
         default=UserSubscriptionType.NO_ACCESS, server_default=UserSubscriptionType.NO_ACCESS.value
     )

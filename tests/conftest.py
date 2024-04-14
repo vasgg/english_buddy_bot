@@ -10,7 +10,7 @@ from webapp.create_app import create_app
 
 @pytest.fixture()
 async def db():
-    test_database = DatabaseConnector(url="sqlite+aiosqlite://")
+    test_database = DatabaseConnector(url="sqlite+aiosqlite://", echo=True)
 
     async with test_database.engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all, checkfirst=True)

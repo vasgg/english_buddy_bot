@@ -21,6 +21,7 @@ class Session(Base):
             return [int(elem) for elem in self.path_extra.split(".")]
         return [int(elem) for elem in self.path.split(".")]
 
+    # noinspection PyTypeChecker
     def set_extra(self):
         self.in_extra = True
         self.current_step = 0
