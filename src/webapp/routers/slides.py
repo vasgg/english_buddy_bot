@@ -14,7 +14,7 @@ from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
 from webapp.controllers.misc import extract_img_from_form, image_upload
 from webapp.controllers.slide import (
-    get_all_slides_from_lesson_by_order_fastui,
+    get_all_slides_from_lesson_by_order,
 )
 from webapp.db import AsyncDBSession
 from webapp.routers.components.main_component import get_common_content
@@ -46,10 +46,25 @@ default_errors_threshold = 50
 async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('slides router called')
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
-    slides = await get_all_slides_from_lesson_by_order_fastui(lesson.path, db_session)
+    slides = None
+
+    if lesson.path:
+        # noinspection PyTypeChecker
+        slides = await get_all_slides_from_lesson_by_order(lesson.path, db_session)
+
+    if not slides:
+        return get_common_content(
+            c.Paragraph(text=''),
+            c.Paragraph(text='В этом уроке ещё нет слайдов.'),
+            c.Button(text='Назад', named_style='secondary', on_click=BackEvent()),
+            c.Paragraph(text=''),
+            c.Button(text='Создать слайд', on_click=GoToEvent(url=f'/slides/plus_button/regular/0/{lesson.id}/')),
+            title=f'Слайды | Урок {lesson.index} | {lesson.title}',
+        )
+
     extra_slides_table = None
     if lesson.path_extra:
-        extra_slides = await get_all_slides_from_lesson_by_order_fastui(str(lesson.path_extra), db_session)
+        extra_slides = await get_all_slides_from_lesson_by_order(str(lesson.path_extra), db_session)
         extra_slides_table = c.Table(
             data=extra_slides,
             columns=[
@@ -83,15 +98,6 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
                     table_width_percent=3,
                 ),
             ],
-        )
-    if len(slides) == 0:
-        return get_common_content(
-            c.Paragraph(text=''),
-            c.Paragraph(text='В этом уроке ещё нет слайдов.'),
-            c.Button(text='Назад', named_style='secondary', on_click=BackEvent()),
-            c.Paragraph(text=''),
-            c.Button(text='Создать слайд', on_click=GoToEvent(url=f'/slides/plus_button/regular/0/{lesson.id}/')),
-            title=f'Слайды | Урок {lesson.index} | {lesson.title}',
         )
 
     slides_table = c.Table(

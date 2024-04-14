@@ -8,7 +8,7 @@ from webapp.schemas.slide import SlidesTableSchema
 logger = logging.getLogger()
 
 
-async def get_all_slides_from_lesson_by_order_fastui(path: str, db_session: AsyncDBSession) -> list:
+async def get_all_slides_from_lesson_by_order(path: str, db_session: AsyncDBSession) -> list[SlidesTableSchema]:
     slides_ids = [int(slideid) for slideid in path.split('.')]
     ordered_slides = []
     for index, slide_id in enumerate(slides_ids, start=1):
@@ -34,13 +34,4 @@ async def get_all_slides_from_lesson_by_order_fastui(path: str, db_session: Asyn
         validated_slide = SlidesTableSchema.model_validate(slide_data)
         ordered_slides.append(validated_slide)
     logger.info(f"Processed slides: {len(ordered_slides)}")
-    return ordered_slides
-
-
-async def get_all_slides_from_lesson_by_order(path: str, db_session: AsyncDBSession) -> list:
-    slides_ids = [int(slide_id) for slide_id in path.split('.')]
-    ordered_slides = []
-    for slide_id in slides_ids:
-        slide = await get_slide_by_id(slide_id, db_session)
-        ordered_slides.append(slide)
     return ordered_slides
