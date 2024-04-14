@@ -6,17 +6,6 @@ from database.models.session import Session
 from enums import SessionStatus, SlideType
 
 
-async def get_lesson_progress(user_id: int, lesson_id: int, db_session: AsyncSession) -> int:
-    query = select(Session.current_slide_id).filter(
-        Session.user_id == user_id,
-        Session.lesson_id == lesson_id,
-        Session.status == SessionStatus.IN_PROGRESS,
-    )
-    result: Result = await db_session.execute(query)
-    user_progress = result.scalar_one_or_none()
-    return user_progress
-
-
 async def get_current_session(user_id: int, lesson_id: int, db_session: AsyncSession) -> Session | None:
     query = select(Session).filter(
         Session.user_id == user_id,

@@ -23,6 +23,7 @@ async def get_user_from_db_by_tg_id(telegram_id: int, db_session: AsyncSession) 
     query = select(User).filter(User.telegram_id == telegram_id)
     result: Result = await db_session.execute(query)
     user = result.scalar()
+    user.last_reminded_at = user.last_reminded_at.replace(tzinfo=timezone.utc)
     return user
 
 
@@ -30,13 +31,8 @@ async def get_user_from_db_by_id(user_id: int, db_session: AsyncSession) -> User
     query = select(User).filter(User.id == user_id)
     result: Result = await db_session.execute(query)
     user = result.scalar()
+    user.last_reminded_at = user.last_reminded_at.replace(tzinfo=timezone.utc)
     return user
-
-
-async def toggle_user_paywall_access(user_id: int, db_session: AsyncSession) -> None:
-    await db_session.execute(
-        update(User).filter(User.id == user_id).values(paywall_access=func.not_(User.paywall_access)),
-    )
 
 
 async def set_user_reminders(user_id: int, reminder_freq: int, db_session: AsyncSession) -> None:

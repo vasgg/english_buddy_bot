@@ -5,20 +5,28 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from config import get_settings
 from database.database_connector import DatabaseConnector
 from database.models.base import Base
+
 # noinspection PyUnresolvedReferences
 from database.models.lesson import Lesson
+
 # noinspection PyUnresolvedReferences
 import database.models.quiz_answer_log
+
 # noinspection PyUnresolvedReferences
 from database.models.reaction import Reaction, ReactionType
+
 # noinspection PyUnresolvedReferences
 import database.models.session
+
 # noinspection PyUnresolvedReferences
 from database.models.slide import Slide, SlideType
+
 # noinspection PyUnresolvedReferences
 import database.models.sticker
+
 # noinspection PyUnresolvedReferences
 import database.models.text
+
 # noinspection PyUnresolvedReferences
 from database.models.user import User
 

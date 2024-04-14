@@ -13,7 +13,7 @@ from webapp.routers.texts import router as texts_fastui_router
 from webapp.routers.users import router as users_fastui_router
 
 static_files_path = join(dirname(realpath(__file__)), 'static')
-assert exists(static_files_path)
+assert exists(static_files_path), static_files_path
 
 
 def create_app():

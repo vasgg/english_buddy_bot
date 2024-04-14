@@ -9,7 +9,6 @@ from database.crud.user import (
     get_all_users_with_reminders,
     get_user_from_db_by_tg_id,
     set_user_reminders,
-    toggle_user_paywall_access,
     update_last_reminded_at,
 )
 from database.models.user import User as UserDbModel
@@ -25,14 +24,13 @@ def rand_bool() -> bool:
 @dataclass
 class User:
     id: int
-    first_name: str
-    last_name: str
+    full_name: str
     username: str
 
 
 @pytest.fixture()
 async def user() -> User:
-    return User(id=123, first_name="aba", last_name="caba", username="@capybara")
+    return User(id=123, full_name="aba", username="@capybara")
 
 
 @pytest.fixture()
@@ -56,14 +54,6 @@ async def test_user_cr_separate_sessions(user_db_model: UserDbModel, db, user: U
     assert user_db_model.id == selected_user.id
 
 
-async def test_toggle_user_paywall_access(user_db_model: UserDbModel, db, user: User):
-    async with db.session_factory.begin() as session:
-        await toggle_user_paywall_access(user_db_model.id, session)
-        selected_user = await get_user_from_db_by_tg_id(user.id, session)
-
-    assert user_db_model.paywall_access is not selected_user.paywall_access
-
-
 async def test_set_user_reminders(user_db_model: UserDbModel, db, user: User):
     new_reminder_freq = random.randint(1, 1000)
 
@@ -82,7 +72,7 @@ async def test_get_all_users_with_reminders(db, user: User):
     expected_users_with_reminders = set()
     async with db.session_factory.begin() as session:
         for i in range(1, 100):
-            user = await add_user_to_db(User(id=i, first_name="aba", last_name="caba", username="@capybara"), session)
+            user = await add_user_to_db(User(id=i, full_name="aba", username="@capybara"), session)
             if rand_bool():
                 expected_users_with_reminders.add(user.id)
                 await set_user_reminders(user.id, 1, session)

@@ -21,7 +21,9 @@ logger = logging.getLogger()
 
 
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
-async def statistics_page(settings: Annotated[Settings, Depends(get_settings)], db_session: AsyncDBSession) -> list[AnyComponent]:
+async def statistics_page(
+    settings: Annotated[Settings, Depends(get_settings)], db_session: AsyncDBSession
+) -> list[AnyComponent]:
     users_count = await get_users_count(db_session)
 
     session_stats = SessionStatistics(
