@@ -20,15 +20,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = logging.getLogger(__name__)
 
 
-async def get_steps_to_current_slide(first_slide_id: int, target_slide_id: int, path: str) -> int:
-    slide_ids_str = path.split(".")
-    slide_ids = [int(id_str) for id_str in slide_ids_str]
-    start_index = slide_ids.index(first_slide_id)
-    target_index = slide_ids.index(target_slide_id)
-    steps = abs(target_index - start_index)
-    return steps
-
-
 async def process_slide(
     event: types.Message,
     state: FSMContext,

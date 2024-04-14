@@ -77,8 +77,8 @@ async def process_quiz_options(
         return await show_quiz_options(event, state, slide)
     match user_input:
         case UserInputHint() as hint_msg:
+            await event.delete_reply_markup()
             if hint_msg.hint_requested:
-                await event.delete_reply_markup()
                 await event.answer(
                     text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
                         slide.right_answers,
@@ -87,7 +87,6 @@ async def process_quiz_options(
                 await asyncio.sleep(2)
                 return True
             else:
-                await event.delete_reply_markup()
                 return await show_quiz_options(event, state, slide)
         case UserInputMsg() as input_msg:
             if input_msg.text.lower() == slide.right_answers.lower():

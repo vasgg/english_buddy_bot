@@ -69,5 +69,4 @@ async def process_quiz_input_phrase(
                 return False
 
             await show_quiz_input_phrase(event, state, slide)
-
             return False
