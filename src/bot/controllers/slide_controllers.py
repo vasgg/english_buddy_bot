@@ -1,5 +1,6 @@
 import logging
 
+from contextlib import asynccontextmanager
 from aiogram import types
 from aiogram.fsm.context import FSMContext
 from bot.controllers.final_controllers import finalizing, finalizing_extra
@@ -48,6 +49,18 @@ async def process_slide(
             raise AssertionError(msg)
 
 
+@asynccontextmanager
+async def paranoid(state: FSMContext):
+    data = await state.get_data()
+    if 'slide_in_progress' in data:
+        assert data['slide_in_progress'] is False
+    await state.update_data(slide_in_progress=True)
+    try:
+        yield
+    finally:
+        await state.update_data(slide_in_progress=False)
+
+
 async def show_slides(
     event: types.Message,
     state: FSMContext,
@@ -56,18 +69,19 @@ async def show_slides(
     user_input: UserQuizInput | None = None,
 ) -> None:
     while session.has_next():
-        current_slide_id = session.get_slide()
-        current_slide = await get_slide_by_id(current_slide_id, db_session)
-        logger.info(f"Processing step={session.current_step}, slide_id={current_slide_id}")
-        need_next = await process_slide(event, state, current_slide, session, db_session, user_input)
-        user_input = None
-        if not need_next:
-            logger.info("returning...")
-            return
+        async with paranoid(state):
+            current_slide_id = session.get_slide()
+            current_slide = await get_slide_by_id(current_slide_id, db_session)
+            logger.info(f"Processing step={session.current_step}, slide_id={current_slide_id}")
+            need_next = await process_slide(event, state, current_slide, session, db_session, user_input)
+            user_input = None
+            if not need_next:
+                logger.info("returning...")
+                return
 
-        logger.info("continuing...")
-        session.current_step += 1
-        await db_session.flush()
+            logger.info("continuing...")
+            session.current_step += 1
+            await db_session.flush()
 
     if session.in_extra:
         logger.info("finalizing extra...")
