@@ -34,7 +34,7 @@ async def newsletter_page() -> list[AnyComponent]:
 
 
 @router.get("/sent/", response_model=FastUI, response_model_exclude_none=True)
-async def newsletter_page() -> list[AnyComponent]:
+async def newsletter_page_response() -> list[AnyComponent]:
     return get_common_content(
         c.Paragraph(text=''),
         c.Paragraph(text=''),

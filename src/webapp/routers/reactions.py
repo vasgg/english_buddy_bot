@@ -187,7 +187,7 @@ async def delete_slide(reaction_id: int, db_session: AsyncDBSession) -> list[Any
 
 
 @router.get('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
-async def delete_slide(
+async def delete_slide_response(
     reaction_id: int,
     db_session: AsyncDBSession,
 ):

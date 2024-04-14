@@ -8,7 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard, get_premium_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_completed_lessons_from_sessions, get_lessons
-from database.crud.user import get_all_users_with_active_subscription, get_all_users_with_reminders, update_last_reminded_at
+from database.crud.user import (
+    get_all_users_with_active_subscription,
+    get_all_users_with_reminders,
+    update_last_reminded_at,
+)
 from database.database_connector import DatabaseConnector
 from enums import UserSubscriptionType
 
@@ -58,7 +62,9 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                             text=await get_text_by_prompt(prompt='reminder_text', db_session=session),
                         )
                         logger.info(f"{'reminder sended to ' + str(user)}")
-                        await update_last_reminded_at(user_id=user.id, timestamp=datetime.now(timezone.utc), db_session=session)
+                        await update_last_reminded_at(
+                            user_id=user.id, timestamp=datetime.now(timezone.utc), db_session=session
+                        )
                         await session.commit()
 
 

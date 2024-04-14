@@ -52,4 +52,4 @@ async def test_session_in_progress(db: 'DatabaseConnector'):
     async with db.session_factory() as session:
         current_session = await get_current_session(1, 1, session)
 
-    assert target_step   == current_session.current_step
+    assert target_step == current_session.current_step
