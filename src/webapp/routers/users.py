@@ -1,3 +1,4 @@
+from functools import cache
 import logging
 from typing import Annotated
 
@@ -7,8 +8,10 @@ from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
+from pydantic import BaseModel, Field, TypeAdapter
 
-from database.crud.user import get_user_from_db_by_id
+from database.crud.user import get_all_users, get_user_from_db_by_id
+from database.models.user import User
 from enums import SelectOneEnum, UserSubscriptionType
 from webapp.controllers.users import get_users_table_content
 from webapp.db import AsyncDBSession
@@ -19,10 +22,31 @@ router = APIRouter()
 logger = logging.getLogger()
 
 
+@cache
+def users_list(db_session: AsyncDBSession) -> list[User]:
+    users_adapter = TypeAdapter(list[User])
+    all_users = get_all_users(db_session)
+    # cities_file = Path(__file__).parent / 'cities.json'
+    users = users_adapter.validate_model(all_users)
+    users.sort(key=lambda city: city.population, reverse=True)
+    return users
+
+
+class FilterForm(BaseModel):
+    country: str = Field(json_schema_extra={'search_url': '/api/forms/search', 'placeholder': 'Поиск пользователя...'})
+
+
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
-async def users_page(db_session: AsyncDBSession) -> list[AnyComponent]:
+async def users_page(db_session: AsyncDBSession, user: str | None = None) -> list[AnyComponent]:
     logger.info('users router called')
     users = await get_users_table_content(db_session)
+    filter_form_initial = {}
+    if user:
+        country = users[0].country
+        cities = await db_session.execute(select(City).where(City.country == country))
+        cities = [city for city in cities if city.iso3 == country]
+        country_name = cities[0].country if cities else country
+        filter_form_initial['country'] = {'value': country, 'label': country_name}
     return get_common_content(
         c.Paragraph(text=' '),
         c.Paragraph(text='⬜ нет доступа'),
@@ -31,6 +55,14 @@ async def users_page(db_session: AsyncDBSession) -> list[AnyComponent]:
         c.Paragraph(text='🟨 нет доступа, интересовался'),
         c.Paragraph(text='⭐ доступ навсегда'),
         c.Paragraph(text=' '),
+        c.ModelForm(
+            model=FilterForm,
+            submit_url='.',
+            initial=filter_form_initial,
+            method='GOTO',
+            submit_on_change=True,
+            display_mode='inline',
+        ),
         c.Table(
             data=users,
             columns=[
