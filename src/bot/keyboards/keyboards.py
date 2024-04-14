@@ -1,14 +1,17 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 from bot.keyboards.callback_data import (
     ExtraSlidesCallbackFactory,
     HintCallbackFactory,
-    LessonsCallbackFactory,
     LessonStartsFromCallbackFactory,
+    LessonsCallbackFactory,
+    PaymentSentCallbackFactory,
+    PremiumSubCallbackFactory,
     QuizCallbackFactory,
     RemindersCallbackFactory,
 )
 from database.models.lesson import Lesson
-from enums import LessonStartsFrom, UserLessonProgress
+from enums import LessonStartsFrom, SubscriptionType, UserLessonProgress
 
 
 def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
@@ -171,6 +174,39 @@ def get_notified_keyboard() -> InlineKeyboardMarkup:
                     callback_data=RemindersCallbackFactory(
                         frequency=0,
                     ).pack(),
+                ),
+            ],
+        ],
+    )
+
+
+def get_premium_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='Доступ на месяц',
+                    callback_data=PremiumSubCallbackFactory(subscription_type=SubscriptionType.LIMITED).pack(),
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Доступ навсегда',
+                    callback_data=PremiumSubCallbackFactory(subscription_type=SubscriptionType.ALLTIME).pack(),
+                ),
+            ],
+        ],
+    )
+
+
+def get_payment_sent_keyboard(mode: SubscriptionType) -> InlineKeyboardMarkup:
+    sub_type = SubscriptionType.LIMITED if mode == SubscriptionType.LIMITED else SubscriptionType.ALLTIME
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='Платёж отправлен',
+                    callback_data=PaymentSentCallbackFactory(subscription_type=sub_type).pack(),
                 ),
             ],
         ],

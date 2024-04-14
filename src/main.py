@@ -7,10 +7,11 @@ from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis
 import sentry_sdk
 
-from bot.controllers.user_controllers import check_user_reminders
+from bot.controllers.user_controllers import check_user_reminders, check_user_subscription
 from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
 from bot.handlers.lesson_handlers import router as lesson_router
+from bot.handlers.premium_handlers import router as premium_router
 from bot.handlers.session_handlers import router as quiz_router
 from bot.internal.commands import set_bot_commands
 from bot.internal.notify_admin import on_shutdown_notify, on_startup_notify
@@ -55,8 +56,11 @@ async def main():
     dispatcher.startup.register(set_bot_commands)
     dispatcher.startup.register(on_startup_notify)
     dispatcher.shutdown.register(on_shutdown_notify)
-    dispatcher.include_routers(base_router, errors_router, lesson_router, quiz_router)
-    task = asyncio.create_task(check_user_reminders(bot=bot, db_connector=db))
+    dispatcher.include_routers(base_router, errors_router, lesson_router, quiz_router, premium_router)
+    # noinspection PyUnusedLocal
+    reminders_task = asyncio.create_task(check_user_reminders(bot=bot, db_connector=db))
+    # noinspection PyUnusedLocal
+    subscriptions_task = asyncio.create_task(check_user_subscription(bot=bot, db_connector=db))
     await dispatcher.start_polling(bot)
 
 

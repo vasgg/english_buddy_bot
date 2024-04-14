@@ -28,6 +28,10 @@ def get_common_content(
                     on_click=GoToEvent(url='/newsletter'),
                 ),
                 c.Link(
+                    components=[c.Text(text='Пользователи')],
+                    on_click=GoToEvent(url='/users'),
+                ),
+                c.Link(
                     components=[c.Text(text='Статистика')],
                     on_click=GoToEvent(url='/statistics'),
                 ),

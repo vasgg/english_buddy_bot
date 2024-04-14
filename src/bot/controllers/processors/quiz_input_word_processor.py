@@ -3,6 +3,8 @@ import logging
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
 from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
 from database.crud.answer import get_random_answer, get_text_by_prompt
@@ -11,27 +13,26 @@ from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType, States
 from webapp.controllers.misc import trim_non_alpha
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_quiz_input_word(
-        event: types.Message,
-        state: FSMContext,
-        slide: Slide,
+    event: types.Message,
+    state: FSMContext,
+    slide: Slide,
 ) -> bool:
-    msg = await event.answer(text=slide.text)
+    msg = await event.answer(text=slide.text.replace("_", "…"))
     await state.update_data(quiz_word_msg_id=msg.message_id)
     await state.set_state(States.INPUT_WORD)
     return False
 
 
 async def response_input_word_correct(
-        event: types.Message,
-        slide: Slide,
-        user_input_text: str,
-        state: FSMContext,
-        session: Session,
-        db_session: AsyncSession,
+    event: types.Message,
+    slide: Slide,
+    user_input_text: str,
+    state: FSMContext,
+    session: Session,
+    db_session: AsyncSession,
 ) -> None:
     data = await state.get_data()
     try:
@@ -39,11 +40,11 @@ async def response_input_word_correct(
             chat_id=event.from_user.id,
             message_id=data["quiz_word_msg_id"],
             text=(
-                slide.text.replace("…", f"<u>{user_input_text.lower()}</u>")
-                if "…" in slide.text
+                slide.text.replace("_", f"<u>{user_input_text.lower()}</u>")
+                if "_" in slide.text
                 else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
-                                  'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного '
-                                  'варианта.'
+                'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
+                'варианта.'
             ),
         )
     except KeyError:
@@ -53,12 +54,12 @@ async def response_input_word_correct(
 
 
 async def response_input_word_almost_correct(
-        event: types.Message,
-        slide: Slide,
-        user_input_text: str,
-        state: FSMContext,
-        session: Session,
-        db_session: AsyncSession,
+    event: types.Message,
+    slide: Slide,
+    user_input_text: str,
+    state: FSMContext,
+    session: Session,
+    db_session: AsyncSession,
 ) -> None:
     data = await state.get_data()
     try:
@@ -66,11 +67,11 @@ async def response_input_word_almost_correct(
             chat_id=event.from_user.id,
             message_id=data["quiz_word_msg_id"],
             text=(
-                slide.text.replace("…", f"<u>{user_input_text.lower()}</u>")
-                if "…" in slide.text
+                slide.text.replace("_", f"<u>{user_input_text.lower()}</u>")
+                if "_" in slide.text
                 else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
-                                  'всегда должен быть символ "…", чтобы при правильном ответе он подменялся на текст правильного '
-                                  'варианта.'
+                'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
+                'варианта.'
             ),
         )
     except KeyError:
@@ -80,12 +81,12 @@ async def response_input_word_almost_correct(
 
 
 async def process_quiz_input_word(
-        event: types.Message,
-        state: FSMContext,
-        user_input: UserQuizInput,
-        slide: Slide,
-        session: Session,
-        db_session: AsyncSession,
+    event: types.Message,
+    state: FSMContext,
+    user_input: UserQuizInput,
+    slide: Slide,
+    session: Session,
+    db_session: AsyncSession,
 ) -> bool:
     if not user_input:
         return await show_quiz_input_word(event, state, slide)

@@ -56,11 +56,10 @@ async def statistics_page(settings: Annotated[Settings, Depends(get_settings)], 
             data=rows,
             columns=[
                 DisplayLookup(field='description', title='описание'),
-                DisplayLookup(field='value', title='значение'),
+                DisplayLookup(field='value', title='значение', table_width_percent=38),
             ],
         ),
-        c.Heading(text='Ошибки', level=4),
-        c.Heading(text='Топ слайдов по количеству ошибок: ', level=4),
+        c.Heading(text='Топ слайдов по количеству ошибок', level=4),
         c.Paragraph(text=' '),
         c.Table(
             data=errors_stats,

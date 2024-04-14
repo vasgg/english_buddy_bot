@@ -98,7 +98,7 @@ def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class QuizOptionsSlideDataModel(BaseModel):
         text: str = Field(
             slide.text if slide else '',
-            description='Введите текст вопроса с пропущенным словом, отмеченным "…". Обязательное поле.',
+            description='Введите текст вопроса с пропущенным словом, отмеченным "_". Обязательное поле.',
             title='текст вопроса',
         )
         right_answers: str = Field(
@@ -125,7 +125,7 @@ def get_quiz_input_word_slide_data_model(slide: Slide = None) -> Type[BaseModel]
     class QuizInputWordSlideDataModel(BaseModel):
         text: str = Field(
             initial=slide.text if slide else '',
-            description='Введите текст вопроса с пропущенным словом, отмеченным "…". Обязательное поле.',
+            description='Введите текст вопроса с пропущенным словом, отмеченным "_". Обязательное поле.',
             format='textarea',
             rows=5,
             cols=None,
@@ -227,14 +227,15 @@ class EditQuizOptionsSlideData(BaseModel):
     keyboard: str
     is_exam_slide: bool = False
 
+    # noinspection PyMethodParameters
     @field_validator('text')
-    def text_validator(cls, v: str) -> str:
-        if '…' not in v:
+    def text_validator(cls, value: str) -> str:
+        if '_' not in value:
             raise PydanticCustomError(
                 'missing_symbol',
-                'Текст вопроса должен содержать символ "…" для подстановки правильного значения.',
+                'Текст вопроса должен содержать символ "_" для подстановки правильного значения.',
             )
-        return v
+        return value
 
 
 class EditQuizInputWordSlideData(BaseModel):
@@ -244,14 +245,15 @@ class EditQuizInputWordSlideData(BaseModel):
     almost_right_answer_reply: str | None = None
     is_exam_slide: bool = False
 
+    # noinspection PyMethodParameters
     @field_validator('text')
-    def text_validator(cls, v: str) -> str:
-        if '…' not in v:
+    def text_validator(cls, value: str) -> str:
+        if '_' not in value:
             raise PydanticCustomError(
                 'missing_symbol',
-                'Текст вопроса должен содержать символ "…" для подстановки правильного значения.',
+                'Текст вопроса должен содержать символ "_" для подстановки правильного значения.',
             )
-        return v
+        return value
 
 
 class EditQuizInputPhraseSlideData(BaseModel):
