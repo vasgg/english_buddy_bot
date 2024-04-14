@@ -1,17 +1,18 @@
 import logging
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated, TYPE_CHECKING
 
-from config import Settings, get_settings
-from database.crud.lesson import get_lesson_by_id
-from database.crud.slide import get_slide_by_id
-from database.models.slide import Slide
-from enums import KeyboardType, SlidesMenuType, SlideType, StickerType
 from fastapi import APIRouter, Depends, HTTPException
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
+
+from config import Settings, get_settings
+from database.crud.lesson import get_lesson_by_id
+from database.crud.slide import get_slide_by_id
+from database.models.slide import Slide
+from enums import KeyboardType, SlideType, SlidesMenuType, StickerType
 from webapp.controllers.misc import extract_img_from_form, image_upload
 from webapp.controllers.slide import (
     get_all_slides_from_lesson_by_order,
@@ -160,10 +161,10 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
 
 @router.get('/edit/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_slide(
-        index: int,
-        slide_id: int,
-        source: SlidesMenuType,
-        db_session: AsyncDBSession,
+    index: int,
+    slide_id: int,
+    source: SlidesMenuType,
+    db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     optionnal_component = c.Paragraph(text='')
@@ -214,11 +215,11 @@ async def edit_slide(
 
 @router.post('/edit/sticker/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_sticker_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditStickerSlideDataModel, fastui_form(EditStickerSlideDataModel)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditStickerSlideDataModel, fastui_form(EditStickerSlideDataModel)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -247,11 +248,11 @@ async def edit_sticker_slide(
 
 @router.post('/edit/text/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_text_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditTextSlideDataModel, fastui_form(EditTextSlideDataModel)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditTextSlideDataModel, fastui_form(EditTextSlideDataModel)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -281,11 +282,11 @@ async def edit_text_slide(
 
 @router.post('/edit/dict/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_dict_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditDictSlideData, fastui_form(EditDictSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditDictSlideData, fastui_form(EditDictSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -313,11 +314,11 @@ async def edit_dict_slide(
 
 @router.post('/edit/quiz_option/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_option_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditQuizOptionsSlideData, fastui_form(EditQuizOptionsSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditQuizOptionsSlideData, fastui_form(EditQuizOptionsSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -353,11 +354,11 @@ async def edit_quiz_option_slide(
     response_model_exclude_none=True,
 )
 async def edit_quiz_input_word_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditQuizInputWordSlideData, fastui_form(EditQuizInputWordSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditQuizInputWordSlideData, fastui_form(EditQuizInputWordSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -393,11 +394,11 @@ async def edit_quiz_input_word_slide(
     response_model_exclude_none=True,
 )
 async def edit_quiz_input_phrase_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditQuizInputPhraseSlideData, fastui_form(EditQuizInputPhraseSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditQuizInputPhraseSlideData, fastui_form(EditQuizInputPhraseSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -429,13 +430,13 @@ async def edit_quiz_input_phrase_slide(
 
 @router.post('/edit/image/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_image_slide(
-        image_file: Annotated[bytes, Depends(extract_img_from_form)],
-        settings: Annotated[Settings, Depends(get_settings)],
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
+    image_file: Annotated[bytes, Depends(extract_img_from_form)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -466,21 +467,25 @@ async def edit_image_slide(
 
 @router.get('/new/{slide_type}/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def create_slide(
-        source: SlidesMenuType,
-        slide_type: SlideType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
+    source: SlidesMenuType,
+    slide_type: SlideType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
 ):
-    slide: Slide = await get_slide_by_id(slide_id, db_session)
-    lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+    if index == 0:
+        lesson_id = slide_id
+    else:
+        slide: Slide = await get_slide_by_id(slide_id, db_session)
+        lesson_id = slide.lesson_id
+    lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     match slide_type:
         case SlideType.TEXT:
             submit_url = f'/api/slides/new/text/{source}/{index}/{slide_id}/'
             form = c.ModelForm(model=get_text_slide_data_model(), submit_url=submit_url)
         case SlideType.IMAGE:
             submit_url = f'/api/slides/new/image/{source}/{index}/{slide_id}/'
-            form = c.ModelForm(model=get_image_slide_data_model(lesson_id=slide.lesson_id), submit_url=submit_url)
+            form = c.ModelForm(model=get_image_slide_data_model(lesson_id=lesson_id), submit_url=submit_url)
         case SlideType.PIN_DICT:
             submit_url = f'/api/slides/new/dict/{source}/{index}/{slide_id}/'
             form = c.ModelForm(model=get_pin_dict_slide_data_model(), submit_url=submit_url)
@@ -545,11 +550,11 @@ async def create_slide(
 
 @router.post('/new/text/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_text_slide_form(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditTextSlideDataModel, fastui_form(EditTextSlideDataModel)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditTextSlideDataModel, fastui_form(EditTextSlideDataModel)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -610,13 +615,13 @@ async def new_text_slide_form(
 
 @router.post('/new/image/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_image_slide_form(
-        image_file: Annotated[bytes, Depends(extract_img_from_form)],
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
-        settings: Annotated[Settings, Depends(get_settings)],
+    image_file: Annotated[bytes, Depends(extract_img_from_form)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -670,11 +675,11 @@ async def new_image_slide_form(
 
 @router.post('/new/dict/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_dict_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditDictSlideData, fastui_form(EditDictSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditDictSlideData, fastui_form(EditDictSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -718,11 +723,11 @@ async def new_dict_slide(
 
 @router.post('/new/quiz_option/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def new_quiz_option_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditQuizOptionsSlideData, fastui_form(EditQuizOptionsSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditQuizOptionsSlideData, fastui_form(EditQuizOptionsSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -776,11 +781,11 @@ async def new_quiz_option_slide(
     response_model_exclude_none=True,
 )
 async def new_quiz_input_word_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditQuizInputWordSlideData, fastui_form(EditQuizInputWordSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditQuizInputWordSlideData, fastui_form(EditQuizInputWordSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -847,11 +852,11 @@ async def new_quiz_input_word_slide(
     response_model_exclude_none=True,
 )
 async def new_quiz_input_phrase_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
-        form: Annotated[EditQuizInputPhraseSlideData, fastui_form(EditQuizInputPhraseSlideData)],
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
+    form: Annotated[EditQuizInputPhraseSlideData, fastui_form(EditQuizInputPhraseSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     lesson: Lesson = await get_lesson_by_id(slide.lesson_id, db_session)
@@ -989,10 +994,10 @@ async def add_slide(index: int, slide_id: int, source: SlidesMenuType) -> list[A
 
 @router.get('/up_button/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def slides_up_button(
-        index: int,
-        slide_id: int,
-        source: SlidesMenuType,
-        db_session: AsyncDBSession,
+    index: int,
+    slide_id: int,
+    source: SlidesMenuType,
+    db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     logger.info(f'pressed slide up button with slide id {slide_id} index {index}. source {source}')
     slide: Slide = await get_slide_by_id(slide_id, db_session)
@@ -1017,10 +1022,10 @@ async def slides_up_button(
 
 @router.get('/down_button/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def slides_down_button(
-        index: int,
-        slide_id: int,
-        source: SlidesMenuType,
-        db_session: AsyncDBSession,
+    index: int,
+    slide_id: int,
+    source: SlidesMenuType,
+    db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     logger.info(f'pressed slide down button with slide id {slide_id} index {index}. source {source}')
     slide: Slide = await get_slide_by_id(slide_id, db_session)
@@ -1045,10 +1050,10 @@ async def slides_down_button(
 
 @router.get('/delete/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def delete_slide(
-        source: SlidesMenuType,
-        index: int,
-        slide_id: int,
-        db_session: AsyncDBSession,
+    source: SlidesMenuType,
+    index: int,
+    slide_id: int,
+    db_session: AsyncDBSession,
 ):
     logger.info(f'delete slide with slide id {slide_id} index {index}. source {source}')
     slide: Slide = await get_slide_by_id(slide_id, db_session)
@@ -1070,10 +1075,10 @@ async def delete_slide(
 
 @router.get('/confirm_delete/{source}/{index}/{slide_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def confirm_delete_slide(
-        index: int,
-        slide_id: int,
-        source: SlidesMenuType,
-        db_session: AsyncDBSession,
+    index: int,
+    slide_id: int,
+    source: SlidesMenuType,
+    db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     slide: Slide = await get_slide_by_id(slide_id, db_session)
     return get_common_content(
