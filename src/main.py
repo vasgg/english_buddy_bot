@@ -41,7 +41,7 @@ async def main():
             # We recommend adjusting this value in production.
             profiles_sample_rate=1.0,
         )
-    bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML', protect_content=True)
+    bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
     logging.info("bot started")
     redis = Redis(db=1)
     storage = RedisStorage(redis)
