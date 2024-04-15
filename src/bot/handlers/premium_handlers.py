@@ -52,7 +52,8 @@ async def premium_payment_sent_message(
     admin_message_text = await get_text_by_prompt(prompt='new_sub_admin_notify', db_session=db_session)
     user_info = f'{user.fullname} (@{user.username})' if user.username else user.fullname
     sub_type = 'monthly' if callback_data.subscription_type == SubscriptionType.LIMITED else 'alltime ⭐'
-    await callback.bot.send_message(
-        chat_id=get_settings().SUB_ADMINS[0],
-        text=admin_message_text.format(user_info, sub_type),
-    )
+    for admin in get_settings().SUB_ADMINS:
+        await callback.bot.send_message(
+            chat_id=admin,
+            text=admin_message_text.format(user_info, sub_type),
+        )
