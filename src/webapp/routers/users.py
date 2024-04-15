@@ -7,6 +7,7 @@ from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import BackEvent, GoToEvent
 from fastui.forms import fastui_form
+from pydantic import BaseModel, Field
 
 from database.crud.user import get_user_from_db_by_id
 from enums import SelectOneEnum, UserSubscriptionType
@@ -19,10 +20,18 @@ router = APIRouter()
 logger = logging.getLogger()
 
 
+class FilterForm(BaseModel):
+    user: str = Field(json_schema_extra={'search_url': '/api/forms/search', 'placeholder': 'Поиск пользователя...'})
+
+
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
-async def users_page(db_session: AsyncDBSession) -> list[AnyComponent]:
+async def users_page(db_session: AsyncDBSession, user: str | None = None) -> list[AnyComponent]:
     logger.info('users router called')
     users = await get_users_table_content(db_session)
+    filter_form_initial = {}
+    if user:
+        users = [u for u in users if user.lower() in u.credentials.lower()]
+        filter_form_initial['users'] = {'value': user}
     return get_common_content(
         c.Paragraph(text=' '),
         c.Paragraph(text='⬜ нет доступа'),
@@ -31,6 +40,14 @@ async def users_page(db_session: AsyncDBSession) -> list[AnyComponent]:
         c.Paragraph(text='🟨 нет доступа, интересовался'),
         c.Paragraph(text='⭐ доступ навсегда'),
         c.Paragraph(text=' '),
+        c.ModelForm(
+            model=FilterForm,
+            submit_url='.',
+            initial=filter_form_initial,
+            method='GOTO',
+            submit_on_change=True,
+            display_mode='inline',
+        ),
         c.Table(
             data=users,
             columns=[

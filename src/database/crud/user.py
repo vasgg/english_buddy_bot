@@ -45,6 +45,12 @@ async def get_all_users_with_reminders(db_session: AsyncSession) -> list[User]:
     return list(result.scalars().all())
 
 
+async def get_all_users(db_session: AsyncSession) -> list[User]:
+    query = select(User)
+    result = await db_session.execute(query)
+    return list(result.scalars().all())
+
+
 async def get_all_users_with_active_subscription(db_session: AsyncSession) -> list[User]:
     query = select(User).filter(User.subscription_status == UserSubscriptionType.LIMITED_ACCESS)
     result = await db_session.execute(query)

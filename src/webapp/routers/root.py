@@ -8,6 +8,8 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastui import AnyComponent, FastUI, prebuilt_html
 from fastui.forms import SelectSearchResponse
 
+from webapp.controllers.users import get_users_table_content
+from webapp.db import AsyncDBSession
 from webapp.routers.components.main_component import get_common_content
 
 router = APIRouter()
@@ -37,6 +39,22 @@ async def files_search_view(lesson_id: int) -> SelectSearchResponse:
         if mime_type in ['image/png', 'image/jpeg', 'image/gif', 'image/heic', 'image/tiff', 'image/webp']:
             files['files'].append({'value': file.name, 'label': file.name})
     options = [{'label': k, 'options': v} for k, v in files.items()]
+    return SelectSearchResponse(options=options)
+
+
+@router.get('/api/forms/search')
+async def users_search_view(q: str, db_session: AsyncDBSession) -> SelectSearchResponse:
+    all_users = await get_users_table_content(db_session)
+    users = defaultdict(list)
+    for user in all_users:
+        if q.lower() in user.credentials.lower():
+            users['users'].append(
+                {
+                    'value': user.credentials,
+                    'label': user.credentials,
+                }
+            )
+    options = [{'label': k, 'options': v} for k, v in users.items()]
     return SelectSearchResponse(options=options)
 
 
