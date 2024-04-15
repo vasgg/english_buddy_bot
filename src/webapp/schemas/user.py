@@ -13,6 +13,7 @@ class UsersSchema(BaseModel):
     number: int
     fullname: str
     username: str | None
+    credentials: str
     color_code: str
     icon: str
     link: str
