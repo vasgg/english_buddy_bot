@@ -2,6 +2,8 @@ import asyncio
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
 from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
 from database.crud.answer import get_random_answer, get_text_by_prompt
@@ -10,13 +12,12 @@ from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType, States
 from webapp.controllers.misc import trim_non_alpha
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def show_quiz_input_phrase(
-        event: types.Message,
-        state: FSMContext,
-        slide: Slide,
+    event: types.Message,
+    state: FSMContext,
+    slide: Slide,
 ) -> bool:
     msg = await event.answer(text=slide.text)
     await state.update_data(quiz_phrase_msg_id=msg.message_id)
@@ -25,12 +26,12 @@ async def show_quiz_input_phrase(
 
 
 async def process_quiz_input_phrase(
-        event: types.Message,
-        state: FSMContext,
-        user_input: UserQuizInput,
-        slide: Slide,
-        session: Session,
-        db_session: AsyncSession,
+    event: types.Message,
+    state: FSMContext,
+    user_input: UserQuizInput,
+    slide: Slide,
+    session: Session,
+    db_session: AsyncSession,
 ) -> bool:
     if not user_input:
         return await show_quiz_input_phrase(event, state, slide)
@@ -52,7 +53,7 @@ async def process_quiz_input_phrase(
             trimmed_user_input = trim_non_alpha(input_msg.text).lower()
             right_answers = [trim_non_alpha(answer.lower()) for answer in slide.right_answers.split("|")]
             almost_right_answers = [trim_non_alpha(answer.lower()) for answer in (slide.almost_right_answers or '').split("|")]
-
+            # TODO: check correct answers
             if trimmed_user_input in right_answers:
                 await event.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
                 await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
