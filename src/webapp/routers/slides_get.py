@@ -310,7 +310,9 @@ async def show_delete_slide_dialog(
     db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    logger.info(f'delete slide dialog called in lesson {slide.lesson_id}. slide_id: {slide_id}, index: {index}, source: {source}')
+    logger.info(
+        f'delete slide dialog called in lesson {slide.lesson_id}. ' f'slide_id: {slide_id}, index: {index}, source: {source}'
+    )
     return get_common_content(
         c.Paragraph(text='Вы уверены, что хотите удалить слайд?'),
         c.Div(

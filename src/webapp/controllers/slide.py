@@ -27,7 +27,9 @@ async def get_all_slides_from_lesson_by_order_fastui(db_session: AsyncDBSession,
     ordered_slides = []
     for index, slide_id in enumerate(slides_ids, start=1):
         slide = await get_slide_by_id(slide_id, db_session)
-        slide_text = slide.slide_type.value.replace('_', ' ').capitalize() if 'sticker' in slide.slide_type.value else slide.text
+        slide_text = (
+            slide.slide_type.value.replace('_', ' ').capitalize() if 'sticker' in slide.slide_type.value else slide.text
+        )
         slide_data = {
             'id': slide.id,
             'lesson_id': slide.lesson_id,
