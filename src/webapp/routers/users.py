@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.components.display import DisplayLookup
-from fastui.events import BackEvent, GoToEvent
+from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ from database.crud.user import get_user_from_db_by_id
 from enums import SelectOneEnum, UserSubscriptionType
 from webapp.controllers.users import get_users_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import get_common_content
+from webapp.routers.components.main_component import back_button, get_common_content
 from webapp.schemas.user import EditUserModel, get_user_data_model
 
 router = APIRouter()
@@ -72,7 +72,7 @@ async def edit_user_page(user_id: int, db_session: AsyncDBSession) -> list[AnyCo
     form = c.ModelForm(model=get_user_data_model(user), submit_url=submit_url)
     name = f'{user.fullname} | {user.username}' if user.username else user.fullname
     return get_common_content(
-        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        back_button,
         c.Paragraph(text=''),
         form,
         title=f'edit | user {user.id} | {name}',

@@ -58,17 +58,16 @@ def get_color_code_emoji(subscription_type: UserSubscriptionType) -> str:
 
 def get_slide_details(slide: Slide) -> str:
     slide_type_to_str = {
-        'text': slide.keyboard_type if slide.keyboard_type else ' ',
-        'image': slide.keyboard_type if slide.keyboard_type else ' ',
-        'pin_dict': ' ',
-        'small_sticker': ' ',
-        'big_sticker': ' ',
-        'quiz_options': f'{slide.right_answers}|{slide.keyboard}',
-        'quiz_input_word': slide.right_answers,
-        'quiz_input_phrase': slide.right_answers,
-        'final_slide': ' ',
+        SlideType.TEXT: slide.keyboard_type if slide.keyboard_type else ' ',
+        SlideType.IMAGE: slide.keyboard_type if slide.keyboard_type else ' ',
+        SlideType.PIN_DICT: ' ',
+        SlideType.SMALL_STICKER: ' ',
+        SlideType.BIG_STICKER: ' ',
+        SlideType.QUIZ_OPTIONS: f'{slide.right_answers}|{slide.keyboard}',
+        SlideType.QUIZ_INPUT_WORD: slide.right_answers,
+        SlideType.QUIZ_INPUT_PHRASE: slide.right_answers,
     }
-    return slide_type_to_str.get(slide.slide_type.value, ' ')
+    return slide_type_to_str.get(slide.slide_type, ' ')
 
 
 async def extract_img_from_form(request: fastapi.Request):

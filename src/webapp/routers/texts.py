@@ -5,11 +5,12 @@ from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.components.display import DisplayLookup
-from fastui.events import BackEvent, GoToEvent
+from fastui.events import GoToEvent
 from fastui.forms import fastui_form
+
 from webapp.controllers.text import get_text_by_id, get_texts_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import get_common_content
+from webapp.routers.components.main_component import back_button, get_common_content
 from webapp.schemas.text import EditTextDataModel, get_text_data_model
 
 router = APIRouter()
@@ -46,7 +47,7 @@ async def edit_text_page(text_id: int, db_session: AsyncDBSession) -> list[AnyCo
     submit_url = f'/api/texts/edit/{text_id}/'
     form = c.ModelForm(model=get_text_data_model(text), submit_url=submit_url)
     return get_common_content(
-        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        back_button,
         c.Paragraph(text=''),
         form,
         title=f'edit | text {text_id}',
