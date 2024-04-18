@@ -16,7 +16,7 @@ def test_lesson_path_init():
 def test_add_slide():
     new_path = LessonPath('1.2.3')
     new_path.add_slide(1, 4)
-    assert new_path.path == [4, 1, 2, 3]
+    assert new_path.path == [1, 4, 2, 3]
     with pytest.raises(AssertionError):
         new_path.add_slide(1, 3)
         assert new_path.path == [1, 4, 2, 3]
