@@ -20,6 +20,8 @@ async def get_all_slides_from_lesson_by_order_fastui(path: str, db_session: Asyn
         )
         slide_data = {
             'id': slide.id,
+            'lesson_id': slide.lesson_id,
+            'slide_type': slide.slide_type,
             'index': index,
             'emoji': get_slide_emoji(slide.slide_type),
             'text': slide.picture if slide.slide_type.value == 'image' else slide_text,
