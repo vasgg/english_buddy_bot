@@ -122,7 +122,6 @@ async def add_reaction(
 ):
     reaction = Reaction(type=reaction_type, text=form.text)
     db_session.add(reaction)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/reactions'))]
 
 
@@ -159,7 +158,6 @@ async def edit_lesson_form(
         form_value = getattr(form, field, None)
         if form_value is not None:
             setattr(reaction, field, form_value)
-    await db_session.commit()
     logger.info(f'reaction {reaction.id} updated. data: {form.dict()}')
     return [c.FireEvent(event=GoToEvent(url='/reactions'))]
 

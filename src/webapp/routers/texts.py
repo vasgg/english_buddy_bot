@@ -65,6 +65,5 @@ async def edit_text_form(
         form_value = getattr(form, field, None)
         if form_value is not None:
             setattr(text, field, form_value)
-    await db_session.commit()
     logger.info(f'text {text.id} updated. data: {form.dict()}')
     return [c.FireEvent(event=GoToEvent(url='/texts'))]

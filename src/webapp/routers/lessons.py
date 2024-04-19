@@ -120,7 +120,6 @@ async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent
             await db_session.flush()
             lesson.index = index - 1
             lesson_with_target_index.index = index
-            await db_session.commit()
     except ResponseValidationError:
         pass
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
@@ -141,7 +140,6 @@ async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyCompone
             await db_session.flush()
             lesson.index = index + 1
             lesson_with_target_index.index = index
-            await db_session.commit()
     except ResponseValidationError:
         pass
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
@@ -160,7 +158,6 @@ async def edit_lesson_form(
     lesson.is_paid = bool(form.is_paid)
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
-    await db_session.commit()
     logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
@@ -212,7 +209,6 @@ async def delete_lesson(
     for lesson in lessons:
         lesson.index -= 1
         await db_session.flush()
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
 
@@ -226,7 +222,6 @@ async def create_new_lesson(
     for lesson in reversed(lessons[index:]):
         lesson.index += 1
         await db_session.flush()
-    await db_session.commit()
 
     new_lesson = Lesson(
         index=index + 1,
@@ -238,5 +233,4 @@ async def create_new_lesson(
     await db_session.flush()
     directory = Path(f"src/webapp/static/lessons_images/{new_lesson.id}")
     directory.mkdir(parents=True, exist_ok=True)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]

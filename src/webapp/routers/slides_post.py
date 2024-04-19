@@ -16,7 +16,6 @@ from enums import KeyboardType, PathType, SlideType, SlidesMenuType, StickerType
 from webapp.controllers.misc import extract_img_from_form, image_upload
 from webapp.controllers.slide import update_path
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import back_button, get_common_content
 from webapp.schemas.slide import (
     EditDictSlideData,
     EditImageSlideData,
@@ -51,7 +50,6 @@ async def edit_text_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_EDIT)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
@@ -73,7 +71,6 @@ async def edit_dict_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_EDIT)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
@@ -95,7 +92,6 @@ async def edit_sticker_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_EDIT)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
@@ -121,7 +117,6 @@ async def edit_quiz_option_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_EDIT)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
@@ -151,7 +146,6 @@ async def edit_quiz_input_word_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_EDIT)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
@@ -177,7 +171,6 @@ async def edit_quiz_input_phrase_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_EDIT)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
@@ -208,19 +201,7 @@ async def edit_image_slide(
         db_session.add(new_slide)
         await db_session.flush()
         update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_EDIT)
-        await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
-
-
-@router.get('/new/test/', response_model=FastUI, response_model_exclude_none=True)
-async def new_test(abc, cde=None):
-    if cde is None:
-        cde = 321
-    return get_common_content(
-        back_button,
-        c.Paragraph(text=''),
-        title=f'Тестовая страница |{abc} {cde}',
-    )
 
 
 @router.post('/new/{lesson_id}/{source}/text/', response_model=FastUI, response_model_exclude_none=True)
@@ -242,7 +223,6 @@ async def new_text_slide_form(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_NEW)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
@@ -273,7 +253,6 @@ async def new_image_slide_form(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_NEW)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
@@ -294,7 +273,6 @@ async def new_dict_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_NEW)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
@@ -318,7 +296,6 @@ async def new_quiz_option_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_NEW)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
@@ -341,7 +318,6 @@ async def new_quiz_input_word_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_NEW)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
 
 
@@ -366,5 +342,4 @@ async def new_quiz_input_phrase_slide(
     db_session.add(new_slide)
     await db_session.flush()
     update_path(lesson, source, new_slide.id, index, PathType.EXISTING_PATH_NEW)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]

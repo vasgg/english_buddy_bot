@@ -11,6 +11,7 @@ from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from enums import MoveSlideDirection, PathType, SlideType, SlidesMenuType, StickerType
+from webapp.consts import ERRORS_THRESHOLD, IMAGE_WIDTH
 from webapp.controllers.slide import (
     create_new_sticker,
     delete_slide,
@@ -29,8 +30,6 @@ from webapp.schemas.sticker import get_sticker_slide_data_model
 
 router = APIRouter()
 logger = logging.getLogger()
-default_errors_threshold = 50
-default_image_width = 800
 
 
 @router.get("/lesson{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
@@ -38,7 +37,6 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
     logger.info('slides router called')
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     slides = await get_all_slides_from_lesson_by_order_fastui(db_session, lesson.path)
-    extra_slides_table = None
     if not slides:
         return get_common_content(
             c.Paragraph(text=''),
@@ -94,49 +92,48 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
             c.Paragraph(text=''),
             title=f'Слайды | Урок {lesson.index} | {lesson.title}',
         )
-    if lesson.path_extra:
-        extra_slides = await get_all_slides_from_lesson_by_order_fastui(db_session, str(lesson.path_extra))
-        extra_slides_table = c.Table(
-            data=extra_slides,
-            columns=[
-                DisplayLookup(field='index', table_width_percent=3),
-                DisplayLookup(field='emoji', table_width_percent=3),
-                DisplayLookup(field='text'),
-                DisplayLookup(field='details', table_width_percent=23),
-                DisplayLookup(
-                    field='edit_button',
-                    on_click=GoToEvent(url='/slides/edit/extra/{slide_type}/{id}/{index}/'),
-                    table_width_percent=3,
-                ),
-                DisplayLookup(
-                    field='up_button',
-                    on_click=GoToEvent(url='/slides/up/extra/{lesson_id}/{index}/'),
-                    table_width_percent=3,
-                ),
-                DisplayLookup(
-                    field='down_button',
-                    on_click=GoToEvent(url='/slides/down/extra/{lesson_id}/{index}/'),
-                    table_width_percent=3,
-                ),
-                DisplayLookup(
-                    field='plus_button',
-                    on_click=GoToEvent(url='/slides/plus_button/extra/{lesson_id}/?index={index}'),
-                    table_width_percent=3,
-                ),
-                DisplayLookup(
-                    field='minus_button',
-                    on_click=GoToEvent(url='/slides/confirm_delete/extra/{id}/{index}/'),
-                    table_width_percent=3,
-                ),
-            ],
-        )
+    extra_slides = await get_all_slides_from_lesson_by_order_fastui(db_session, str(lesson.path_extra))
+    extra_slides_table = c.Table(
+        data=extra_slides,
+        columns=[
+            DisplayLookup(field='index', table_width_percent=3),
+            DisplayLookup(field='emoji', table_width_percent=3),
+            DisplayLookup(field='text'),
+            DisplayLookup(field='details', table_width_percent=23),
+            DisplayLookup(
+                field='edit_button',
+                on_click=GoToEvent(url='/slides/edit/extra/{slide_type}/{id}/{index}/'),
+                table_width_percent=3,
+            ),
+            DisplayLookup(
+                field='up_button',
+                on_click=GoToEvent(url='/slides/up/extra/{lesson_id}/{index}/'),
+                table_width_percent=3,
+            ),
+            DisplayLookup(
+                field='down_button',
+                on_click=GoToEvent(url='/slides/down/extra/{lesson_id}/{index}/'),
+                table_width_percent=3,
+            ),
+            DisplayLookup(
+                field='plus_button',
+                on_click=GoToEvent(url='/slides/plus_button/extra/{lesson_id}/?index={index}'),
+                table_width_percent=3,
+            ),
+            DisplayLookup(
+                field='minus_button',
+                on_click=GoToEvent(url='/slides/confirm_delete/extra/{id}/{index}/'),
+                table_width_percent=3,
+            ),
+        ],
+    )
     return get_common_content(
         c.Paragraph(text=''),
         slides_table,
         c.Paragraph(text=''),
         c.Heading(text='Экстра слайды', level=3),
         c.Paragraph(text=''),
-        extra_slides_table if lesson.path_extra else c.Paragraph(text=''),
+        extra_slides_table,
         title=f'Слайды | Урок {lesson.index} | {lesson.title}',
     )
 
@@ -249,7 +246,6 @@ async def create_slide_for_existing_path(
             sticker_type = StickerType.SMALL if slide_type == SlideType.SMALL_STICKER else StickerType.BIG
             new_sticker_id = await create_new_sticker(lesson_id, sticker_type, db_session)
             update_path(lesson, source, new_sticker_id, index, PathType.EXISTING_PATH_NEW)
-            await db_session.commit()
             return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
         case _:
             form = get_new_slide_form_by_slide_type(slide_type, lesson_id, source, index)
@@ -338,7 +334,6 @@ async def confirm_delete_slide(
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     logger.info(f'deleting slide from lesson {lesson_id}. index: {index}, source: {source}')
     delete_slide(lesson, source, index)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]
 
 
@@ -352,6 +347,5 @@ async def move_slide_by_direction(
 ) -> list[AnyComponent]:
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     move_slide(lesson, source, direction, index)
-    await db_session.commit()
     logger.info(f'moved slide {direction} in lesson: {lesson_id}. index: {index}. source: {source}')
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]

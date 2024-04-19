@@ -23,9 +23,9 @@ logger = logging.getLogger()
 
 
 async def get_all_slides_from_lesson_by_order_fastui(db_session: AsyncDBSession, path: str | None = None) -> list:
-    slides_ids = [int(slideid) for slideid in path.split('.')] if path else []
+    lesson_path = LessonPath(path).path
     ordered_slides = []
-    for index, slide_id in enumerate(slides_ids, start=1):
+    for index, slide_id in enumerate(lesson_path, start=1):
         slide = await get_slide_by_id(slide_id, db_session)
         slide_text = (
             slide.slide_type.value.replace('_', ' ').capitalize() if 'sticker' in slide.slide_type.value else slide.text
@@ -181,12 +181,11 @@ def update_path(
             raise AssertionError(f'Unexpected source: {source}')
 
 
-def compose_path(index, path, mode, slide_id):
+def compose_path(index, path, mode, slide_id) -> str:
     lesson_path = LessonPath(path)
     match mode:
         case PathType.EXISTING_PATH_NEW:
             lesson_path.add_slide(index, slide_id)
         case PathType.EXISTING_PATH_EDIT:
             lesson_path.edit_slide(index, slide_id)
-    path = str(lesson_path)
-    return path
+    return str(lesson_path)

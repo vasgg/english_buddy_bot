@@ -19,7 +19,7 @@ def test_add_slide():
     assert new_path.path == [1, 4, 2, 3]
     with pytest.raises(AssertionError):
         new_path.add_slide(1, 3)
-        assert new_path.path == [1, 4, 2, 3]
+    assert new_path.path == [1, 4, 2, 3]
 
 
 def test_edit_slide():
