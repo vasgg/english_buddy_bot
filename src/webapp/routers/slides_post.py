@@ -312,6 +312,8 @@ async def new_quiz_input_word_slide(
         slide_type=SlideType.QUIZ_INPUT_WORD,
         lesson_id=lesson.id,
         text=form.text,
+        almost_right_answers=form.almost_right_answers,
+        almost_right_answer_reply=form.almost_right_answer_reply,
         right_answers=form.right_answers,
         is_exam_slide=form.is_exam_slide,
     )

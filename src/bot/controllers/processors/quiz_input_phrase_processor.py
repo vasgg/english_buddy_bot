@@ -53,7 +53,7 @@ async def process_quiz_input_phrase(
             trimmed_user_input = trim_non_alpha(input_msg.text).lower()
             right_answers = [trim_non_alpha(answer.lower()) for answer in slide.right_answers.split("|")]
             almost_right_answers = [trim_non_alpha(answer.lower()) for answer in (slide.almost_right_answers or '').split("|")]
-            # TODO: check correct answers
+
             if trimmed_user_input in right_answers:
                 await event.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
                 await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
