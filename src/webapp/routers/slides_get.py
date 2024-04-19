@@ -19,7 +19,7 @@ from webapp.controllers.slide import (
     get_edit_slide_form_by_slide_type,
     get_new_slide_form_by_slide_type,
     move_slide,
-    update_path,
+    update_lesson_path,
 )
 from webapp.db import AsyncDBSession
 from webapp.routers.components.main_component import back_button, get_common_content
@@ -218,7 +218,7 @@ async def create_slide_for_empty_path(
         case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:
             sticker_type = StickerType.SMALL if slide_type == SlideType.SMALL_STICKER else StickerType.BIG
             new_sticker_id = await create_new_sticker(lesson_id, sticker_type, db_session)
-            update_path(lesson, source, new_sticker_id)
+            await update_lesson_path(lesson_id, source, new_sticker_id, db_session)
             if source == SlidesMenuType.EXTRA:
                 lesson.errors_threshold = ERRORS_THRESHOLD
             return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
@@ -245,7 +245,7 @@ async def create_slide_for_existing_path(
         case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:
             sticker_type = StickerType.SMALL if slide_type == SlideType.SMALL_STICKER else StickerType.BIG
             new_sticker_id = await create_new_sticker(lesson_id, sticker_type, db_session)
-            update_path(lesson, source, new_sticker_id, index, PathType.EXISTING_PATH_NEW)
+            await update_lesson_path(lesson_id, source, new_sticker_id, db_session, index, PathType.EXISTING_PATH_NEW)
             return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
         case _:
             form = get_new_slide_form_by_slide_type(slide_type, lesson_id, source, index)
