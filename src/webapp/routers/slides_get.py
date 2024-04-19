@@ -223,8 +223,7 @@ async def create_slide_for_empty_path(
             new_sticker_id = await create_new_sticker(lesson_id, sticker_type, db_session)
             update_path(lesson, source, new_sticker_id)
             if source == SlidesMenuType.EXTRA:
-                lesson.errors_threshold = default_errors_threshold
-            await db_session.commit()
+                lesson.errors_threshold = ERRORS_THRESHOLD
             return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson.id}/'))]
         case _:
             form = get_new_slide_form_by_slide_type(slide_type, lesson_id, source)
@@ -281,7 +280,7 @@ async def edit_slide(
                 components=[
                     c.Image(
                         src=f'/static/lessons_images/{slide.lesson_id}/{slide.picture}',
-                        width=default_image_width,
+                        width=IMAGE_WIDTH,
                         loading='lazy',
                         referrer_policy='no-referrer',
                     ),

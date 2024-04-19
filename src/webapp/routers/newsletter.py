@@ -12,6 +12,7 @@ from fastui.forms import fastui_form
 
 from config import Settings, get_settings
 from database.crud.user import get_all_users_with_reminders
+from webapp.consts import IMAGE_WIDTH
 from webapp.controllers.misc import extract_img_from_form, send_newsletter_to_users
 from webapp.db import AsyncDBSession
 from webapp.routers.components.main_component import get_common_content
@@ -19,7 +20,6 @@ from webapp.schemas.newsletter import get_newsletter_data_model
 
 router = APIRouter()
 logger = logging.getLogger()
-default_image_width = 800
 
 
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
@@ -58,9 +58,9 @@ async def send_newsletter(
             directory = Path("src/webapp/static/uploaded_images/")
             directory.mkdir(parents=True, exist_ok=True)
             image = Image.open(io.BytesIO(image_file))
-            if image.width > default_image_width:
-                new_height = int((default_image_width / image.width) * image.height)
-                image = image.resize((default_image_width, new_height), Image.Resampling.LANCZOS)
+            if image.width > IMAGE_WIDTH:
+                new_height = int((IMAGE_WIDTH / image.width) * image.height)
+                image = image.resize((IMAGE_WIDTH, new_height), Image.Resampling.LANCZOS)
             file_path = directory / form.upload_new_picture.filename
             with open(file_path, "wb") as buffer:
                 image_format = form.upload_new_picture.content_type
