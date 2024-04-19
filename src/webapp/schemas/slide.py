@@ -20,6 +20,8 @@ class SlidesSchema(BaseModel):
 
 class SlidesTableSchema(SlidesSchema):
     index: int = Field(title=' ')
+    lesson_id: int = Field(title=' ')
+    slide_type: str = Field(title=' ')
     emoji: str = Field(title=' ')
     edit_button: str = Field(title=' ')
     up_button: str = Field(title=' ')

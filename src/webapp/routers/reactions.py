@@ -1,17 +1,18 @@
 import logging
 from typing import Annotated
 
-from database.models.reaction import Reaction
-from enums import ReactionType
 from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.components.display import DisplayLookup
-from fastui.events import BackEvent, GoToEvent
+from fastui.events import GoToEvent
 from fastui.forms import fastui_form
+
+from database.models.reaction import Reaction
+from enums import ReactionType
 from webapp.controllers.reaction import delete_reaction_by_id, get_reaction_by_id, get_reactions_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import get_common_content
+from webapp.routers.components.main_component import back_button, get_common_content
 from webapp.schemas.reaction import (
     AddReactionDataModel,
     EditReactionDataModel,
@@ -94,17 +95,19 @@ async def add_reaction_form(reaction_type: ReactionType) -> list[AnyComponent]:
         case ReactionType.RIGHT:
             submit_url = '/api/reactions/add/right/'
             form = c.ModelForm(
-                model=get_new_reaction_data_model(reaction_type=ReactionType.RIGHT), submit_url=submit_url,
+                model=get_new_reaction_data_model(reaction_type=ReactionType.RIGHT),
+                submit_url=submit_url,
             )
         case ReactionType.WRONG:
             submit_url = '/api/reactions/add/wrong/'
             form = c.ModelForm(
-                model=get_new_reaction_data_model(reaction_type=ReactionType.WRONG), submit_url=submit_url,
+                model=get_new_reaction_data_model(reaction_type=ReactionType.WRONG),
+                submit_url=submit_url,
             )
         case _:
             raise AssertionError("Unexpected reaction type")
     return get_common_content(
-        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        back_button,
         c.Paragraph(text=''),
         form,
         title=f'add reaction | {reaction_type.value}',
@@ -119,7 +122,6 @@ async def add_reaction(
 ):
     reaction = Reaction(type=reaction_type, text=form.text)
     db_session.add(reaction)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/reactions'))]
 
 
@@ -138,7 +140,7 @@ async def edit_text_page(reaction_id: int, db_session: AsyncDBSession) -> list[A
     submit_url = f'/api/reactions/edit/{reaction_id}/'
     form = c.ModelForm(model=get_reaction_data_model(reaction), submit_url=submit_url)
     return get_common_content(
-        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        back_button,
         c.Paragraph(text=''),
         form,
         title=f'edit | reaction {reaction_id}',
@@ -156,7 +158,6 @@ async def edit_lesson_form(
         form_value = getattr(form, field, None)
         if form_value is not None:
             setattr(reaction, field, form_value)
-    await db_session.commit()
     logger.info(f'reaction {reaction.id} updated. data: {form.dict()}')
     return [c.FireEvent(event=GoToEvent(url='/reactions'))]
 
@@ -170,11 +171,7 @@ async def delete_slide(reaction_id: int, db_session: AsyncDBSession) -> list[Any
         c.Paragraph(text='Вы уверены, что хотите удалить эту реакцию?'),
         c.Div(
             components=[
-                c.Link(
-                    components=[c.Button(text='Назад', named_style='secondary')],
-                    on_click=BackEvent(),
-                    class_name='+ ms-2',
-                ),
+                back_button,
                 c.Link(
                     components=[c.Button(text='Удалить', named_style='warning')],
                     on_click=GoToEvent(url=f'/reactions/delete/{reaction_id}/'),

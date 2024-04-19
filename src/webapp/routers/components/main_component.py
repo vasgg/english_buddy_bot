@@ -1,6 +1,6 @@
 from fastui import AnyComponent
 from fastui import components as c
-from fastui.events import GoToEvent
+from fastui.events import BackEvent, GoToEvent
 
 
 def get_common_content(
@@ -44,12 +44,14 @@ def get_common_content(
             ],
         ),
         # c.Footer(
-        #     extra_text="english buddy admin section",
         #     links=[
         #         c.Link(
-        #             components=[c.Text(text="бот")],
-        #             on_click=GoToEvent(url="https://t.me/english_buddy_bot"),
+        #             components=[c.Text(text='можно вот тут ссылку на мониторинг сделать')],
+        #             on_click=GoToEvent(url='...'),
         #         ),
         #     ],
         # ),
     ]
+
+
+back_button = c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent())

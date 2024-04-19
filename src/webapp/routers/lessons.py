@@ -2,18 +2,19 @@ import logging
 from pathlib import Path
 from typing import Annotated
 
-from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons, get_lessons_with_greater_index
-from database.models.lesson import Lesson
 from fastapi import APIRouter
 from fastapi.exceptions import ResponseValidationError
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.components.display import DisplayLookup
-from fastui.events import BackEvent, GoToEvent
+from fastui.events import GoToEvent
 from fastui.forms import fastui_form
+
+from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons, get_lessons_with_greater_index
+from database.models.lesson import Lesson
 from webapp.controllers.lesson import get_lessons_fastui
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import get_common_content
+from webapp.routers.components.main_component import back_button, get_common_content
 from webapp.schemas.lesson import (
     EditLessonDataModel,
     NewLessonDataModel,
@@ -68,10 +69,14 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
                     table_width_percent=3,
                 ),
                 DisplayLookup(
-                    field='up_button', on_click=GoToEvent(url='/lessons/up_button/{index}/'), table_width_percent=3,
+                    field='up_button',
+                    on_click=GoToEvent(url='/lessons/up_button/{index}/'),
+                    table_width_percent=3,
                 ),
                 DisplayLookup(
-                    field='down_button', on_click=GoToEvent(url='/lessons/down_button/{index}/'), table_width_percent=3,
+                    field='down_button',
+                    on_click=GoToEvent(url='/lessons/down_button/{index}/'),
+                    table_width_percent=3,
                 ),
                 DisplayLookup(
                     field='plus_button',
@@ -115,7 +120,6 @@ async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent
             await db_session.flush()
             lesson.index = index - 1
             lesson_with_target_index.index = index
-            await db_session.commit()
     except ResponseValidationError:
         pass
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
@@ -136,7 +140,6 @@ async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyCompone
             await db_session.flush()
             lesson.index = index + 1
             lesson_with_target_index.index = index
-            await db_session.commit()
     except ResponseValidationError:
         pass
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
@@ -155,7 +158,6 @@ async def edit_lesson_form(
     lesson.is_paid = bool(form.is_paid)
     path = '.'.join([str(slideid) for slideid in slides_ids])
     lesson.path = path
-    await db_session.commit()
     logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
@@ -165,7 +167,7 @@ async def add_lesson(index: int) -> list[AnyComponent]:
     submit_url = f'/api/lessons/new/{index}/'
     form = c.ModelForm(model=get_new_lesson_data_model(), submit_url=submit_url)
     return get_common_content(
-        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent()),
+        back_button,
         c.Paragraph(text=''),
         form,
         title='Создание урока',
@@ -179,11 +181,7 @@ async def delete_lesson_confirm(index: int, db_session: AsyncDBSession) -> list[
         c.Paragraph(text='Вы уверены, что хотите удалить урок?'),
         c.Div(
             components=[
-                c.Link(
-                    components=[c.Button(text='Назад', named_style='secondary')],
-                    on_click=BackEvent(),
-                    class_name='+ ms-2',
-                ),
+                back_button,
                 c.Link(
                     components=[c.Button(text='Удалить', named_style='warning')],
                     on_click=GoToEvent(url=f'/lessons/delete/{index}/'),
@@ -196,7 +194,7 @@ async def delete_lesson_confirm(index: int, db_session: AsyncDBSession) -> list[
 
 
 @router.get('/delete/{index}/', response_model=FastUI, response_model_exclude_none=True)
-async def delete_slide(
+async def delete_lesson(
     index: int,
     db_session: AsyncDBSession,
 ):
@@ -211,12 +209,11 @@ async def delete_slide(
     for lesson in lessons:
         lesson.index -= 1
         await db_session.flush()
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
 
 @router.post('/new/{index}/', response_model=FastUI, response_model_exclude_none=True)
-async def new_slide(
+async def create_new_lesson(
     index: int,
     db_session: AsyncDBSession,
     form: Annotated[NewLessonDataModel, fastui_form(NewLessonDataModel)],
@@ -225,14 +222,15 @@ async def new_slide(
     for lesson in reversed(lessons[index:]):
         lesson.index += 1
         await db_session.flush()
-    await db_session.commit()
 
     new_lesson = Lesson(
-        index=index + 1, title=form.title, errors_threshold=form.errors_threshold, is_paid=form.is_paid,
+        index=index + 1,
+        title=form.title,
+        errors_threshold=form.errors_threshold,
+        is_paid=form.is_paid,
     )
     db_session.add(new_lesson)
     await db_session.flush()
     directory = Path(f"src/webapp/static/lessons_images/{new_lesson.id}")
     directory.mkdir(parents=True, exist_ok=True)
-    await db_session.commit()
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]

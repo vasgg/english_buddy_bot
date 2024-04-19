@@ -104,6 +104,16 @@ class SelectOneEnum(StrEnum):
     NO_ACCESS = auto()
 
 
+class PathType(StrEnum):
+    EXISTING_PATH_EDIT = auto()
+    EXISTING_PATH_NEW = auto()
+
+
+class MoveSlideDirection(StrEnum):
+    UP = auto()
+    DOWN = auto()
+
+
 def sub_status_to_select_one(sub_status: UserSubscriptionType) -> SelectOneEnum:
     match sub_status:
         case UserSubscriptionType.UNLIMITED_ACCESS:
