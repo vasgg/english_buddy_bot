@@ -2,6 +2,7 @@ import logging
 
 from fastui import components as c
 
+from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from database.models.slide import Slide
@@ -159,29 +160,31 @@ def move_slide(
             raise AssertionError(f'Unexpected source: {source}')
 
 
-def update_path(
-    lesson: Lesson,
+async def update_lesson_path(
+    lesson_id: int,
     source: SlidesMenuType,
     slide_id: int,
+    db_session: AsyncDBSession,
     index: int | None = None,
     mode: PathType | None = None,
 ) -> None:
+    lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     match source:
         case SlidesMenuType.REGULAR:
             if index is None:
                 lesson.path = str(slide_id)
             else:
-                lesson.path = compose_path(index, lesson.path, mode, slide_id)
+                lesson.path = compose_lesson_path(index, lesson.path, mode, slide_id)
         case SlidesMenuType.EXTRA:
             if index is None:
                 lesson.path_extra = str(slide_id)
             else:
-                lesson.path_extra = compose_path(index, lesson.path_extra, mode, slide_id)
+                lesson.path_extra = compose_lesson_path(index, lesson.path_extra, mode, slide_id)
         case _:
             raise AssertionError(f'Unexpected source: {source}')
 
 
-def compose_path(index, path, mode, slide_id) -> str:
+def compose_lesson_path(index, path, mode, slide_id) -> str:
     lesson_path = LessonPath(path)
     match mode:
         case PathType.EXISTING_PATH_NEW:
