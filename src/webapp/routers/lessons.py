@@ -12,6 +12,7 @@ from fastui.forms import fastui_form
 
 from database.crud.lesson import get_lesson_by_id, get_lesson_by_index, get_lessons, get_lessons_with_greater_index
 from database.models.lesson import Lesson
+from lesson_path import LessonPath
 from webapp.controllers.lesson import get_lessons_fastui
 from webapp.db import AsyncDBSession
 from webapp.routers.components.main_component import back_button, get_common_content
@@ -152,12 +153,11 @@ async def edit_lesson_form(
     form: Annotated[EditLessonDataModel, fastui_form(EditLessonDataModel)],
 ):
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
-    slides_ids = [int(slideid) for slideid in lesson.path.split('.') if slideid]
+    lesson_path = LessonPath(lesson.path)
     lesson.title = form.title
     lesson.errors_threshold = form.errors_threshold
     lesson.is_paid = bool(form.is_paid)
-    path = '.'.join([str(slideid) for slideid in slides_ids])
-    lesson.path = path
+    lesson.path = str(lesson_path)
     logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
