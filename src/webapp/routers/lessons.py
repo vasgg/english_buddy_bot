@@ -150,7 +150,7 @@ async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyCompone
 
 @router.get('/add_lesson/', response_model=FastUI, response_model_exclude_none=True)
 async def add_lesson() -> list[AnyComponent]:
-    submit_url = f'/api/lessons/new/'
+    submit_url = '/api/lessons/new/'
     form = c.ModelForm(model=get_new_lesson_data_model(), submit_url=submit_url)
     return get_common_content(
         back_button,
