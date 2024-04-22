@@ -11,17 +11,18 @@ from bot.keyboards.callback_data import (
     RemindersCallbackFactory,
 )
 from database.models.lesson import Lesson
-from enums import LessonStartsFrom, SubscriptionType, UserLessonProgress
+from enums import LessonStartsFrom, LessonStatus, SubscriptionType, UserLessonProgress
 
 
 def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
     buttons = []
     for lesson in lessons:
-        mark = ' ✅' if lesson.id in completed_lessons else ''
+        editing_mark = '🧑‍🏫 ' if lesson.is_active == LessonStatus.EDITING else ''
+        completion_mark = ' ✅' if lesson.id in completed_lessons else ''
         buttons.append(
             [
                 InlineKeyboardButton(
-                    text=f'{lesson.title}{mark}',
+                    text=f'{editing_mark}{lesson.title}{completion_mark}',
                     callback_data=LessonsCallbackFactory(lesson_id=lesson.id).pack(),
                 ),
             ],

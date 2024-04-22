@@ -6,20 +6,20 @@ from aiogram import Bot, types
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard, get_premium_keyboard
+from config import get_settings
+from consts import ONE_DAY, ONE_HOUR, UTC_STARTING_MARK
 from database.crud.answer import get_text_by_prompt
-from database.crud.lesson import get_completed_lessons_from_sessions, get_lessons
+from database.crud.lesson import get_active_and_editing_lessons, get_active_lessons, get_completed_lessons_from_sessions
 from database.crud.user import (
     get_all_users_with_active_subscription,
     get_all_users_with_reminders,
     update_last_reminded_at,
 )
 from database.database_connector import DatabaseConnector
+from database.garbage_helper import collect_garbage
 from enums import UserSubscriptionType
 
 logger = logging.getLogger()
-UTC_STARTING_MARK = 14
-ONE_HOUR = 3600
-ONE_DAY = 86400
 
 
 def get_seconds_until_starting_mark(current_hour, utcnow):
@@ -39,7 +39,10 @@ async def propose_reminder_to_user(message: types.Message, db_session: AsyncSess
 
 
 async def show_start_menu(event: types.Message, user_id: int, db_session: AsyncSession) -> None:
-    lessons = await get_lessons(db_session)
+    if event.from_user.id not in get_settings().TEACHERS:
+        lessons = await get_active_lessons(db_session)
+    else:
+        lessons = await get_active_and_editing_lessons(db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=user_id, db_session=db_session)
     await event.answer(
         text=await get_text_by_prompt(prompt='start_message', db_session=db_session),
