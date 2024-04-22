@@ -3,15 +3,15 @@ import logging
 from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
-from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
 
+from consts import ERRORS_THRESHOLD, IMAGE_WIDTH
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from enums import MoveSlideDirection, PathType, SlideType, SlidesMenuType, StickerType
-from webapp.consts import ERRORS_THRESHOLD, IMAGE_WIDTH
+from webapp.controllers.lesson import update_lesson_path
 from webapp.controllers.slide import (
     create_new_sticker,
     delete_slide,
@@ -19,10 +19,11 @@ from webapp.controllers.slide import (
     get_edit_slide_form_by_slide_type,
     get_new_slide_form_by_slide_type,
     move_slide,
-    update_lesson_path,
 )
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import back_button, get_common_content
+from webapp.routers.components.buttons import back_button, create_new_slide_button_by_mode
+from webapp.routers.components.components import get_add_slide_page, get_common_content
+from webapp.routers.components.tables import get_extra_slides_table, get_slides_table
 from webapp.schemas.slide import (
     get_image_slide_data_model,
 )
@@ -37,173 +38,44 @@ async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyCom
     logger.info('slides router called')
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     slides = await get_all_slides_from_lesson_by_order_fastui(db_session, lesson.path)
-    if not slides:
-        return get_common_content(
-            c.Paragraph(text=''),
-            c.Paragraph(text='В этом уроке ещё нет слайдов.'),
-            back_button,
-            c.Paragraph(text=''),
-            c.Button(text='Создать слайд', on_click=GoToEvent(url=f'/slides/plus_button/regular/{lesson_id}/')),
-            title=f'Слайды | Урок {lesson.index} | {lesson.title}',
-        )
-    slides_table = c.Table(
-        data=slides,
-        columns=[
-            DisplayLookup(field='index', table_width_percent=3),
-            DisplayLookup(field='emoji', table_width_percent=3),
-            DisplayLookup(field='text'),
-            DisplayLookup(field='details', table_width_percent=20),
-            DisplayLookup(field='is_exam_slide', table_width_percent=3),
-            DisplayLookup(
-                field='edit_button',
-                on_click=GoToEvent(url='/slides/edit/regular/{slide_type}/{id}/{index}/'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='up_button',
-                on_click=GoToEvent(url='/slides/up/regular/{lesson_id}/{index}/'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='down_button',
-                on_click=GoToEvent(url='/slides/down/regular/{lesson_id}/{index}/'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='plus_button',
-                on_click=GoToEvent(url='/slides/plus_button/regular/{lesson_id}/?index={index}'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='minus_button',
-                on_click=GoToEvent(url='/slides/confirm_delete/regular/{id}/{index}/'),
-                table_width_percent=3,
-            ),
-        ],
-    )
-    if not lesson.path_extra:
-        return get_common_content(
-            c.Paragraph(text=''),
-            slides_table,
-            c.Paragraph(text=''),
-            c.Paragraph(text='В этом уроке нет экстра слайдов.'),
-            c.Paragraph(text=''),
-            c.Button(text='Создать экстра слайд', on_click=GoToEvent(url=f'/slides/plus_button/extra/{lesson_id}/')),
-            c.Paragraph(text=''),
-            title=f'Слайды | Урок {lesson.index} | {lesson.title}',
-        )
     extra_slides = await get_all_slides_from_lesson_by_order_fastui(db_session, str(lesson.path_extra))
-    extra_slides_table = c.Table(
-        data=extra_slides,
-        columns=[
-            DisplayLookup(field='index', table_width_percent=3),
-            DisplayLookup(field='emoji', table_width_percent=3),
-            DisplayLookup(field='text'),
-            DisplayLookup(field='details', table_width_percent=23),
-            DisplayLookup(
-                field='edit_button',
-                on_click=GoToEvent(url='/slides/edit/extra/{slide_type}/{id}/{index}/'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='up_button',
-                on_click=GoToEvent(url='/slides/up/extra/{lesson_id}/{index}/'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='down_button',
-                on_click=GoToEvent(url='/slides/down/extra/{lesson_id}/{index}/'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='plus_button',
-                on_click=GoToEvent(url='/slides/plus_button/extra/{lesson_id}/?index={index}'),
-                table_width_percent=3,
-            ),
-            DisplayLookup(
-                field='minus_button',
-                on_click=GoToEvent(url='/slides/confirm_delete/extra/{id}/{index}/'),
-                table_width_percent=3,
-            ),
-        ],
-    )
+
+    slides_heading = [c.Heading(text='Слайды', level=4), c.Paragraph(text='')]
+    if len(slides) > 0:
+        slides_heading.append(get_slides_table(slides))
+    else:
+        slides_heading.extend(
+            [
+                c.Paragraph(text='В этом уроке ещё нет слайдов.'),
+                create_new_slide_button_by_mode(lesson_id, SlidesMenuType.REGULAR),
+            ]
+        )
+    slides_heading.append(c.Paragraph(text=''))
+
+    extra_slides_heading = [c.Heading(text='Экстра слайды', level=4), c.Paragraph(text='')]
+    if len(extra_slides) > 0:
+        extra_slides_heading.append(get_extra_slides_table(extra_slides))
+    else:
+        extra_slides_heading.extend(
+            [
+                c.Paragraph(text='В этом уроке ещё нет экстра слайдов.'),
+                create_new_slide_button_by_mode(lesson_id, SlidesMenuType.EXTRA),
+            ]
+        )
+    extra_slides_heading.append(c.Paragraph(text=''))
+
     return get_common_content(
         c.Paragraph(text=''),
-        slides_table,
+        *slides_heading,
+        *extra_slides_heading,
         c.Paragraph(text=''),
-        c.Heading(text='Экстра слайды', level=3),
-        c.Paragraph(text=''),
-        extra_slides_table,
         title=f'Слайды | Урок {lesson.index} | {lesson.title}',
     )
 
 
 @router.get('/plus_button/{source}/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
 async def add_slide(lesson_id: int, source: SlidesMenuType, index: int | None = None) -> list[AnyComponent]:
-    suffix = f'{index}/' if index else ''
-    return get_common_content(
-        c.Paragraph(text=''),
-        c.Paragraph(text='Выберите тип слайда.'),
-        c.Paragraph(text=''),
-        c.Button(
-            text='🖋  текст',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/text/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='🖼  картинка',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/image/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='📎  словарик',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/dict/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='🧨  малый стикер',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/small_sticker/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='💣  большой стикер',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/big_sticker/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='🧩  квиз варианты',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/quiz_options/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='🗨  квиз впиши слово',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/quiz_input_word/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        c.Button(
-            text='💬  квиз впиши фразу',
-            on_click=GoToEvent(url=f'/slides/new/{lesson_id}/{source}/quiz_input_phrase/' + suffix),
-            class_name='+ ms-2',
-            named_style='secondary',
-        ),
-        c.Paragraph(text=''),
-        back_button,
-        title='Добавить новый слайд',
-    )
+    return get_add_slide_page(lesson_id, source, index)
 
 
 @router.get('/new/{lesson_id}/{source}/{slide_type}/', response_model=FastUI, response_model_exclude_none=True)
