@@ -86,16 +86,27 @@ async def get_lesson_progress_keyboard(
                     ],
                 )
         case UserLessonProgress.IN_PROGRESS:
-            buttons.append(
+            buttons.extend(
                 [
-                    InlineKeyboardButton(
-                        text='Продолжить урок',
-                        callback_data=LessonStartsFromCallbackFactory(
-                            lesson_id=lesson.id,
-                            attr=LessonStartsFrom.CONTINUE,
-                        ).pack(),
-                    ),
-                ],
+                    [
+                        InlineKeyboardButton(
+                            text='Начать с экзамена',
+                            callback_data=LessonStartsFromCallbackFactory(
+                                lesson_id=lesson.id,
+                                attr=LessonStartsFrom.EXAM,
+                            ).pack(),
+                        ),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text='Продолжить урок',
+                            callback_data=LessonStartsFromCallbackFactory(
+                                lesson_id=lesson.id,
+                                attr=LessonStartsFrom.CONTINUE,
+                            ).pack(),
+                        ),
+                    ],
+                ]
             )
         case _:
             msg = f'Unknown mode: {mode}'
