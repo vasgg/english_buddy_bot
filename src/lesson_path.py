@@ -3,7 +3,7 @@ from enums import MoveSlideDirection
 
 class LessonPath:
     def __init__(self, path: str):
-        if len(path) == 0:
+        if path is None or path == 'None' or len(path) == 0:
             self.path = []
         else:
             self.path = list(map(int, path.split('.')))

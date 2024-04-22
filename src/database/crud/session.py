@@ -78,8 +78,8 @@ async def get_error_counter_from_slides(session_id, slides_set: set[int], db_ses
 
 
 async def get_sessions_statistics(
-        db_session: AsyncSession,
-        status: SessionStatus | None = None,
+    db_session: AsyncSession,
+    status: SessionStatus | None = None,
 ) -> int:
     query = select(func.count()).select_from(Session)
     if status is not None:
@@ -88,3 +88,12 @@ async def get_sessions_statistics(
     result = await db_session.execute(query)
     count = result.scalar_one()
     return count
+
+
+async def abort_in_progress_sessions_by_lesson(lesson_id: int, db_session: AsyncSession):
+    query = (
+        update(Session)
+        .where((Session.lesson_id == lesson_id) & (Session.status == SessionStatus.IN_PROGRESS))
+        .values(status=SessionStatus.ABORTED)
+    )
+    await db_session.execute(query)

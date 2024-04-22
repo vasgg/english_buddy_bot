@@ -1,6 +1,7 @@
-from database.models.base import Base
-from enums import LessonLevel
 from sqlalchemy.orm import Mapped, mapped_column
+
+from database.models.base import Base
+from enums import LessonLevel, LessonStatus
 
 
 class Lesson(Base):
@@ -13,5 +14,5 @@ class Lesson(Base):
     path: Mapped[str | None]
     path_extra: Mapped[str | None]
     errors_threshold: Mapped[int | None]
-    is_active: Mapped[bool] = mapped_column(default=True, server_default='1')
+    is_active: Mapped[LessonStatus] = mapped_column(default=LessonStatus.EDITING, server_default='EDITING')
     is_paid: Mapped[bool] = mapped_column(default=False, server_default='0')
