@@ -4,13 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
-from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 
 from webapp.controllers.text import get_text_by_id, get_texts_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import back_button, get_common_content
+from webapp.routers.components.buttons import back_button
+from webapp.routers.components.components import get_common_content, get_texts_page
 from webapp.schemas.text import EditTextDataModel, get_text_data_model
 
 router = APIRouter()
@@ -21,24 +21,7 @@ logger = logging.getLogger()
 async def texts_page(db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('texts router called')
     texts = await get_texts_table_content(db_session)
-    return get_common_content(
-        c.Paragraph(text=''),
-        c.Table(
-            data=texts,
-            columns=[
-                DisplayLookup(field='description', title='description'),
-                DisplayLookup(field='text', title='text'),
-                DisplayLookup(
-                    field='edit_button',
-                    title=' ',
-                    on_click=GoToEvent(url='/texts/edit/{id}'),
-                    table_width_percent=3,
-                ),
-            ],
-        ),
-        c.Paragraph(text=''),
-        title='Тексты',
-    )
+    return get_texts_page(texts)
 
 
 @router.get("/edit/{text_id}", response_model=FastUI, response_model_exclude_none=True)

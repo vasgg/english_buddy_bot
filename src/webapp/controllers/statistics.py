@@ -1,10 +1,12 @@
 from database.crud.lesson import get_lesson_by_id
 from database.crud.quiz_answer import get_top_error_slides
+from database.crud.session import get_sessions_statistics
 from database.crud.slide import get_slide_by_id
-from enums import SlidesMenuType
+from enums import SessionStatus, SlidesMenuType
+from lesson_path import LessonPath
 from webapp.controllers.misc import get_slide_emoji
 from webapp.db import AsyncDBSession
-from webapp.schemas.statistics import SlidesStatisticsTableSchema
+from webapp.schemas.statistics import SessionStatistics, SessionsStatisticsTableSchema, SlidesStatisticsTableSchema
 
 
 async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession) -> list:
@@ -13,8 +15,8 @@ async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession)
     for i in slides_by_errors:
         slide = await get_slide_by_id(i.slide_id, db_session)
         lesson = await get_lesson_by_id(slide.lesson_id, db_session)
-        lesson_path = [int(slide_id) for slide_id in lesson.path.split('.')]
-        lesson_path_extra = [int(slide_id) for slide_id in lesson.path_extra.split('.')] if lesson.path_extra else []
+        lesson_path = LessonPath(lesson.path).path
+        lesson_path_extra = LessonPath(lesson.path_extra).path
         try:
             index = lesson_path.index(i.slide_id)
             source = SlidesMenuType.REGULAR
@@ -41,3 +43,28 @@ async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession)
         if len(stats) == limit:
             break
     return stats
+
+
+async def get_session_stats(db_session):
+    session_stats = SessionStatistics(
+        all_sessions={'description': 'Всего сессий', 'value': await get_sessions_statistics(db_session)},
+        completed={
+            'description': 'Завершено сессий',
+            'value': await get_sessions_statistics(db_session, status=SessionStatus.COMPLETED),
+        },
+        in_progress={
+            'description': 'Сессий в процессе',
+            'value': await get_sessions_statistics(db_session, status=SessionStatus.IN_PROGRESS),
+        },
+        aborted={
+            'description': 'Отменено сессий',
+            'value': await get_sessions_statistics(db_session, status=SessionStatus.ABORTED),
+        },
+    )
+    rows = []
+    all_sessions_schema = SessionsStatisticsTableSchema.model_validate(session_stats.all_sessions)
+    completed_schema = SessionsStatisticsTableSchema.model_validate(session_stats.completed)
+    in_progress_schema = SessionsStatisticsTableSchema.model_validate(session_stats.in_progress)
+    aborted_schema = SessionsStatisticsTableSchema.model_validate(session_stats.aborted)
+    rows.extend([all_sessions_schema, completed_schema, in_progress_schema, aborted_schema])
+    return rows

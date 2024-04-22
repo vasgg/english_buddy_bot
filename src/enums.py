@@ -109,6 +109,12 @@ class PathType(StrEnum):
     EXISTING_PATH_NEW = auto()
 
 
+class LessonStatus(StrEnum):
+    ACTIVE = auto()
+    EDITING = auto()
+    DISABLED = auto()
+
+
 class MoveSlideDirection(StrEnum):
     UP = auto()
     DOWN = auto()

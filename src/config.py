@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     NGROK_PASS: SecretStr
     ADMIN: int
     SUB_ADMINS: list[int]
+    TEACHERS: list[int]
     DB_NAME: str
     SENTRY_AIOGRAM_DSN: SecretStr | None = None
     SENTRY_FASTAPI_DSN: SecretStr | None = None

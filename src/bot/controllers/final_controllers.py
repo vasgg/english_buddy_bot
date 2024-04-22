@@ -10,11 +10,13 @@ from bot.keyboards.keyboards import (
     get_extra_slides_keyboard,
     get_lesson_picker_keyboard,
 )
+from config import get_settings
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import (
+    get_active_and_editing_lessons,
+    get_active_lessons,
     get_completed_lessons_from_sessions,
     get_lesson_by_id,
-    get_lessons,
 )
 from database.crud.session import (
     get_error_counter_from_slides,
@@ -111,7 +113,10 @@ async def show_stats_extra(
     db_session: AsyncSession,
 ) -> None:
     lesson = await get_lesson_by_id(lesson_id=session.lesson_id, db_session=db_session)
-    lessons = await get_lessons(db_session)
+    if event.from_user.id not in get_settings().TEACHERS:
+        lessons = await get_active_lessons(db_session)
+    else:
+        lessons = await get_active_and_editing_lessons(db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=session.user_id, db_session=db_session)
     lesson_picker_kb = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)
     await event.answer(
@@ -162,7 +167,10 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
             await show_stats(event, user_stats, session, db_session)
             await show_extra_slides_dialog(event, db_session)
             return
-    lessons = await get_lessons(db_session)
+    if event.from_user.id not in get_settings().TEACHERS:
+        lessons = await get_active_lessons(db_session)
+    else:
+        lessons = await get_active_and_editing_lessons(db_session)
     await finish_session(session, db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=session.user_id, db_session=db_session)
     markup = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)

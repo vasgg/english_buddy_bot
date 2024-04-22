@@ -18,6 +18,7 @@ from database.models.lesson import Lesson
 from database.models.session import Session
 from database.models.user import User
 from enums import LessonStartsFrom, SessionStatus, UserLessonProgress, UserSubscriptionType, lesson_to_session
+from lesson_path import LessonPath
 
 router = Router()
 
@@ -29,21 +30,18 @@ async def lesson_callback_processing(
     user: User,
     db_session: AsyncSession,
 ) -> None:
+    await callback.answer()
     with contextlib.suppress(TelegramBadRequest):
         await callback.message.delete()
 
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
     lesson = await get_lesson_by_id(lesson_id=callback_data.lesson_id, db_session=db_session)
-    try:
-        slides_count = len(lesson.path.split('.'))
-    except AttributeError:
-        await callback.message.answer(text='no slides yet in this lesson')
-        return
+    lesson_path = LessonPath(lesson.path).path
+    slides_count = len(lesson_path)
     if slides_count == 0:
         await callback.message.answer(text='no slides yet in this lesson')
         return
-    path: list[int] = [int(elem) for elem in lesson.path.split(".")]
-    first_exam_slide = await find_first_exam_slide_id(path, db_session)
+    first_exam_slide = await find_first_exam_slide_id(lesson_path, db_session)
     has_exam_slides = first_exam_slide is not None
     if lesson.is_paid and user.subscription_status not in (
         UserSubscriptionType.UNLIMITED_ACCESS,
@@ -71,13 +69,12 @@ async def lesson_callback_processing(
                 has_exam_slides=has_exam_slides,
             ),
         )
-    await callback.answer()
 
 
 async def prepare_session(lesson: Lesson, db_session: AsyncSession, attr: LessonStartsFrom, user_id: int) -> Session:
     path = lesson.path
     if attr == LessonStartsFrom.EXAM:
-        path_list: list[int] = [int(elem) for elem in lesson.path.split(".")]
+        path_list = LessonPath(path).path
         first_exam_slide_id = await find_first_exam_slide_id(path_list, db_session)
         if first_exam_slide_id:
             path_start_index = path_list.index(first_exam_slide_id)
@@ -104,7 +101,7 @@ async def lesson_start_from_callback_processing(
     db_session: AsyncSession,
 ) -> None:
     await callback.answer()
-    with contextlib.suppress(TelegramBadRequest):
+    with contextlib.suppress(TelegramBadRequest, AttributeError):
         await callback.message.delete()
 
     lesson_id = callback_data.lesson_id

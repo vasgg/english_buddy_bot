@@ -11,8 +11,8 @@ from config import Settings, get_settings
 from database.crud.slide import get_slide_by_id
 from database.models.slide import Slide
 from enums import KeyboardType, PathType, SlideType, SlidesMenuType, StickerType
+from webapp.controllers.lesson import update_lesson_path
 from webapp.controllers.misc import extract_img_from_form, image_upload
-from webapp.controllers.slide import update_lesson_path
 from webapp.db import AsyncDBSession
 from webapp.schemas.slide import (
     EditDictSlideData,

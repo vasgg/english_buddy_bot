@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
-from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 
@@ -12,7 +11,9 @@ from database.models.reaction import Reaction
 from enums import ReactionType
 from webapp.controllers.reaction import delete_reaction_by_id, get_reaction_by_id, get_reactions_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import back_button, get_common_content
+from webapp.routers.components.buttons import back_button
+from webapp.routers.components.components import get_common_content
+from webapp.routers.components.tables import get_reactions_table
 from webapp.schemas.reaction import (
     AddReactionDataModel,
     EditReactionDataModel,
@@ -37,24 +38,7 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
             ],
         ),
         c.Paragraph(text=''),
-        c.Table(
-            data=right_reactions,
-            columns=[
-                DisplayLookup(field='text', title='text'),
-                DisplayLookup(
-                    field='edit_button',
-                    title=' ',
-                    on_click=GoToEvent(url='/reactions/edit/{id}'),
-                    table_width_percent=3,
-                ),
-                DisplayLookup(
-                    field='minus_button',
-                    title=' ',
-                    on_click=GoToEvent(url='/reactions/confirm_delete/{id}/'),
-                    table_width_percent=3,
-                ),
-            ],
-        ),
+        get_reactions_table(right_reactions),
         c.Paragraph(text=''),
         c.Div(
             components=[
@@ -67,24 +51,7 @@ async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
             ],
         ),
         c.Paragraph(text=''),
-        c.Table(
-            data=wrong_reactions,
-            columns=[
-                DisplayLookup(field='text', title='text'),
-                DisplayLookup(
-                    field='edit_button',
-                    title=' ',
-                    on_click=GoToEvent(url='/reactions/edit/{id}'),
-                    table_width_percent=3,
-                ),
-                DisplayLookup(
-                    field='minus_button',
-                    title=' ',
-                    on_click=GoToEvent(url='/reactions/confirm_delete/{id}/'),
-                    table_width_percent=3,
-                ),
-            ],
-        ),
+        get_reactions_table(wrong_reactions),
         title='Реакции',
     )
 
@@ -122,15 +89,6 @@ async def add_reaction(
 ):
     reaction = Reaction(type=reaction_type, text=form.text)
     db_session.add(reaction)
-    return [c.FireEvent(event=GoToEvent(url='/reactions'))]
-
-
-@router.post('/delete/{reaction_id}/', response_model=FastUI, response_model_exclude_none=True)
-async def delete_reaction(
-    reaction_id: int,
-    db_session: AsyncDBSession,
-):
-    await delete_reaction_by_id(reaction_id, db_session)
     return [c.FireEvent(event=GoToEvent(url='/reactions'))]
 
 

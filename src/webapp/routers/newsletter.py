@@ -11,11 +11,11 @@ from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 
 from config import Settings, get_settings
+from consts import IMAGE_WIDTH
 from database.crud.user import get_all_users_with_reminders
-from webapp.consts import IMAGE_WIDTH
 from webapp.controllers.misc import extract_img_from_form, send_newsletter_to_users
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import get_common_content
+from webapp.routers.components.components import get_common_content
 from webapp.schemas.newsletter import get_newsletter_data_model
 
 router = APIRouter()

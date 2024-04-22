@@ -11,17 +11,18 @@ from bot.keyboards.callback_data import (
     RemindersCallbackFactory,
 )
 from database.models.lesson import Lesson
-from enums import LessonStartsFrom, SubscriptionType, UserLessonProgress
+from enums import LessonStartsFrom, LessonStatus, SubscriptionType, UserLessonProgress
 
 
 def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
     buttons = []
     for lesson in lessons:
-        mark = ' ✅' if lesson.id in completed_lessons else ''
+        editing_mark = '🧑‍🏫 ' if lesson.is_active == LessonStatus.EDITING else ''
+        completion_mark = ' ✅' if lesson.id in completed_lessons else ''
         buttons.append(
             [
                 InlineKeyboardButton(
-                    text=f'{lesson.title}{mark}',
+                    text=f'{editing_mark}{lesson.title}{completion_mark}',
                     callback_data=LessonsCallbackFactory(lesson_id=lesson.id).pack(),
                 ),
             ],
@@ -86,17 +87,41 @@ async def get_lesson_progress_keyboard(
                     ],
                 )
         case UserLessonProgress.IN_PROGRESS:
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        text='Продолжить урок',
-                        callback_data=LessonStartsFromCallbackFactory(
-                            lesson_id=lesson.id,
-                            attr=LessonStartsFrom.CONTINUE,
-                        ).pack(),
-                    ),
-                ],
-            )
+            if has_exam_slides:
+                buttons.extend(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                text='Начать с экзамена',
+                                callback_data=LessonStartsFromCallbackFactory(
+                                    lesson_id=lesson.id,
+                                    attr=LessonStartsFrom.EXAM,
+                                ).pack(),
+                            ),
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                text='Продолжить урок',
+                                callback_data=LessonStartsFromCallbackFactory(
+                                    lesson_id=lesson.id,
+                                    attr=LessonStartsFrom.CONTINUE,
+                                ).pack(),
+                            ),
+                        ],
+                    ]
+                )
+            else:
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text='Продолжить урок',
+                            callback_data=LessonStartsFromCallbackFactory(
+                                lesson_id=lesson.id,
+                                attr=LessonStartsFrom.CONTINUE,
+                            ).pack(),
+                        ),
+                    ],
+                )
         case _:
             msg = f'Unknown mode: {mode}'
             raise AssertionError(msg)

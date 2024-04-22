@@ -4,24 +4,19 @@ from typing import Annotated
 from fastapi import APIRouter
 from fastui import AnyComponent, FastUI
 from fastui import components as c
-from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
 from fastui.forms import fastui_form
-from pydantic import BaseModel, Field
 
 from database.crud.user import get_user_from_db_by_id
 from enums import SelectOneEnum, UserSubscriptionType
 from webapp.controllers.users import get_users_table_content
 from webapp.db import AsyncDBSession
-from webapp.routers.components.main_component import back_button, get_common_content
+from webapp.routers.components.buttons import back_button
+from webapp.routers.components.components import get_common_content, get_users_page
 from webapp.schemas.user import EditUserModel, get_user_data_model
 
 router = APIRouter()
 logger = logging.getLogger()
-
-
-class FilterForm(BaseModel):
-    user: str = Field(json_schema_extra={'search_url': '/api/forms/search', 'placeholder': 'Поиск пользователя...'})
 
 
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
@@ -32,37 +27,7 @@ async def users_page(db_session: AsyncDBSession, user: str | None = None) -> lis
     if user:
         users = [u for u in users if user.lower() in u.credentials.lower()]
         filter_form_initial['users'] = {'value': user}
-    return get_common_content(
-        c.Paragraph(text=' '),
-        c.Paragraph(text='⬜ нет доступа'),
-        c.Paragraph(text='🟩 доступ активен'),
-        c.Paragraph(text='🟥 доступ истёк'),
-        c.Paragraph(text='🟨 нет доступа, интересовался'),
-        c.Paragraph(text='⭐ доступ навсегда'),
-        c.Paragraph(text=' '),
-        c.ModelForm(
-            model=FilterForm,
-            submit_url='.',
-            initial=filter_form_initial,
-            method='GOTO',
-            submit_on_change=True,
-            display_mode='inline',
-        ),
-        c.Table(
-            data=users,
-            columns=[
-                DisplayLookup(field='number', title=' ', table_width_percent=3),
-                DisplayLookup(field='fullname', title='полное имя', table_width_percent=15),
-                DisplayLookup(field='username', title='никнейм', table_width_percent=15),
-                DisplayLookup(field='registration_date', title='зарегистрирован', table_width_percent=10),
-                DisplayLookup(field='comment', title='комментарий', table_width_percent=20),
-                DisplayLookup(field='subscription_expired_at', title='доступ истекает', table_width_percent=13),
-                DisplayLookup(field='color_code', title=' ', table_width_percent=3),
-                DisplayLookup(field='icon', table_width_percent=3, title=' ', on_click=GoToEvent(url='{link}')),
-            ],
-        ),
-        title='Пользователи',
-    )
+    return get_users_page(users, filter_form_initial)
 
 
 @router.get("/edit/{user_id}/", response_model=FastUI, response_model_exclude_none=True)

@@ -1,8 +1,9 @@
 import logging
 
+from sqlalchemy import delete, select
+
 from database.models.reaction import Reaction
 from enums import ReactionType
-from sqlalchemy import select
 from webapp.db import AsyncDBSession
 from webapp.schemas.reaction import ReactionsTableSchema
 
@@ -22,9 +23,8 @@ async def get_reactions_table_content(reaction_type: ReactionType, session: Asyn
 
 
 async def delete_reaction_by_id(reaction_id: int, db_session: AsyncDBSession) -> None:
-    query = select(Reaction).filter(Reaction.id == reaction_id)
-    result = await db_session.execute(query)
-    await db_session.delete(result.scalar())
+    query = delete(Reaction).filter(Reaction.id == reaction_id)
+    await db_session.execute(query)
 
 
 async def get_reaction_by_id(reaction_id: int, db_session: AsyncDBSession) -> Reaction:
