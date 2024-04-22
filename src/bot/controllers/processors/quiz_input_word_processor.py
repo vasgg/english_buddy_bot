@@ -56,7 +56,6 @@ async def response_input_word_correct(
 async def response_input_word_almost_correct(
     event: types.Message,
     slide: Slide,
-    user_input_text: str,
     state: FSMContext,
     session: Session,
     db_session: AsyncSession,
@@ -67,7 +66,7 @@ async def response_input_word_almost_correct(
             chat_id=event.from_user.id,
             message_id=data["quiz_word_msg_id"],
             text=(
-                slide.text.replace("_", f"<u>{user_input_text.lower()}</u>")
+                slide.text.replace("_", f"<u>{slide.right_answers.lower()}</u>")
                 if "_" in slide.text
                 else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
                 'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
@@ -114,7 +113,7 @@ async def process_quiz_input_word(
                 await response_input_word_correct(event, slide, trimmed_user_input, state, session, db_session)
                 return True
             elif trimmed_user_input in almost_right_answers:
-                await response_input_word_almost_correct(event, slide, trimmed_user_input, state, session, db_session)
+                await response_input_word_almost_correct(event, slide, state, session, db_session)
                 return True
 
             await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)
