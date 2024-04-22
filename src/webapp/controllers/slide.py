@@ -30,6 +30,7 @@ async def get_all_slides_from_lesson_by_order_fastui(db_session: AsyncDBSession,
         slide_text = (
             slide.slide_type.value.replace('_', ' ').capitalize() if 'sticker' in slide.slide_type.value else slide.text
         )
+        # noinspection PyTypeChecker
         slide_data = {
             'id': slide.id,
             'lesson_id': slide.lesson_id,
@@ -37,6 +38,7 @@ async def get_all_slides_from_lesson_by_order_fastui(db_session: AsyncDBSession,
             'index': index,
             'emoji': get_slide_emoji(slide.slide_type),
             'text': slide.picture if slide.slide_type.value == 'image' else slide_text,
+            'delay': str(int(slide.delay)) if slide.delay else ' ',
             'details': get_slide_details(slide),
             'is_exam_slide': '🎓' if slide.is_exam_slide else ' ',
             'edit_button': '✏️',

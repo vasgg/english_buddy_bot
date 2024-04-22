@@ -9,19 +9,15 @@ from database.models.slide import Slide
 from enums import KeyboardType
 
 
-class SlidesSchema(BaseModel):
+class SlidesTableSchema(BaseModel):
     id: int
     text: str | None = Field(title='Контент')
     details: str | None = Field(title='Контекст')
     is_exam_slide: str = Field(title=' ')
-
-    model_config = ConfigDict(extra='allow', from_attributes=True)
-
-
-class SlidesTableSchema(SlidesSchema):
     index: int = Field(title=' ')
     lesson_id: int = Field(title=' ')
     slide_type: str = Field(title=' ')
+    delay: str = Field(title='⏲︎')
     emoji: str = Field(title=' ')
     edit_button: str = Field(title=' ')
     up_button: str = Field(title=' ')
@@ -218,6 +214,13 @@ class EditTextSlideDataModel(BaseModel):
     delay: float | None = None
     keyboard_type: bool = False
 
+    # noinspection PyMethodParameters
+    @field_validator('delay')
+    def delay_validator(cls, value: float) -> float:
+        if value <= 0:
+            raise PydanticCustomError('delay', 'Задержка не может быть отрицательной или равной 0.')
+        return value
+
 
 class EditDictSlideData(BaseModel):
     text: str
@@ -271,3 +274,10 @@ class EditImageSlideData(BaseModel):
     select_picture: str | None = None
     keyboard_type: bool = False
     upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=10_000_000)] | None
+
+    # noinspection PyMethodParameters
+    @field_validator('delay')
+    def delay_validator(cls, value: float) -> float:
+        if value <= 0:
+            raise PydanticCustomError('delay', 'Задержка не может быть отрицательной или равной 0.')
+        return value
