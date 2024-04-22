@@ -4,7 +4,7 @@ from fastui.events import BackEvent, GoToEvent
 from enums import SlidesMenuType
 
 back_button = c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=BackEvent())
-create_lesson_button = c.Button(text='Создать урок', on_click=GoToEvent(url=f'/lessons/add_lesson/'))
+create_lesson_button = c.Button(text='Создать урок', on_click=GoToEvent(url='/lessons/add_lesson/'))
 
 
 def create_new_slide_button_by_mode(lesson_id: int, mode: SlidesMenuType):
