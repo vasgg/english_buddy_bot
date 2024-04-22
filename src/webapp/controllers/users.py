@@ -30,7 +30,7 @@ async def get_users_table_content(session: AsyncDBSession):
             'id': user.id,
             'number': i,
             'fullname': user.fullname,
-            'username': user.username,
+            'username': user.username if user.username else ' ',
             'credentials': f'{user.fullname} | {user.username}' if user.username else user.fullname,
             'color_code': get_color_code_emoji(user.subscription_status),
             'icon': '👤',

@@ -2,11 +2,10 @@ import logging
 
 from fastui import components as c
 
-from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from database.models.slide import Slide
-from enums import MoveSlideDirection, PathType, SlideType, SlidesMenuType, StickerType
+from enums import MoveSlideDirection, SlideType, SlidesMenuType, StickerType
 from lesson_path import LessonPath
 from webapp.controllers.misc import get_slide_details, get_slide_emoji
 from webapp.db import AsyncDBSession
@@ -158,37 +157,3 @@ def move_slide(
             lesson.path_extra = str(lesson_path)
         case _:
             raise AssertionError(f'Unexpected source: {source}')
-
-
-async def update_lesson_path(
-    lesson_id: int,
-    source: SlidesMenuType,
-    slide_id: int,
-    db_session: AsyncDBSession,
-    index: int | None = None,
-    mode: PathType | None = None,
-) -> None:
-    lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
-    match source:
-        case SlidesMenuType.REGULAR:
-            if index is None:
-                lesson.path = str(slide_id)
-            else:
-                lesson.path = compose_lesson_path(index, lesson.path, mode, slide_id)
-        case SlidesMenuType.EXTRA:
-            if index is None:
-                lesson.path_extra = str(slide_id)
-            else:
-                lesson.path_extra = compose_lesson_path(index, lesson.path_extra, mode, slide_id)
-        case _:
-            raise AssertionError(f'Unexpected source: {source}')
-
-
-def compose_lesson_path(index, path, mode, slide_id) -> str:
-    lesson_path = LessonPath(path)
-    match mode:
-        case PathType.EXISTING_PATH_NEW:
-            lesson_path.add_slide(index, slide_id)
-        case PathType.EXISTING_PATH_EDIT:
-            lesson_path.edit_slide(index, slide_id)
-    return str(lesson_path)
