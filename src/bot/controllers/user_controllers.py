@@ -68,13 +68,14 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                         await session.commit()
 
 
-async def check_user_subscription(bot: Bot, db_connector: DatabaseConnector):
+async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
     utcnow = datetime.now(timezone.utc)
     current_hour = utcnow.hour
     seconds_to_sleep = get_seconds_until_starting_mark(current_hour, utcnow)
     await asyncio.sleep(seconds_to_sleep)
     while True:
         async with db_connector.session_factory() as session:
+            await collect_garbage(session)
             for user in await get_all_users_with_active_subscription(session):
                 utcnow = datetime.now(timezone.utc)
                 delta = utcnow.date() - user.subscription_expired_at
