@@ -87,17 +87,31 @@ async def get_lesson_progress_keyboard(
                     ],
                 )
         case UserLessonProgress.IN_PROGRESS:
-            buttons.extend(
-                [
+            if has_exam_slides:
+                buttons.extend(
                     [
-                        InlineKeyboardButton(
-                            text='Начать с экзамена',
-                            callback_data=LessonStartsFromCallbackFactory(
-                                lesson_id=lesson.id,
-                                attr=LessonStartsFrom.EXAM,
-                            ).pack(),
-                        ),
-                    ],
+                        [
+                            InlineKeyboardButton(
+                                text='Начать с экзамена',
+                                callback_data=LessonStartsFromCallbackFactory(
+                                    lesson_id=lesson.id,
+                                    attr=LessonStartsFrom.EXAM,
+                                ).pack(),
+                            ),
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                text='Продолжить урок',
+                                callback_data=LessonStartsFromCallbackFactory(
+                                    lesson_id=lesson.id,
+                                    attr=LessonStartsFrom.CONTINUE,
+                                ).pack(),
+                            ),
+                        ],
+                    ]
+                )
+            else:
+                buttons.append(
                     [
                         InlineKeyboardButton(
                             text='Продолжить урок',
@@ -107,8 +121,7 @@ async def get_lesson_progress_keyboard(
                             ).pack(),
                         ),
                     ],
-                ]
-            )
+                )
         case _:
             msg = f'Unknown mode: {mode}'
             raise AssertionError(msg)
