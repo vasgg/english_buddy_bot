@@ -42,6 +42,7 @@ async def edit_text_slide(
         lesson_id=slide.lesson_id,
         text=form.text,
         delay=form.delay,
+        is_exam_slide=form.is_exam_slide,
         keyboard_type=KeyboardType.FURTHER if form.keyboard_type else None,
     )
     db_session.add(new_slide)
@@ -208,6 +209,7 @@ async def new_text_slide_form(
         lesson_id=lesson_id,
         text=form.text,
         delay=form.delay,
+        is_exam_slide=form.is_exam_slide,
         keyboard_type=KeyboardType.FURTHER if form.keyboard_type else None,
     )
     db_session.add(new_slide)
