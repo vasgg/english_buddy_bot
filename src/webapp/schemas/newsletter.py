@@ -10,7 +10,7 @@ def get_newsletter_data_model() -> Type[BaseModel]:
         text: str = Field(
             description='Введите текст. Обязательное поле.',
             format='textarea',
-            title='Текст рассылки. Он будет отправлен всем пользователям, у которых включены уведомления.',
+            title='Текст рассылки. Он будет отправлен всем пользователям без уведомления.',
             rows=5,
             cols=None,
         )

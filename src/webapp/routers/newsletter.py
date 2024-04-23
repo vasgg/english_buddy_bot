@@ -12,7 +12,7 @@ from fastui.forms import fastui_form
 
 from config import Settings, get_settings
 from consts import IMAGE_WIDTH
-from database.crud.user import get_all_users_with_reminders
+from database.crud.user import get_all_users
 from webapp.controllers.misc import extract_img_from_form, send_newsletter_to_users
 from webapp.db import AsyncDBSession
 from webapp.routers.components.components import get_common_content
@@ -51,7 +51,7 @@ async def send_newsletter(
     form: Annotated[get_newsletter_data_model(), fastui_form(get_newsletter_data_model())],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> list[AnyComponent]:
-    users_with_reminders = [user.telegram_id for user in await get_all_users_with_reminders(db_session)]
+    users = [user.telegram_id for user in await get_all_users(db_session)]
     text = form.text
     if form.upload_new_picture.filename != '':
         if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
@@ -67,7 +67,7 @@ async def send_newsletter(
                 image.save(buffer, format=image_format.split("/")[1])
             await send_newsletter_to_users(
                 settings.BOT_TOKEN.get_secret_value(),
-                users_with_reminders,
+                users,
                 text,
                 file_path,
             )
