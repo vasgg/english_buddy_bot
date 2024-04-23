@@ -48,6 +48,11 @@ def get_text_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
             description='Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.',
             title='Кнопка "далее"',
         )
+        is_exam_slide: bool = Field(
+            slide.is_exam_slide if slide else False,
+            description='Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.',
+            title='exam slide',
+        )
 
     return TextSlideDataModel
 
@@ -213,6 +218,7 @@ class EditTextSlideDataModel(BaseModel):
     text: str
     delay: float | None = None
     keyboard_type: bool = False
+    is_exam_slide: bool = False
 
     # noinspection PyMethodParameters
     @field_validator('delay')
