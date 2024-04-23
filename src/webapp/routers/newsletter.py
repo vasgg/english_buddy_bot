@@ -73,5 +73,5 @@ async def send_newsletter(
             )
 
     else:
-        await send_newsletter_to_users(settings.BOT_TOKEN.get_secret_value(), users_with_reminders, text)
+        await send_newsletter_to_users(settings.BOT_TOKEN.get_secret_value(), users, text)
     return [c.FireEvent(event=GoToEvent(url='/newsletter/sent/'))]
