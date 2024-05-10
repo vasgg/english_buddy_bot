@@ -91,7 +91,7 @@ async def edit_sticker_slide(
     return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
 
 
-@router.post('/edit/{source}/quiz_option/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post('/edit/{source}/quiz_options/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def edit_quiz_option_slide(
     source: SlidesMenuType,
     index: int,
