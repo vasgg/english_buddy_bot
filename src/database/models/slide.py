@@ -1,7 +1,8 @@
-from database.models.base import Base
-from enums import KeyboardType, SlideType
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
+
+from database.models.base import Base
+from enums import KeyboardType, SlideType
 
 
 class Slide(Base):
@@ -11,7 +12,7 @@ class Slide(Base):
     picture: Mapped[str | None]
     delay: Mapped[float | None]
     slide_type: Mapped[SlideType]
-    lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id'))
+    lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id', ondelete='CASCADE'))
     right_answers: Mapped[str | None]
     almost_right_answers: Mapped[str | None]
     almost_right_answer_reply: Mapped[str | None]

@@ -1,13 +1,14 @@
-from database.models.base import Base
-from enums import SessionStartsFrom, SessionStatus
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
+
+from database.models.base import Base
+from enums import SessionStartsFrom, SessionStatus
 
 
 class Session(Base):
     __tablename__ = 'sessions'
 
-    lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id'))
+    lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id', ondelete='CASCADE'))
     path: Mapped[str]
     path_extra: Mapped[str | None]
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
