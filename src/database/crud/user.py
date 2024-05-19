@@ -19,11 +19,12 @@ async def add_user_to_db(user, db_session) -> User:
     return new_user
 
 
-async def get_user_from_db_by_tg_id(telegram_id: int, db_session: AsyncSession) -> User:
+async def get_user_from_db_by_tg_id(telegram_id: int, db_session: AsyncSession) -> User | None:
     query = select(User).filter(User.telegram_id == telegram_id)
     result: Result = await db_session.execute(query)
     user = result.scalar()
-    user.last_reminded_at = user.last_reminded_at.replace(tzinfo=timezone.utc)
+    if user:
+        user.last_reminded_at = user.last_reminded_at.replace(tzinfo=timezone.utc)
     return user
 
 
