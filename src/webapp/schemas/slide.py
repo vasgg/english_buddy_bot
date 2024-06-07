@@ -100,8 +100,11 @@ def get_pin_dict_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
 def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class QuizOptionsSlideDataModel(BaseModel):
         text: str = Field(
-            slide.text if slide else '',
+            initial=slide.text if slide else '',
             description='Введите текст вопроса с пропущенным словом, отмеченным "_". Обязательное поле.',
+            format='textarea',
+            rows=5,
+            cols=None,
             title='текст вопроса',
         )
         right_answers: str = Field(

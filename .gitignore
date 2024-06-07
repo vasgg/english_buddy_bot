@@ -6,7 +6,7 @@ node_modules
 venv2
 *.egg-info
 .vscode/
-.idea/
+../english_buddy_bot/.idea/
 build/
 __pycache__/
 __pypackages__/

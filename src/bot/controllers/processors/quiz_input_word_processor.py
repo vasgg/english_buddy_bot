@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import random
 
 from aiogram import types
 from aiogram.fsm.context import FSMContext
@@ -12,7 +13,7 @@ from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType, States
-from webapp.controllers.misc import trim_non_alpha
+from webapp.controllers.misc import normalize_apostrophes, trim_non_alpha
 
 
 async def show_quiz_input_word(
@@ -61,12 +62,13 @@ async def response_input_word_almost_correct(
     db_session: AsyncSession,
 ) -> None:
     data = await state.get_data()
+    right_answer = random.choice(slide.right_answers.split("|")) if '|' in slide.right_answers else slide.right_answers
     try:
         await event.bot.edit_message_text(
             chat_id=event.from_user.id,
             message_id=data["quiz_word_msg_id"],
             text=(
-                slide.text.replace("_", f"<u>{slide.right_answers.lower()}</u>")
+                slide.text.replace("_", f"<u>{right_answer.lower()}</u>")
                 if "_" in slide.text
                 else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
                 'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
@@ -105,9 +107,14 @@ async def process_quiz_input_word(
                 await event.delete_reply_markup()
                 return await show_quiz_input_word(event, state, slide)
         case UserInputMsg() as input_msg:
-            trimmed_user_input = trim_non_alpha(input_msg.text).lower()
-            right_answers = [trim_non_alpha(answer.lower()) for answer in slide.right_answers.split("|")]
-            almost_right_answers = [trim_non_alpha(answer.lower()) for answer in (slide.almost_right_answers or '').split("|")]
+            trimmed_user_input = normalize_apostrophes(trim_non_alpha(input_msg.text).lower())
+            right_answers = [
+                normalize_apostrophes(trim_non_alpha(answer.lower())) for answer in slide.right_answers.split("|")
+            ]
+            almost_right_answers = [
+                normalize_apostrophes(trim_non_alpha(answer.lower()))
+                for answer in (slide.almost_right_answers or "").split("|")
+            ]
 
             if trimmed_user_input in right_answers:
                 await response_input_word_correct(event, slide, trimmed_user_input, state, session, db_session)

@@ -147,3 +147,7 @@ def trim_non_alpha(string: str) -> str:
     # fmt: off
     return string[start:end + 1]
     # fmt: on
+
+
+def normalize_apostrophes(text):
+    return text.replace("‘", "'").replace("’", "'").replace("`", "'")
