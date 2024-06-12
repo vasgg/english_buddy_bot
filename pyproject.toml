@@ -3,7 +3,7 @@ requires = ["setuptools>=58.0.4", "wheel>=0.37.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "english_buddy_bot"
+name = "georgian_buddy_bot"
 description = ""
 version = "0.0.1"
 authors = [

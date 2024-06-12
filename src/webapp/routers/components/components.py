@@ -13,7 +13,7 @@ def get_common_content(
     title: str | None = None,
 ) -> list[AnyComponent]:
     return [
-        c.PageTitle(text=f"English buddy — {title}" if title else "admin panel"),
+        c.PageTitle(text=f"Georgian buddy — {title}" if title else "admin panel"),
         c.Navbar(
             start_links=[
                 c.Link(
