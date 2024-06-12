@@ -26,7 +26,7 @@ async def favicon():
 @router.get("/api/", response_model=FastUI, response_model_exclude_none=True)
 async def root_page() -> list[AnyComponent]:
     logger.info('root router called')
-    return get_common_content(title='English Buddy Bot Admin Panel')
+    return get_common_content(title='Italian Buddy Bot Admin Panel')
 
 
 @router.get('/api/files/{lesson_id}/', response_model=SelectSearchResponse)
@@ -60,4 +60,4 @@ async def users_search_view(q: str, db_session: AsyncDBSession) -> SelectSearchR
 
 @router.get('/{path:path}')
 async def html_landing() -> HTMLResponse:
-    return HTMLResponse(prebuilt_html(title='English buddy FastUI'))
+    return HTMLResponse(prebuilt_html(title='Italian buddy FastUI'))
