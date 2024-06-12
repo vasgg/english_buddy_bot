@@ -3,6 +3,8 @@ import logging.config
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis
 import sentry_sdk
@@ -41,7 +43,7 @@ async def main():
             # We recommend adjusting this value in production.
             profiles_sample_rate=1.0,
         )
-    bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), parse_mode='HTML')
+    bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     logging.info("bot started")
     redis = Redis(db=1)
     storage = RedisStorage(redis)
