@@ -45,7 +45,7 @@ async def main():
         )
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     logging.info("bot started")
-    redis = Redis(db=1)
+    redis = Redis(db=2)
     storage = RedisStorage(redis)
     db = get_db()
     dispatcher = Dispatcher(storage=storage)
