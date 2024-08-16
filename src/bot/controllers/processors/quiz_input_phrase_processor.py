@@ -11,7 +11,7 @@ from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
 from database.models.slide import Slide
 from enums import ReactionType, States
-from webapp.controllers.misc import trim_non_alpha
+from webapp.controllers.misc import normalize_apostrophes, trim_non_alpha
 
 
 async def show_quiz_input_phrase(
@@ -50,9 +50,13 @@ async def process_quiz_input_phrase(
                 await event.delete_reply_markup()
                 return await show_quiz_input_phrase(event, state, slide)
         case UserInputMsg() as input_msg:
-            trimmed_user_input = trim_non_alpha(input_msg.text).lower()
-            right_answers = [trim_non_alpha(answer.lower()) for answer in slide.right_answers.split("|")]
-            almost_right_answers = [trim_non_alpha(answer.lower()) for answer in (slide.almost_right_answers or '').split("|")]
+            trimmed_user_input = normalize_apostrophes(trim_non_alpha(input_msg.text).lower())
+            right_answers = [
+                normalize_apostrophes(trim_non_alpha(answer.lower())) for answer in slide.right_answers.split("|")
+            ]
+            almost_right_answers = [
+                normalize_apostrophes(trim_non_alpha(answer.lower())) for answer in (slide.almost_right_answers or '').split("|")
+            ]
 
             if trimmed_user_input in right_answers:
                 await event.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
