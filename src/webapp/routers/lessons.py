@@ -103,6 +103,7 @@ async def edit_lesson_form(
         await abort_in_progress_sessions_by_lesson(lesson.id, db_session)
     elif lesson_status == LessonStatus.EDITING and form.is_active is True:
         lesson.index = len(await get_active_lessons(db_session)) + 1
+        logger.info(f'index updated to {lesson.index}')
         lesson.is_active = LessonStatus.ACTIVE
     # noinspection PyTypeChecker
     logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
@@ -122,9 +123,11 @@ async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent
             lesson_with_target_index.index = None
             await db_session.flush()
             lesson.index = index - 1
+            logger.info(f'lesson {lesson.id} updated to {lesson.index}, lesson_with_target_index '
+                        f'{lesson_with_target_index.id} updated to {lesson_with_target_index.index}')
             lesson_with_target_index.index = index
     except ResponseValidationError:
-        pass
+        logger.exception('unexpected behavior')
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
 
@@ -143,8 +146,10 @@ async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyCompone
             await db_session.flush()
             lesson.index = index + 1
             lesson_with_target_index.index = index
+            logger.info(f'lesson {lesson.id} updated to {lesson.index}, lesson_with_target_index '
+                        f'{lesson_with_target_index.id} updated to {lesson_with_target_index.index}')
     except ResponseValidationError:
-        pass
+        logger.exception('unexpected behavior')
     return [c.FireEvent(event=GoToEvent(url='/lessons'))]
 
 

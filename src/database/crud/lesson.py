@@ -38,13 +38,6 @@ async def get_active_and_editing_lessons(db_session: AsyncSession) -> list[Lesso
     return sorted_lessons
 
 
-async def get_lessons_with_greater_index(index: int, db_session: AsyncSession) -> list[Lesson]:
-    query = select(Lesson).filter(Lesson.is_active == LessonStatus.ACTIVE, Lesson.index > index).group_by(Lesson.index)
-    result = await db_session.execute(query)
-    lessons = result.scalars().all()
-    return list(lessons)
-
-
 async def update_lesson_status(lesson_id: int, mode: LessonStatus, db_session: AsyncSession):
     query = update(Lesson).filter(Lesson.id == lesson_id).values(is_active=mode, index=None)
     await db_session.execute(query)
