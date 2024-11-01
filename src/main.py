@@ -5,6 +5,7 @@ from pathlib import Path
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import SimpleEventIsolation
 from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis
 import sentry_sdk
@@ -48,7 +49,7 @@ async def main():
     redis = Redis(db=1)
     storage = RedisStorage(redis)
     db = get_db()
-    dispatcher = Dispatcher(storage=storage)
+    dispatcher = Dispatcher(storage=storage, events_isolation=SimpleEventIsolation())
     db_session_middleware = DBSessionMiddleware(db)
     dispatcher.message.middleware(db_session_middleware)
     dispatcher.callback_query.middleware(db_session_middleware)
