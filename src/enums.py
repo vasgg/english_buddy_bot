@@ -98,6 +98,11 @@ class SubscriptionType(StrEnum):
     ALLTIME = auto()
 
 
+class SubscriptionDuration(StrEnum):
+    ONE_MONTH = auto()
+    THREE_MONTH = auto()
+
+
 class SelectOneEnum(StrEnum):
     ALLTIME_ACCESS = auto()
     MONTHLY_ACCESS = auto()

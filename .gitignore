@@ -28,3 +28,4 @@ venv.bak/
 *$py.class
 *.so
 *.db
+.idea

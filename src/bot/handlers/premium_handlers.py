@@ -1,40 +1,73 @@
 import logging
 
-from aiogram import Router, types
+from aiogram import Router, types, F
+from aiogram.types import FSInputFile, LabeledPrice, PreCheckoutQuery, Message
+from aiogram.utils.media_group import MediaGroupBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.keyboards.callback_data import PaymentSentCallbackFactory, PremiumSubCallbackFactory
+from bot.internal.helpers import get_image_paths
+from bot.keyboards.callback_data import PaymentSentCallbackFactory, PremiumSubCallbackFactory, \
+    PremiumSubDurationCallbackFactory
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_payment_sent_keyboard
-from config import get_settings
+from config import get_settings, Settings
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_active_lessons, get_completed_lessons_from_sessions
 from database.models.user import User
-from enums import SubscriptionType
+from enums import SubscriptionType, SubscriptionDuration
 
 logger = logging.Logger(__name__)
 
 router = Router()
 
 
-@router.callback_query(PremiumSubCallbackFactory.filter())
+@router.pre_checkout_query()
+async def on_pre_checkout_query(
+    pre_checkout_query: PreCheckoutQuery,
+):
+    await pre_checkout_query.answer(ok=True)
+
+
+@router.message(F.successful_payment)
+async def on_successful_payment(
+    message: Message,
+    user: User,
+    settings: Settings,
+    db_session: AsyncSession,
+):
+    payload = message.successful_payment.invoice_payload
+    ...
+
+    logger.info(f"Successful payment for user {user.username}: {message.successful_payment.invoice_payload}")
+
+
+@router.callback_query(PremiumSubDurationCallbackFactory.filter())
 async def premium_types_message(
-    callback: types.CallbackQuery, callback_data: PremiumSubCallbackFactory, db_session: AsyncSession
+    callback: types.CallbackQuery, callback_data: PremiumSubDurationCallbackFactory, db_session: AsyncSession
 ) -> None:
     await callback.answer()
     await callback.message.delete_reply_markup()
-    match callback_data.subscription_type:
-        case SubscriptionType.LIMITED:
-            await callback.message.answer(
-                text=await get_text_by_prompt(prompt='monthly_premium_text', db_session=db_session),
-                reply_markup=get_payment_sent_keyboard(mode=SubscriptionType.LIMITED),
-            )
-        case SubscriptionType.ALLTIME:
-            await callback.message.answer(
-                text=await get_text_by_prompt(prompt='alltime_premium_text', db_session=db_session),
-                reply_markup=get_payment_sent_keyboard(mode=SubscriptionType.ALLTIME),
-            )
+    match callback_data.duration:
+        case SubscriptionDuration.ONE_MONTH:
+            description = "Длительность: 1 месяц"
+            prices = [
+                LabeledPrice(label="Подписка на 1 месяц", amount=35),
+            ]
+
+        case SubscriptionDuration.THREE_MONTH:
+            description = "Длительность: 3 месяца"
+            prices = [
+                LabeledPrice(label="Подписка на 3 месяца", amount=90),
+            ]
         case _:
-            assert False, f'Unexpected subscription type {callback_data.subscription_type}'
+            assert False, f'Unexpected subscription type {callback_data.duration}'
+    await callback.message.answer_invoice(
+        title="Подписка",
+        description=description,
+        payload=description,
+        currency="XTR",
+        prices=prices,
+        start_parameter="stars-payment",
+    )
 
 
 @router.callback_query(PaymentSentCallbackFactory.filter())
@@ -57,3 +90,24 @@ async def premium_payment_sent_message(
             chat_id=admin,
             text=admin_message_text.format(user_info, sub_type),
         )
+
+
+@router.callback_query(F.data == 'discount_button')
+async def discount_button_callback_processing(
+    callback: types.CallbackQuery,
+    db_session: AsyncSession,
+) -> None:
+    await callback.answer()
+    await callback.message.delete_reply_markup()
+    image_paths = get_image_paths()
+    caption = await get_text_by_prompt(prompt='discount_button_caption', db_session=db_session)
+    if not image_paths:
+        await callback.answer("Нет доступных изображений для репоста.")
+        return
+
+    media = MediaGroupBuilder(caption=caption)
+
+    for path in image_paths:
+        media.add_photo(media=FSInputFile(path))
+
+    await callback.message.answer_media_group(media.build())

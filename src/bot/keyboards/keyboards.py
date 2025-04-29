@@ -6,12 +6,11 @@ from bot.keyboards.callback_data import (
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
     PaymentSentCallbackFactory,
-    PremiumSubCallbackFactory,
     QuizCallbackFactory,
-    RemindersCallbackFactory,
+    RemindersCallbackFactory, PremiumSubDurationCallbackFactory,
 )
 from database.models.lesson import Lesson
-from enums import LessonStartsFrom, LessonStatus, SubscriptionType, UserLessonProgress
+from enums import LessonStartsFrom, LessonStatus, SubscriptionType, UserLessonProgress, SubscriptionDuration
 
 
 def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
@@ -211,28 +210,21 @@ def get_premium_keyboard() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text='Доступ на месяц',
-                    callback_data=PremiumSubCallbackFactory(subscription_type=SubscriptionType.LIMITED).pack(),
+                    callback_data=PremiumSubDurationCallbackFactory(duration=SubscriptionDuration.ONE_MONTH).pack(),
                 ),
             ],
             [
                 InlineKeyboardButton(
-                    text='Доступ навсегда',
-                    callback_data=PremiumSubCallbackFactory(subscription_type=SubscriptionType.ALLTIME).pack(),
+                    text='Доступ на 3 месяца',
+                    callback_data=PremiumSubDurationCallbackFactory(duration=SubscriptionDuration.THREE_MONTH).pack(),
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Хочу скидку',
+                    callback_data='discount_button',
                 ),
             ],
         ],
     )
 
-
-def get_payment_sent_keyboard(mode: SubscriptionType) -> InlineKeyboardMarkup:
-    sub_type = SubscriptionType.LIMITED if mode == SubscriptionType.LIMITED else SubscriptionType.ALLTIME
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text='Платёж отправлен',
-                    callback_data=PaymentSentCallbackFactory(subscription_type=sub_type).pack(),
-                ),
-            ],
-        ],
-    )
