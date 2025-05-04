@@ -1,19 +1,20 @@
+from datetime import UTC, datetime
 import logging
 
 from aiogram import Router, types, F
 from aiogram.types import FSInputFile, LabeledPrice, PreCheckoutQuery, Message
 from aiogram.utils.media_group import MediaGroupBuilder
+from dateutil.relativedelta import relativedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.internal.helpers import get_image_paths
-from bot.keyboards.callback_data import PaymentSentCallbackFactory, PremiumSubCallbackFactory, \
-    PremiumSubDurationCallbackFactory
-from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_payment_sent_keyboard
+from bot.keyboards.callback_data import PaymentSentCallbackFactory, PremiumSubDurationCallbackFactory
+from bot.keyboards.keyboards import get_lesson_picker_keyboard
 from config import get_settings, Settings
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_active_lessons, get_completed_lessons_from_sessions
 from database.models.user import User
-from enums import SubscriptionType, SubscriptionDuration
+from enums import SubscriptionType, SubscriptionDuration, UserSubscriptionType
 
 logger = logging.Logger(__name__)
 
@@ -31,18 +32,31 @@ async def on_pre_checkout_query(
 async def on_successful_payment(
     message: Message,
     user: User,
-    settings: Settings,
     db_session: AsyncSession,
 ):
     payload = message.successful_payment.invoice_payload
-    ...
-
+    match payload:
+        case SubscriptionDuration.ONE_MONTH:
+            months = 1
+        case SubscriptionDuration.THREE_MONTH:
+            months = 3
+        case _:
+            assert False, f'Unexpected subscription type {payload}'
+    today = datetime.now(UTC).date()
+    if user.subscription_expired_at and user.subscription_expired_at > today:
+        new_expiry = user.subscription_expired_at + relativedelta(months=months)
+    else:
+        new_expiry = today + relativedelta(months=months)
+    user.subscription_status = UserSubscriptionType.LIMITED_ACCESS
+    user.subscription_expired_at = new_expiry
+    text = await get_text_by_prompt(prompt=..., db_session=db_session)
+    await message.answer(text)
     logger.info(f"Successful payment for user {user.username}: {message.successful_payment.invoice_payload}")
 
 
 @router.callback_query(PremiumSubDurationCallbackFactory.filter())
 async def premium_types_message(
-    callback: types.CallbackQuery, callback_data: PremiumSubDurationCallbackFactory, db_session: AsyncSession
+    callback: types.CallbackQuery, callback_data: PremiumSubDurationCallbackFactory
 ) -> None:
     await callback.answer()
     await callback.message.delete_reply_markup()
@@ -52,20 +66,22 @@ async def premium_types_message(
             prices = [
                 LabeledPrice(label="Подписка на 1 месяц", amount=35),
             ]
-
+            subscription_period = 2592000
         case SubscriptionDuration.THREE_MONTH:
             description = "Длительность: 3 месяца"
             prices = [
                 LabeledPrice(label="Подписка на 3 месяца", amount=90),
             ]
+            subscription_period = 7776000
         case _:
             assert False, f'Unexpected subscription type {callback_data.duration}'
     await callback.message.answer_invoice(
         title="Подписка",
         description=description,
-        payload=description,
+        payload=callback_data.duration,
         currency="XTR",
         prices=prices,
+        subscription_period=subscription_period,
         start_parameter="stars-payment",
     )
 
@@ -106,7 +122,6 @@ async def discount_button_callback_processing(
         return
 
     media = MediaGroupBuilder(caption=caption)
-
     for path in image_paths:
         media.add_photo(media=FSInputFile(path))
 

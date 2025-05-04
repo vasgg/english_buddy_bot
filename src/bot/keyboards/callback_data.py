@@ -35,5 +35,6 @@ class PremiumSubCallbackFactory(CallbackData, prefix='premium'):
 class PremiumSubDurationCallbackFactory(CallbackData, prefix='premium_duration'):
     duration: SubscriptionDuration
 
+
 class PaymentSentCallbackFactory(CallbackData, prefix='payment_sent'):
     subscription_type: SubscriptionType
