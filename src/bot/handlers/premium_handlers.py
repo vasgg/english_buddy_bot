@@ -1,7 +1,9 @@
 from datetime import UTC, datetime
 import logging
 
-from aiogram import Router, types, F
+from aiogram import Router, types, F, Bot
+from aiogram.exceptions import TelegramBadRequest
+from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, LabeledPrice, PreCheckoutQuery, Message
 from aiogram.utils.media_group import MediaGroupBuilder
 from dateutil.relativedelta import relativedelta
@@ -10,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.internal.helpers import get_image_paths
 from bot.keyboards.callback_data import PaymentSentCallbackFactory, PremiumSubDurationCallbackFactory
 from bot.keyboards.keyboards import get_lesson_picker_keyboard
-from config import get_settings, Settings
+from config import get_settings
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_active_lessons, get_completed_lessons_from_sessions
 from database.models.user import User
@@ -38,8 +40,10 @@ async def on_successful_payment(
     match payload:
         case SubscriptionDuration.ONE_MONTH:
             months = 1
+            prompt = 'stars_payment_complete_1m'
         case SubscriptionDuration.THREE_MONTH:
             months = 3
+            prompt = 'stars_payment_complete_3m'
         case _:
             assert False, f'Unexpected subscription type {payload}'
     today = datetime.now(UTC).date()
@@ -49,7 +53,7 @@ async def on_successful_payment(
         new_expiry = today + relativedelta(months=months)
     user.subscription_status = UserSubscriptionType.LIMITED_ACCESS
     user.subscription_expired_at = new_expiry
-    text = await get_text_by_prompt(prompt=..., db_session=db_session)
+    text = await get_text_by_prompt(prompt=prompt, db_session=db_session)
     await message.answer(text)
     logger.info(f"Successful payment for user {user.username}: {message.successful_payment.invoice_payload}")
 
@@ -66,13 +70,11 @@ async def premium_types_message(
             prices = [
                 LabeledPrice(label="Подписка на 1 месяц", amount=35),
             ]
-            subscription_period = 2592000
         case SubscriptionDuration.THREE_MONTH:
             description = "Длительность: 3 месяца"
             prices = [
                 LabeledPrice(label="Подписка на 3 месяца", amount=90),
             ]
-            subscription_period = 7776000
         case _:
             assert False, f'Unexpected subscription type {callback_data.duration}'
     await callback.message.answer_invoice(
@@ -81,7 +83,6 @@ async def premium_types_message(
         payload=callback_data.duration,
         currency="XTR",
         prices=prices,
-        subscription_period=subscription_period,
         start_parameter="stars-payment",
     )
 
@@ -114,7 +115,7 @@ async def discount_button_callback_processing(
     db_session: AsyncSession,
 ) -> None:
     await callback.answer()
-    await callback.message.delete_reply_markup()
+    await callback.message.delete()
     image_paths = get_image_paths()
     caption = await get_text_by_prompt(prompt='discount_button_caption', db_session=db_session)
     if not image_paths:
@@ -126,3 +127,33 @@ async def discount_button_callback_processing(
         media.add_photo(media=FSInputFile(path))
 
     await callback.message.answer_media_group(media.build())
+
+
+@router.message(Command("refund"))
+async def cmd_refund(
+    message: Message,
+    bot: Bot,
+    user: User,
+    command: CommandObject,
+):
+    settings = get_settings()
+    if message.from_user.id != settings.ADMIN:
+        return
+    transaction_id = command.args
+    if transaction_id is None:
+        await message.answer("No refund code provided")
+        return
+    try:
+        await bot.refund_star_payment(user_id=message.from_user.id, telegram_payment_charge_id=transaction_id)
+        await message.answer("Refund successful")
+        logger.info(f"Refund for user {user.username} successful: {transaction_id}")
+    except TelegramBadRequest as error:
+        if "CHARGE_NOT_FOUND" in error.message:
+            text = "Refund code not found"
+        elif "CHARGE_ALREADY_REFUNDED" in error.message:
+            text = "Stars already refunded"
+        else:
+            text = "Refund code not found"
+        await message.answer(text)
+        logger.exception(error.message)
+        return
