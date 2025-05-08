@@ -58,7 +58,7 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
             await asyncio.sleep(ONE_HOUR - utcnow.minute * 60 - utcnow.second)
             async with db_connector.session_factory() as session:
                 for user in await get_all_users_with_reminders(session):
-                    delta = datetime.now(timezone.utc) - user.last_reminded_at
+                    delta = datetime.now() - user.last_reminded_at
                     if delta > timedelta(days=user.reminder_freq):
                         await bot.send_message(
                             chat_id=user.telegram_id,
