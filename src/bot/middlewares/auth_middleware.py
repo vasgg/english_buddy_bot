@@ -24,8 +24,8 @@ class AuthMiddleware(BaseMiddleware):
         if not user:
             user = await add_user_to_db(event.from_user, session)
             data['is_new_user'] = True
-            if settings.STAGE == Stage.PROD:
-                await blink1_green()
-                await sheet_update('C3', user.id)
+            # if settings.STAGE == Stage.PROD:
+            #     await blink1_green()
+            #     await sheet_update('C3', user.id)
         data['user'] = user
         return await handler(event, data)
