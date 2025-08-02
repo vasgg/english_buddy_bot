@@ -87,6 +87,7 @@ async def send_newsletter(bot_token: str, user_id: int, message: str, image_path
             data.add_field('chat_id', str(user_id))
             data.add_field('caption', message)
             data.add_field('disable_notification', True)
+            data.add_field('parse_mode', 'HTML')
             async with aiofiles.open(image_path, 'rb') as photo:
                 photo_data = await photo.read()
                 data.add_field('photo', photo_data, filename=image_path.name)
@@ -102,6 +103,7 @@ async def send_newsletter(bot_token: str, user_id: int, message: str, image_path
                 'chat_id': str(user_id),
                 'text': message,
                 'disable_notification': True,
+                'parse_mode': 'HTML',
             }
             text_ok = f'Сообщение с рассылкой "{message}" было отправлено пользователю {user_id}.'
             text_error = f'Произошла ошибка при отправке рассылки "{message}" пользователю {user_id}: ' + '{}. {}'
