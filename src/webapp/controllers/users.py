@@ -14,11 +14,12 @@ logger = logging.getLogger()
 
 
 async def get_users_table_content(session: AsyncDBSession):
-    query = select(User)
+    query = select(User).order_by(User.created_at.desc())
     result = await session.execute(query)
     results = result.scalars().all()
     users = []
     for i, user in enumerate(results, start=1):
+        reverse_number = len(results) - i + 1
         expired_at = ' '
         if user.subscription_expired_at and user.subscription_expired_at > datetime.now(timezone.utc).date():
             arrow_expired_at = arrow.get(user.subscription_expired_at)
@@ -28,7 +29,7 @@ async def get_users_table_content(session: AsyncDBSession):
         link = f'/users/edit/{user.id}/'
         user_data = {
             'id': user.id,
-            'number': i,
+            'number': reverse_number,
             'fullname': user.fullname,
             'username': user.username if user.username else ' ',
             'credentials': f'{user.fullname} | {user.username}' if user.username else user.fullname,
