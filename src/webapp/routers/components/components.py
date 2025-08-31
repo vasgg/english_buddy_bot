@@ -7,6 +7,25 @@ from pydantic import BaseModel, Field
 from enums import SlidesMenuType
 from webapp.routers.components.buttons import back_button
 
+try:
+    c.AnyComponent = AnyComponent  # type: ignore[attr-defined]
+    for model in (
+        c.ModelForm,
+        c.Table,
+        c.PageTitle,
+        c.Navbar,
+        c.Page,
+        c.Paragraph,
+        c.Heading,
+        c.Button,
+        c.Text,
+        c.Link,
+    ):
+        model.model_rebuild()
+    DisplayLookup.model_rebuild()
+except Exception:
+    pass
+
 
 def get_common_content(
     *components: AnyComponent,
