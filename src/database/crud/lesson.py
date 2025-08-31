@@ -1,4 +1,4 @@
-from sqlalchemy import Result, select, update
+from sqlalchemy import Result, select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models.lesson import Lesson
@@ -48,6 +48,21 @@ async def get_completed_lessons_from_sessions(user_id: int, db_session: AsyncSes
     query = select(Session.lesson_id).filter(Session.status == SessionStatus.COMPLETED, Session.user_id == user_id)
     result = await db_session.execute(query)
     return set(result.scalars().all())
+
+
+async def get_completed_lessons_recent_first(user_id: int, db_session: AsyncSession) -> list[tuple[int, "datetime"]]:
+    subq = (
+        select(
+            Session.lesson_id.label('lesson_id'),
+            func.max(Session.created_at).label('last_completed_at'),
+        )
+        .filter(Session.status == SessionStatus.COMPLETED, Session.user_id == user_id)
+        .group_by(Session.lesson_id)
+        .subquery()
+    )
+    query = select(subq.c.lesson_id, subq.c.last_completed_at).order_by(subq.c.last_completed_at.desc())
+    result = await db_session.execute(query)
+    return list(result.all())
 
 
 async def get_all_exam_slides_id_in_slides(lesson_id: int, db_session: AsyncSession) -> set[int]:
