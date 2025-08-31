@@ -25,13 +25,26 @@ class UsersSchema(BaseModel):
 
 
 class EditUserModel(BaseModel):
-    select_single: SelectOneEnum
-    subscription_expired_at: date | None = None
-    comment: str | None = None
+    select_single: SelectOneEnum = Field(title='Выберите тип подписки')
+    subscription_expired_at: date | None = Field(
+        default=None,
+        description='Введите дату и время окончания подписки. Необязательное поле.',
+        title='дата истечения подписки',
+    )
+    comment: str | None = Field(
+        default=None,
+        description='Введите комментарий к пользователю. Необязательное поле.',
+        format='textarea',
+        rows=3,
+        cols=None,
+        title='комментарий',
+    )
 
     # noinspection PyMethodParameters
     @field_validator('subscription_expired_at')
-    def date_validator(cls, value: date) -> date:
+    def date_validator(cls, value: date | None) -> date | None:
+        if value is None:
+            return value
         if value <= datetime.now(timezone.utc).date():
             raise PydanticCustomError(
                 'date_error',
@@ -60,3 +73,12 @@ def get_user_data_model(user: User = None) -> Type[BaseModel]:
         )
 
     return UserDataModel
+
+
+class SendMessageModel(BaseModel):
+    message: str = Field(
+        title='Текст сообщения',
+        description='Введите текст, который будет отправлен пользователю в Telegram',
+        format='textarea',
+        rows=6,
+    )
