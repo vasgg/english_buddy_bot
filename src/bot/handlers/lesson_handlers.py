@@ -1,4 +1,4 @@
-import contextlib
+from contextlib import suppress
 
 from aiogram import Router, types
 from aiogram.exceptions import TelegramBadRequest
@@ -31,7 +31,7 @@ async def lesson_callback_processing(
     db_session: AsyncSession,
 ) -> None:
     await callback.answer()
-    with contextlib.suppress(TelegramBadRequest):
+    with suppress(TelegramBadRequest):
         await callback.message.delete()
 
     session = await get_current_session(user_id=user.id, lesson_id=callback_data.lesson_id, db_session=db_session)
@@ -101,7 +101,7 @@ async def lesson_start_from_callback_processing(
     db_session: AsyncSession,
 ) -> None:
     await callback.answer()
-    with contextlib.suppress(TelegramBadRequest, AttributeError):
+    with suppress(TelegramBadRequest, AttributeError):
         await callback.message.delete()
 
     lesson_id = callback_data.lesson_id
@@ -127,7 +127,7 @@ async def reminders_callback_processing(
     user: User,
     db_session: AsyncSession,
 ) -> None:
-    with contextlib.suppress(TelegramBadRequest):
+    with suppress(TelegramBadRequest):
         await callback.message.delete()
 
     frequency = callback_data.frequency

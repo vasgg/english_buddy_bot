@@ -1,6 +1,8 @@
+from contextlib import suppress
 import logging
 
 from aiogram import F, Router, types
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from bot.controllers.final_controllers import finish_session
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg
@@ -31,7 +33,8 @@ async def further_button_callback_processing(
         db_session: AsyncSession,
 ) -> None:
     await callback.answer()
-    await callback.message.delete_reply_markup()
+    with suppress(TelegramBadRequest):
+        await callback.message.delete_reply_markup()
     session.current_step += 1
     await show_slides(callback.message, state, session, db_session)
 
@@ -44,7 +47,8 @@ async def quiz_callback_processing(
         session: Session,
         db_session: AsyncSession,
 ) -> None:
-    await callback.message.delete_reply_markup()
+    with suppress(TelegramBadRequest):
+        await callback.message.delete_reply_markup()
     user_input = UserInputMsg(text=callback_data.answer)
     await show_slides(callback.message, state, session, db_session, user_input)
     await callback.answer()
@@ -83,7 +87,8 @@ async def handle_extra_slide_answer(
         session: Session,
         db_session: AsyncSession,
 ) -> None:
-    await callback.message.delete_reply_markup()
+    with suppress(TelegramBadRequest):
+        await callback.message.delete_reply_markup()
     if callback_data.extra_slides_requested:
         session.set_extra()
         await show_slides(callback.message, state, session, db_session)

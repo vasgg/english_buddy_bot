@@ -1,4 +1,4 @@
-import contextlib
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
@@ -28,7 +28,7 @@ class DBSessionMiddleware(BaseMiddleware):
             res = await handler(event, data)
             # TODO: probably,check how session handles it
             # check how commit behaves
-            with contextlib.suppress(PendingRollbackError):
+            with suppress(PendingRollbackError):
                 await db_session.commit()
 
             return res

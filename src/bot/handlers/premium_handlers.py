@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import UTC, datetime
 import logging
 
@@ -63,7 +64,8 @@ async def premium_types_message(
     callback: types.CallbackQuery, callback_data: PremiumSubDurationCallbackFactory
 ) -> None:
     await callback.answer()
-    await callback.message.delete_reply_markup()
+    with suppress(TelegramBadRequest):
+        await callback.message.delete_reply_markup()
     match callback_data.duration:
         case SubscriptionDuration.ONE_MONTH:
             description = "Длительность: 1 месяц"
@@ -92,7 +94,8 @@ async def premium_payment_sent_message(
     callback: types.CallbackQuery, callback_data: PaymentSentCallbackFactory, user: User, db_session: AsyncSession
 ) -> None:
     await callback.answer()
-    await callback.message.delete_reply_markup()
+    with suppress(TelegramBadRequest):
+        await callback.message.delete_reply_markup()
     lessons = await get_active_lessons(db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=user.id, db_session=db_session)
     await callback.message.answer(

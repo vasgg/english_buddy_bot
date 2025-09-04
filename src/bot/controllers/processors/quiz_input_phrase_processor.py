@@ -1,6 +1,8 @@
 import asyncio
+from contextlib import suppress
 
 from aiogram import types
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,7 +40,8 @@ async def process_quiz_input_phrase(
     match user_input:
         case UserInputHint() as hint_msg:
             if hint_msg.hint_requested:
-                await event.delete_reply_markup()
+                with suppress(TelegramBadRequest):
+                    await event.delete_reply_markup()
                 await event.answer(
                     text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
                         slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0],
@@ -47,7 +50,8 @@ async def process_quiz_input_phrase(
                 await asyncio.sleep(2)
                 return True
             else:
-                await event.delete_reply_markup()
+                with suppress(TelegramBadRequest):
+                    await event.delete_reply_markup()
                 return await show_quiz_input_phrase(event, state, slide)
         case UserInputMsg() as input_msg:
             trimmed_user_input = normalize_apostrophes(trim_non_alpha(input_msg.text).lower())

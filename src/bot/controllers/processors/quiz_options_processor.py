@@ -1,8 +1,10 @@
 import asyncio
+from contextlib import suppress
 import logging
 from random import sample
 
 from aiogram import types
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,15 +40,16 @@ async def response_options_correct(
     db_session: AsyncSession,
 ) -> None:
     try:
-        await event.edit_text(
-            text=(
-                slide.text.replace('_', f'<u>{slide.right_answers}</u>')
-                if "_" in slide.text
-                else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "выбери правильный ответ" '
-                'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
-                'варианта.'
-            ),
-        )
+        with suppress(TelegramBadRequest):
+            await event.edit_text(
+                text=(
+                    slide.text.replace('_', f'<u>{slide.right_answers}</u>')
+                    if "_" in slide.text
+                    else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "выбери правильный ответ" '
+                    'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
+                    'варианта.'
+                ),
+            )
     except KeyError:
         logging.exception('something went wrong with quiz_options')
     await event.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
@@ -77,7 +80,8 @@ async def process_quiz_options(
         return await show_quiz_options(event, state, slide)
     match user_input:
         case UserInputHint() as hint_msg:
-            await event.delete_reply_markup()
+            with suppress(TelegramBadRequest):
+                await event.delete_reply_markup()
             if hint_msg.hint_requested:
                 await event.answer(
                     text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
