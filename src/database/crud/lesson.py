@@ -1,5 +1,6 @@
 from sqlalchemy import Result, select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 
 from database.models.lesson import Lesson
 from database.models.session import Session
@@ -50,7 +51,7 @@ async def get_completed_lessons_from_sessions(user_id: int, db_session: AsyncSes
     return set(result.scalars().all())
 
 
-async def get_completed_lessons_recent_first(user_id: int, db_session: AsyncSession) -> list[tuple[int, "datetime"]]:
+async def get_completed_lessons_recent_first(user_id: int, db_session: AsyncSession) -> list[tuple[int, datetime]]:
     subq = (
         select(
             Session.lesson_id.label('lesson_id'),
