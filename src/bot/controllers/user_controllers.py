@@ -6,6 +6,7 @@ from aiogram import Bot, types
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard, get_premium_keyboard
+from bot.internal.notify_admin import notify_admin_about_exception
 from config import get_settings
 from consts import ONE_DAY, ONE_HOUR, UTC_STARTING_MARK
 from database.crud.answer import get_text_by_prompt
@@ -31,6 +32,12 @@ def get_seconds_until_starting_mark(current_hour, utcnow):
     return seconds_to_sleep
 
 
+def ensure_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
     await message.answer(
         text=await get_text_by_prompt(prompt='registration_message', db_session=db_session),
@@ -53,50 +60,67 @@ async def show_start_menu(event: types.Message, user_id: int, db_session: AsyncS
 async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
     while True:
         await asyncio.sleep(ONE_HOUR)
-        utcnow = datetime.now(timezone.utc)
-        if utcnow.hour == UTC_STARTING_MARK - 1:
-            await asyncio.sleep(ONE_HOUR - utcnow.minute * 60 - utcnow.second)
-            async with db_connector.session_factory() as session:
-                for user in await get_all_users_with_reminders(session):
-                    delta = datetime.now() - user.last_reminded_at
-                    if delta > timedelta(days=user.reminder_freq):
-                        await bot.send_message(
-                            chat_id=user.telegram_id,
-                            text=await get_text_by_prompt(prompt='reminder_text', db_session=session),
-                        )
-                        logger.info(f"{'reminder sended to ' + str(user)}")
-                        await update_last_reminded_at(
-                            user_id=user.id, timestamp=datetime.now(timezone.utc), db_session=session
-                        )
-                        await session.commit()
+        try:
+            utcnow = datetime.now(timezone.utc)
+            if utcnow.hour == UTC_STARTING_MARK - 1:
+                wait_seconds = ONE_HOUR - utcnow.minute * 60 - utcnow.second
+                if wait_seconds > 0:
+                    await asyncio.sleep(wait_seconds)
+                async with db_connector.session_factory() as session:
+                    reminder_text = await get_text_by_prompt(prompt='reminder_text', db_session=session)
+                    for user in await get_all_users_with_reminders(session):
+                        last_reminded_at = ensure_utc(user.last_reminded_at)
+                        reminder_due = datetime.now(timezone.utc)
+                        if reminder_due - last_reminded_at > timedelta(days=user.reminder_freq):
+                            await bot.send_message(chat_id=user.telegram_id, text=reminder_text)
+                            logger.info("Reminder sent to %s", user)
+                            await update_last_reminded_at(
+                                user_id=user.id, timestamp=reminder_due, db_session=session
+                            )
+                    await session.commit()
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.exception("Failed to process reminder check", exc_info=exc)
+            await notify_admin_about_exception(bot, exc, context="check_user_reminders")
 
 
 async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
     utcnow = datetime.now(timezone.utc)
     current_hour = utcnow.hour
     seconds_to_sleep = get_seconds_until_starting_mark(current_hour, utcnow)
-    await asyncio.sleep(seconds_to_sleep)
+    if seconds_to_sleep > 0:
+        await asyncio.sleep(seconds_to_sleep)
     while True:
-        async with db_connector.session_factory() as session:
-            await collect_garbage(session)
-            for user in await get_all_users_with_active_subscription(session):
-                utcnow = datetime.now(timezone.utc)
-                delta = utcnow.date() - user.subscription_expired_at
-                if delta.days == 1:
-                    await bot.send_message(
-                        chat_id=user.telegram_id,
-                        text=await get_text_by_prompt(prompt='subscribtion_almost_over', db_session=session),
-                        reply_markup=get_premium_keyboard(),
-                    )
-                    logger.info(f"{'ending subscription reminder was sent to ' + str(user)}")
+        try:
+            async with db_connector.session_factory() as session:
+                await collect_garbage(session)
+                users = await get_all_users_with_active_subscription(session)
+                today_utc = datetime.now(timezone.utc).date()
+                for user in users:
+                    if not user.subscription_expired_at:
+                        continue
+                    delta_days = (today_utc - user.subscription_expired_at).days
+                    if delta_days == 1:
+                        await bot.send_message(
+                            chat_id=user.telegram_id,
+                            text=await get_text_by_prompt(prompt='subscribtion_almost_over', db_session=session),
+                            reply_markup=get_premium_keyboard(),
+                        )
+                        logger.info("Ending subscription reminder was sent to %s", user)
 
-                elif delta.days == 0:
-                    user.subscription_status = UserSubscriptionType.ACCESS_EXPIRED
-                    await bot.send_message(
-                        chat_id=user.telegram_id,
-                        text=await get_text_by_prompt(prompt='subscribtion_over', db_session=session),
-                        reply_markup=get_premium_keyboard(),
-                    )
-                    logger.info(f"{'ending subscription notification was sent to ' + str(user)}")
-            await session.commit()
+                    elif delta_days == 0:
+                        user.subscription_status = UserSubscriptionType.ACCESS_EXPIRED
+                        await bot.send_message(
+                            chat_id=user.telegram_id,
+                            text=await get_text_by_prompt(prompt='subscribtion_over', db_session=session),
+                            reply_markup=get_premium_keyboard(),
+                        )
+                        logger.info("Ending subscription notification was sent to %s", user)
+                await session.commit()
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.exception("Failed to process daily routine", exc_info=exc)
+            await notify_admin_about_exception(bot, exc, context="daily_routine")
         await asyncio.sleep(ONE_DAY)

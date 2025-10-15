@@ -17,7 +17,7 @@ from bot.handlers.lesson_handlers import router as lesson_router
 from bot.handlers.premium_handlers import router as premium_router
 from bot.handlers.session_handlers import router as quiz_router
 from bot.internal.commands import set_bot_commands
-from bot.internal.notify_admin import on_shutdown_notify, on_startup_notify
+from bot.internal.notify_admin import notify_admin_about_exception, on_shutdown_notify, on_startup_notify
 from bot.middlewares.auth_middleware import AuthMiddleware
 from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
@@ -46,6 +46,22 @@ async def main():
         )
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     logging.info("bot started")
+
+    def supervise_task(task: asyncio.Task, *, context: str) -> None:
+        async def _notify(exc: BaseException) -> None:
+            await notify_admin_about_exception(bot, exc, context=context)
+
+        def _callback(done_task: asyncio.Task) -> None:
+            try:
+                done_task.result()
+            except asyncio.CancelledError:
+                return
+            except Exception as exc:
+                logging.exception("Background task %s crashed", context, exc_info=exc)
+                asyncio.create_task(_notify(exc))
+
+        task.add_done_callback(_callback)
+
     redis = Redis(db=1)
     storage = RedisStorage(redis)
     db = get_db()
@@ -61,9 +77,11 @@ async def main():
     dispatcher.shutdown.register(on_shutdown_notify)
     dispatcher.include_routers(base_router, errors_router, lesson_router, quiz_router, premium_router)
     # noinspection PyUnusedLocal
-    reminders_task = asyncio.create_task(check_user_reminders(bot=bot, db_connector=db))
+    reminders_task = asyncio.create_task(check_user_reminders(bot=bot, db_connector=db), name="check_user_reminders")
+    supervise_task(reminders_task, context="check_user_reminders")
     # noinspection PyUnusedLocal
-    daily_task = asyncio.create_task(daily_routine(bot=bot, db_connector=db))
+    daily_task = asyncio.create_task(daily_routine(bot=bot, db_connector=db), name="daily_routine")
+    supervise_task(daily_task, context="daily_routine")
     await dispatcher.start_polling(bot)
 
 
