@@ -36,8 +36,14 @@ def add_slides_from_paths(paths, slide_set):
 
 
 async def delete_disabled_lessons(db_session: AsyncSession):
-    query = delete(Lesson).where(Lesson.is_active == LessonStatus.DISABLED)
-    await db_session.execute(query)
+    disabled_lessons_query = select(Lesson.id).where(Lesson.is_active == LessonStatus.DISABLED)
+    result = await db_session.execute(disabled_lessons_query)
+    disabled_lesson_ids = result.scalars().all()
+    if not disabled_lesson_ids:
+        return
+    await db_session.execute(delete(Session).where(Session.lesson_id.in_(disabled_lesson_ids)))
+    await db_session.execute(delete(Slide).where(Slide.lesson_id.in_(disabled_lesson_ids)))
+    await db_session.execute(delete(Lesson).where(Lesson.id.in_(disabled_lesson_ids)))
 
 
 async def delete_unused_slides(db_session: AsyncSession):
