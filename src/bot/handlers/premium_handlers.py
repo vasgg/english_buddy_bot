@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import logging
 
 from aiogram import Router, types, F, Bot
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError, TelegramNotFound
 from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, LabeledPrice, PreCheckoutQuery, Message
 from aiogram.utils.media_group import MediaGroupBuilder
@@ -106,10 +106,13 @@ async def premium_payment_sent_message(
     user_info = f'{user.fullname} (@{user.username})' if user.username else user.fullname
     sub_type = 'monthly' if callback_data.subscription_type == SubscriptionType.LIMITED else 'alltime ⭐'
     for admin in get_settings().SUB_ADMINS:
-        await callback.bot.send_message(
-            chat_id=admin,
-            text=admin_message_text.format(user_info, sub_type),
-        )
+        try:
+            await callback.bot.send_message(
+                chat_id=admin,
+                text=admin_message_text.format(user_info, sub_type),
+            )
+        except (TelegramForbiddenError, TelegramNotFound) as exc:
+            logger.warning("Unable to notify admin %s about new subscription: %s", admin, exc)
 
 
 @router.callback_query(F.data == 'discount_button')

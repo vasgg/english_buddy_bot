@@ -1,8 +1,9 @@
 import asyncio
-from datetime import datetime, timedelta, timezone
 import logging
+from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, types
+from aiogram.exceptions import TelegramForbiddenError, TelegramNotFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard, get_premium_keyboard
@@ -36,6 +37,10 @@ def ensure_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
+
+
+async def _mark_failed_delivery(user, *, reason: str) -> None:
+    logger.warning("Telegram refused delivery to %s: %s", user, reason)
 
 
 async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
@@ -72,11 +77,18 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                         last_reminded_at = ensure_utc(user.last_reminded_at)
                         reminder_due = datetime.now(timezone.utc)
                         if reminder_due - last_reminded_at > timedelta(days=user.reminder_freq):
-                            await bot.send_message(chat_id=user.telegram_id, text=reminder_text)
-                            logger.info("Reminder sent to %s", user)
-                            await update_last_reminded_at(
-                                user_id=user.id, timestamp=reminder_due, db_session=session
-                            )
+                            try:
+                                await bot.send_message(chat_id=user.telegram_id, text=reminder_text)
+                            except (TelegramForbiddenError, TelegramNotFound) as exc:
+                                await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
+                                await update_last_reminded_at(
+                                    user_id=user.id, timestamp=reminder_due, db_session=session
+                                )
+                            else:
+                                logger.info("Reminder sent to %s", user)
+                                await update_last_reminded_at(
+                                    user_id=user.id, timestamp=reminder_due, db_session=session
+                                )
                     await session.commit()
         except asyncio.CancelledError:
             raise
@@ -102,21 +114,29 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                         continue
                     delta_days = (today_utc - user.subscription_expired_at).days
                     if delta_days == 1:
-                        await bot.send_message(
-                            chat_id=user.telegram_id,
-                            text=await get_text_by_prompt(prompt='subscribtion_almost_over', db_session=session),
-                            reply_markup=get_premium_keyboard(),
-                        )
-                        logger.info("Ending subscription reminder was sent to %s", user)
+                        try:
+                            await bot.send_message(
+                                chat_id=user.telegram_id,
+                                text=await get_text_by_prompt(prompt='subscribtion_almost_over', db_session=session),
+                                reply_markup=get_premium_keyboard(),
+                            )
+                        except (TelegramForbiddenError, TelegramNotFound) as exc:
+                            await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
+                        else:
+                            logger.info("Ending subscription reminder was sent to %s", user)
 
                     elif delta_days == 0:
                         user.subscription_status = UserSubscriptionType.ACCESS_EXPIRED
-                        await bot.send_message(
-                            chat_id=user.telegram_id,
-                            text=await get_text_by_prompt(prompt='subscribtion_over', db_session=session),
-                            reply_markup=get_premium_keyboard(),
-                        )
-                        logger.info("Ending subscription notification was sent to %s", user)
+                        try:
+                            await bot.send_message(
+                                chat_id=user.telegram_id,
+                                text=await get_text_by_prompt(prompt='subscribtion_over', db_session=session),
+                                reply_markup=get_premium_keyboard(),
+                            )
+                        except (TelegramForbiddenError, TelegramNotFound) as exc:
+                            await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
+                        else:
+                            logger.info("Ending subscription notification was sent to %s", user)
                 await session.commit()
         except asyncio.CancelledError:
             raise
