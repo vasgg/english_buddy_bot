@@ -84,6 +84,8 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                                 await update_last_reminded_at(
                                     user_id=user.id, timestamp=reminder_due, db_session=session
                                 )
+                            except Exception as send_exc:  # noqa: BLE001
+                                logger.exception("Failed to send reminder to %s", user, exc_info=send_exc)
                             else:
                                 logger.info("Reminder sent to %s", user)
                                 await update_last_reminded_at(
@@ -122,6 +124,8 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                             )
                         except (TelegramForbiddenError, TelegramNotFound) as exc:
                             await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
+                        except Exception as send_exc:  # noqa: BLE001
+                            logger.exception("Failed to send subscription reminder to %s", user, exc_info=send_exc)
                         else:
                             logger.info("Ending subscription reminder was sent to %s", user)
 
@@ -135,6 +139,8 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                             )
                         except (TelegramForbiddenError, TelegramNotFound) as exc:
                             await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
+                        except Exception as send_exc:  # noqa: BLE001
+                            logger.exception("Failed to send subscription expiration notice to %s", user, exc_info=send_exc)
                         else:
                             logger.info("Ending subscription notification was sent to %s", user)
                 await session.commit()

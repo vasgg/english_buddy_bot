@@ -41,7 +41,7 @@ async def set_user_reminders(user_id: int, reminder_freq: int, db_session: Async
 
 
 async def get_all_users_with_reminders(db_session: AsyncSession) -> list[User]:
-    query = select(User).filter(User.reminder_freq)
+    query = select(User).filter(User.reminder_freq.is_not(None))
     result = await db_session.execute(query)
     return list(result.scalars().all())
 
