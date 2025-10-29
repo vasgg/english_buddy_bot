@@ -62,6 +62,14 @@ async def update_last_reminded_at(user_id: int, timestamp: datetime, db_session:
     await db_session.execute(update(User).filter(User.id == user_id).values(last_reminded_at=timestamp))
 
 
+async def set_subscription_status(
+    user_id: int,
+    new_status: UserSubscriptionType,
+    db_session: AsyncSession,
+) -> None:
+    await db_session.execute(update(User).filter(User.id == user_id).values(subscription_status=new_status))
+
+
 async def get_users_count(db_session: AsyncSession) -> int:
     query = select(func.count()).select_from(User)
     result = await db_session.execute(query)

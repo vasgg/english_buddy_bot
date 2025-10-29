@@ -25,13 +25,16 @@ class DBSessionMiddleware(BaseMiddleware):
         async with self.db.session_factory() as db_session:
             # TODO: mb change to db_session factory
             data['db_session'] = db_session
-            res = await handler(event, data)
-            # TODO: probably,check how session handles it
-            # check how commit behaves
-            with suppress(PendingRollbackError):
-                await db_session.commit()
-
-            return res
+            try:
+                res = await handler(event, data)
+            except Exception:
+                with suppress(PendingRollbackError):
+                    await db_session.rollback()
+                raise
+            else:
+                with suppress(PendingRollbackError):
+                    await db_session.commit()
+                return res
 
 
 class SessionMiddleware(BaseMiddleware):

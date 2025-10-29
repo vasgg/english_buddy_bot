@@ -15,6 +15,7 @@ from database.crud.lesson import get_active_and_editing_lessons, get_active_less
 from database.crud.user import (
     get_all_users_with_active_subscription,
     get_all_users_with_reminders,
+    set_subscription_status,
     update_last_reminded_at,
 )
 from database.database_connector import DatabaseConnector
@@ -41,6 +42,26 @@ def ensure_utc(dt: datetime) -> datetime:
 
 async def _mark_failed_delivery(user, *, reason: str) -> None:
     logger.warning("Telegram refused delivery to %s: %s", user, reason)
+
+
+async def _update_reminder_timestamp(
+    db_connector: DatabaseConnector,
+    *,
+    user_id: int,
+    timestamp: datetime,
+) -> None:
+    async with db_connector.session_factory.begin() as session:
+        await update_last_reminded_at(user_id=user_id, timestamp=timestamp, db_session=session)
+
+
+async def _set_subscription_status(
+    db_connector: DatabaseConnector,
+    *,
+    user_id: int,
+    new_status: UserSubscriptionType,
+) -> None:
+    async with db_connector.session_factory.begin() as session:
+        await set_subscription_status(user_id=user_id, new_status=new_status, db_session=session)
 
 
 async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
@@ -73,25 +94,45 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                     await asyncio.sleep(wait_seconds)
                 async with db_connector.session_factory() as session:
                     reminder_text = await get_text_by_prompt(prompt='reminder_text', db_session=session)
-                    for user in await get_all_users_with_reminders(session):
-                        last_reminded_at = ensure_utc(user.last_reminded_at)
-                        reminder_due = datetime.now(timezone.utc)
-                        if reminder_due - last_reminded_at > timedelta(days=user.reminder_freq):
-                            try:
-                                await bot.send_message(chat_id=user.telegram_id, text=reminder_text)
-                            except (TelegramForbiddenError, TelegramNotFound) as exc:
-                                await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
-                                await update_last_reminded_at(
-                                    user_id=user.id, timestamp=reminder_due, db_session=session
-                                )
-                            except Exception as send_exc:  # noqa: BLE001
-                                logger.exception("Failed to send reminder to %s", user, exc_info=send_exc)
-                            else:
-                                logger.info("Reminder sent to %s", user)
-                                await update_last_reminded_at(
-                                    user_id=user.id, timestamp=reminder_due, db_session=session
-                                )
-                    await session.commit()
+                    reminder_recipients = [
+                        {
+                            "id": user.id,
+                            "telegram_id": user.telegram_id,
+                            "last_reminded_at": ensure_utc(user.last_reminded_at),
+                            "reminder_freq": user.reminder_freq,
+                            "log_repr": str(user),
+                        }
+                        for user in await get_all_users_with_reminders(session)
+                    ]
+                for recipient in reminder_recipients:
+                    user_id = recipient["id"]
+                    telegram_id = recipient["telegram_id"]
+                    last_reminded_at = recipient["last_reminded_at"]
+                    reminder_freq = recipient["reminder_freq"]
+                    log_repr = recipient["log_repr"]
+                    reminder_due = datetime.now(timezone.utc)
+                    if reminder_freq is None:
+                        continue
+                    if reminder_due - last_reminded_at <= timedelta(days=reminder_freq):
+                        continue
+                    try:
+                        await bot.send_message(chat_id=telegram_id, text=reminder_text)
+                    except (TelegramForbiddenError, TelegramNotFound) as exc:
+                        await _mark_failed_delivery(log_repr, reason=f"Telegram delivery error: {exc}")
+                        await _update_reminder_timestamp(
+                            db_connector,
+                            user_id=user_id,
+                            timestamp=reminder_due,
+                        )
+                    except Exception as send_exc:  # noqa: BLE001
+                        logger.exception("Failed to send reminder to %s", log_repr, exc_info=send_exc)
+                    else:
+                        logger.info("Reminder sent to %s", log_repr)
+                        await _update_reminder_timestamp(
+                            db_connector,
+                            user_id=user_id,
+                            timestamp=reminder_due,
+                        )
         except asyncio.CancelledError:
             raise
         except Exception as exc:
@@ -107,43 +148,65 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
         await asyncio.sleep(seconds_to_sleep)
     while True:
         try:
-            async with db_connector.session_factory() as session:
+            async with db_connector.session_factory.begin() as session:
                 await collect_garbage(session)
-                users = await get_all_users_with_active_subscription(session)
-                today_utc = datetime.now(timezone.utc).date()
-                for user in users:
-                    if not user.subscription_expired_at:
-                        continue
-                    delta_days = (today_utc - user.subscription_expired_at).days
-                    if delta_days == 1:
-                        try:
-                            await bot.send_message(
-                                chat_id=user.telegram_id,
-                                text=await get_text_by_prompt(prompt='subscribtion_almost_over', db_session=session),
-                                reply_markup=get_premium_keyboard(),
-                            )
-                        except (TelegramForbiddenError, TelegramNotFound) as exc:
-                            await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
-                        except Exception as send_exc:  # noqa: BLE001
-                            logger.exception("Failed to send subscription reminder to %s", user, exc_info=send_exc)
-                        else:
-                            logger.info("Ending subscription reminder was sent to %s", user)
 
-                    elif delta_days == 0:
-                        user.subscription_status = UserSubscriptionType.ACCESS_EXPIRED
-                        try:
-                            await bot.send_message(
-                                chat_id=user.telegram_id,
-                                text=await get_text_by_prompt(prompt='subscribtion_over', db_session=session),
-                                reply_markup=get_premium_keyboard(),
-                            )
-                        except (TelegramForbiddenError, TelegramNotFound) as exc:
-                            await _mark_failed_delivery(user, reason=f"Telegram delivery error: {exc}")
-                        except Exception as send_exc:  # noqa: BLE001
-                            logger.exception("Failed to send subscription expiration notice to %s", user, exc_info=send_exc)
-                        else:
-                            logger.info("Ending subscription notification was sent to %s", user)
-                await session.commit()
+            async with db_connector.session_factory() as session:
+                almost_over_text = await get_text_by_prompt(prompt='subscribtion_almost_over', db_session=session)
+                over_text = await get_text_by_prompt(prompt='subscribtion_over', db_session=session)
+                users = [
+                    {
+                        "id": user.id,
+                        "telegram_id": user.telegram_id,
+                        "subscription_expired_at": user.subscription_expired_at,
+                        "log_repr": str(user),
+                    }
+                    for user in await get_all_users_with_active_subscription(session)
+                ]
+
+            today_utc = datetime.now(timezone.utc).date()
+            for user in users:
+                if not user["subscription_expired_at"]:
+                    continue
+                delta_days = (today_utc - user["subscription_expired_at"]).days
+                if delta_days == 1:
+                    try:
+                        await bot.send_message(
+                            chat_id=user["telegram_id"],
+                            text=almost_over_text,
+                            reply_markup=get_premium_keyboard(),
+                        )
+                    except (TelegramForbiddenError, TelegramNotFound) as exc:
+                        await _mark_failed_delivery(user["log_repr"], reason=f"Telegram delivery error: {exc}")
+                    except Exception as send_exc:  # noqa: BLE001
+                        logger.exception(
+                            "Failed to send subscription reminder to %s", user["log_repr"], exc_info=send_exc
+                        )
+                    else:
+                        logger.info("Ending subscription reminder was sent to %s", user["log_repr"])
+
+                elif delta_days == 0:
+                    await _set_subscription_status(
+                        db_connector,
+                        user_id=user["id"],
+                        new_status=UserSubscriptionType.ACCESS_EXPIRED,
+                    )
+                    try:
+                        await bot.send_message(
+                            chat_id=user["telegram_id"],
+                            text=over_text,
+                            reply_markup=get_premium_keyboard(),
+                        )
+                    except (TelegramForbiddenError, TelegramNotFound) as exc:
+                        await _mark_failed_delivery(user["log_repr"], reason=f"Telegram delivery error: {exc}")
+                    except Exception as send_exc:  # noqa: BLE001
+                        logger.exception(
+                            "Failed to send subscription expiration notice to %s",
+                            user["log_repr"],
+                            exc_info=send_exc,
+                        )
+                    else:
+                        logger.info("Ending subscription notification was sent to %s", user["log_repr"])
         except asyncio.CancelledError:
             raise
         except Exception as exc:

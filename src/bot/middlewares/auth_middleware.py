@@ -23,6 +23,7 @@ class AuthMiddleware(BaseMiddleware):
         data['is_new_user'] = False
         if not user:
             user = await add_user_to_db(event.from_user, session)
+            await session.commit()
             data['is_new_user'] = True
             # if settings.STAGE == Stage.PROD:
             #     await blink1_green()
