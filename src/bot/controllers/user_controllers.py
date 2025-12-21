@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard, get_premium_keyboard
 from bot.internal.notify_admin import notify_admin_about_exception
 from config import get_settings
-from consts import ONE_DAY, ONE_HOUR, UTC_STARTING_MARK
+from consts import ONE_DAY, UTC_STARTING_MARK
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_active_and_editing_lessons, get_active_lessons, get_completed_lessons_from_sessions
 from database.crud.user import (
@@ -38,6 +38,15 @@ def ensure_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
+
+
+def get_reminder_slot(utcnow: datetime) -> datetime:
+    if utcnow.tzinfo is None:
+        utcnow = utcnow.replace(tzinfo=timezone.utc)
+    slot = utcnow.replace(hour=UTC_STARTING_MARK, minute=0, second=0, microsecond=0)
+    if utcnow < slot:
+        slot -= timedelta(days=1)
+    return slot
 
 
 async def _mark_failed_delivery(user, *, reason: str) -> None:
@@ -85,54 +94,52 @@ async def show_start_menu(event: types.Message, user_id: int, db_session: AsyncS
 
 async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
     while True:
-        await asyncio.sleep(ONE_HOUR)
         try:
             utcnow = datetime.now(timezone.utc)
-            if utcnow.hour == UTC_STARTING_MARK - 1:
-                wait_seconds = ONE_HOUR - utcnow.minute * 60 - utcnow.second
-                if wait_seconds > 0:
-                    await asyncio.sleep(wait_seconds)
-                async with db_connector.session_factory() as session:
-                    reminder_text = await get_text_by_prompt(prompt='reminder_text', db_session=session)
-                    reminder_recipients = [
-                        {
-                            "id": user.id,
-                            "telegram_id": user.telegram_id,
-                            "last_reminded_at": ensure_utc(user.last_reminded_at),
-                            "reminder_freq": user.reminder_freq,
-                            "log_repr": str(user),
-                        }
-                        for user in await get_all_users_with_reminders(session)
-                    ]
-                for recipient in reminder_recipients:
-                    user_id = recipient["id"]
-                    telegram_id = recipient["telegram_id"]
-                    last_reminded_at = recipient["last_reminded_at"]
-                    reminder_freq = recipient["reminder_freq"]
-                    log_repr = recipient["log_repr"]
-                    reminder_due = datetime.now(timezone.utc)
-                    if reminder_freq is None:
-                        continue
-                    if reminder_due - last_reminded_at <= timedelta(days=reminder_freq):
-                        continue
-                    try:
-                        await bot.send_message(chat_id=telegram_id, text=reminder_text)
-                    except (TelegramForbiddenError, TelegramNotFound) as exc:
-                        await _mark_failed_delivery(log_repr, reason=f"Telegram delivery error: {exc}")
-                        await _update_reminder_timestamp(
-                            db_connector,
-                            user_id=user_id,
-                            timestamp=reminder_due,
-                        )
-                    except Exception as send_exc:  # noqa: BLE001
-                        logger.exception("Failed to send reminder to %s", log_repr, exc_info=send_exc)
-                    else:
-                        logger.info("Reminder sent to %s", log_repr)
-                        await _update_reminder_timestamp(
-                            db_connector,
-                            user_id=user_id,
-                            timestamp=reminder_due,
-                        )
+            wait_seconds = get_seconds_until_starting_mark(utcnow.hour, utcnow)
+            if wait_seconds > 0:
+                await asyncio.sleep(wait_seconds)
+            reminder_due = get_reminder_slot(datetime.now(timezone.utc))
+            async with db_connector.session_factory() as session:
+                reminder_text = await get_text_by_prompt(prompt='reminder_text', db_session=session)
+                reminder_recipients = [
+                    {
+                        "id": user.id,
+                        "telegram_id": user.telegram_id,
+                        "last_reminded_at": get_reminder_slot(ensure_utc(user.last_reminded_at)),
+                        "reminder_freq": user.reminder_freq,
+                        "log_repr": str(user),
+                    }
+                    for user in await get_all_users_with_reminders(session)
+                ]
+            for recipient in reminder_recipients:
+                user_id = recipient["id"]
+                telegram_id = recipient["telegram_id"]
+                last_reminded_at = recipient["last_reminded_at"]
+                reminder_freq = recipient["reminder_freq"]
+                log_repr = recipient["log_repr"]
+                if reminder_freq is None:
+                    continue
+                if reminder_due - last_reminded_at < timedelta(days=reminder_freq):
+                    continue
+                try:
+                    await bot.send_message(chat_id=telegram_id, text=reminder_text)
+                except (TelegramForbiddenError, TelegramNotFound) as exc:
+                    await _mark_failed_delivery(log_repr, reason=f"Telegram delivery error: {exc}")
+                    await _update_reminder_timestamp(
+                        db_connector,
+                        user_id=user_id,
+                        timestamp=reminder_due,
+                    )
+                except Exception as send_exc:  # noqa: BLE001
+                    logger.exception("Failed to send reminder to %s", log_repr, exc_info=send_exc)
+                else:
+                    logger.info("Reminder sent to %s", log_repr)
+                    await _update_reminder_timestamp(
+                        db_connector,
+                        user_id=user_id,
+                        timestamp=reminder_due,
+                    )
         except asyncio.CancelledError:
             raise
         except Exception as exc:
@@ -168,8 +175,8 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
             for user in users:
                 if not user["subscription_expired_at"]:
                     continue
-                delta_days = (today_utc - user["subscription_expired_at"]).days
-                if delta_days == 1:
+                days_to_expiry = (user["subscription_expired_at"] - today_utc).days
+                if days_to_expiry == 1:
                     try:
                         await bot.send_message(
                             chat_id=user["telegram_id"],
@@ -185,7 +192,7 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                     else:
                         logger.info("Ending subscription reminder was sent to %s", user["log_repr"])
 
-                elif delta_days == 0:
+                elif days_to_expiry == 0:
                     await _set_subscription_status(
                         db_connector,
                         user_id=user["id"],

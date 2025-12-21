@@ -18,7 +18,7 @@ from database.models.session import Session
 from enums import States
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = Router()
 router.message.middleware.register(SessionMiddleware())

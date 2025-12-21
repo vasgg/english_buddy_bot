@@ -1,7 +1,9 @@
 import logging
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from aiogram import types
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError, TelegramNotFound
 from aiogram.fsm.context import FSMContext
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +31,7 @@ from enums import QuizType, SessionStartsFrom, SessionStatus
 if TYPE_CHECKING:
     from database.models.lesson import Lesson
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class StatsCalculationResults(BaseModel):
@@ -148,7 +150,8 @@ async def show_extra_slides_dialog(
 
 
 async def finalizing(event: types.Message, state: FSMContext, session: Session, db_session: AsyncSession):
-    await event.bot.unpin_all_chat_messages(chat_id=event.from_user.id)
+    with suppress(TelegramBadRequest, TelegramForbiddenError, TelegramNotFound):
+        await event.bot.unpin_all_chat_messages(chat_id=event.from_user.id)
     slides_ids = session.get_path()
     regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
     exam_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.EXAM, db_session=db_session)

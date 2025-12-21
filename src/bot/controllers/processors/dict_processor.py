@@ -1,4 +1,7 @@
+from contextlib import suppress
+
 from aiogram import types
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError, TelegramNotFound
 
 
 async def process_dict(
@@ -6,5 +9,6 @@ async def process_dict(
     text: str,
 ) -> bool:
     msg = await event.answer(text=text)
-    await msg.pin(disable_notification=True)
+    with suppress(TelegramBadRequest, TelegramForbiddenError, TelegramNotFound):
+        await msg.pin(disable_notification=True)
     return True

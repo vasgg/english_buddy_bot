@@ -19,7 +19,7 @@ from database.crud.lesson import get_active_lessons, get_completed_lessons_from_
 from database.models.user import User
 from enums import SubscriptionType, SubscriptionDuration, UserSubscriptionType
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = Router()
 

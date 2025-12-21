@@ -1,8 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from consts import UTC_STARTING_MARK
 from database.models.user import User
 from enums import UserSubscriptionType
 
@@ -36,8 +37,20 @@ async def get_user_from_db_by_id(user_id: int, db_session: AsyncSession) -> User
     return user
 
 
-async def set_user_reminders(user_id: int, reminder_freq: int, db_session: AsyncSession) -> None:
-    await db_session.execute(update(User).filter(User.id == user_id).values(reminder_freq=reminder_freq))
+def _get_previous_reminder_slot(utcnow: datetime) -> datetime:
+    if utcnow.tzinfo is None:
+        utcnow = utcnow.replace(tzinfo=timezone.utc)
+    slot_today = utcnow.replace(hour=UTC_STARTING_MARK, minute=0, second=0, microsecond=0)
+    if utcnow < slot_today:
+        slot_today -= timedelta(days=1)
+    return slot_today
+
+
+async def set_user_reminders(user_id: int, reminder_freq: int | None, db_session: AsyncSession) -> None:
+    values = {"reminder_freq": reminder_freq}
+    if reminder_freq is not None:
+        values["last_reminded_at"] = _get_previous_reminder_slot(datetime.now(timezone.utc))
+    await db_session.execute(update(User).filter(User.id == user_id).values(**values))
 
 
 async def get_all_users_with_reminders(db_session: AsyncSession) -> list[User]:
