@@ -134,6 +134,27 @@ def get_reactions_table(reactions: list[dict]) -> c.Table:
     )
 
 
+def get_reminder_texts_table(variants: list[dict]) -> c.Table:
+    return c.Table(
+        data=variants,
+        columns=[
+            DisplayLookup(field='text', title='text'),
+            DisplayLookup(
+                field='edit_button',
+                title=' ',
+                on_click=GoToEvent(url='/reminder_texts/edit/{id}'),
+                table_width_percent=3,
+            ),
+            DisplayLookup(
+                field='minus_button',
+                title=' ',
+                on_click=GoToEvent(url='/reminder_texts/confirm_delete/{id}/'),
+                table_width_percent=3,
+            ),
+        ],
+    )
+
+
 def get_slides_table(slides: list[dict]) -> c.Table:
     return c.Table(
         data=slides,

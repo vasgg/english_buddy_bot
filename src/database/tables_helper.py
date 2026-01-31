@@ -28,6 +28,9 @@ import database.models.sticker
 import database.models.text
 
 # noinspection PyUnresolvedReferences
+import database.models.reminder_text_variant
+
+# noinspection PyUnresolvedReferences
 from database.models.user import User
 
 

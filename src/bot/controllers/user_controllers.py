@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import random
 from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, types
 from aiogram.exceptions import TelegramForbiddenError, TelegramNotFound
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards.keyboards import get_lesson_picker_keyboard, get_notified_keyboard, get_premium_keyboard
@@ -12,6 +14,7 @@ from config import get_settings
 from consts import ONE_DAY, UTC_STARTING_MARK
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_active_and_editing_lessons, get_active_lessons, get_completed_lessons_from_sessions
+from database.crud.reminder_text_variant import get_all_reminder_text_variants
 from database.crud.user import (
     get_all_users_with_active_subscription,
     get_all_users_with_reminders,
@@ -101,7 +104,13 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                 await asyncio.sleep(wait_seconds)
             reminder_due = get_reminder_slot(datetime.now(timezone.utc))
             async with db_connector.session_factory() as session:
-                reminder_text = await get_text_by_prompt(prompt='reminder_text', db_session=session)
+                try:
+                    reminder_text_variants = await get_all_reminder_text_variants(session)
+                except OperationalError:
+                    reminder_text_variants = []
+                reminder_text_fallback = None
+                if not reminder_text_variants:
+                    reminder_text_fallback = await get_text_by_prompt(prompt='reminder_text', db_session=session)
                 reminder_recipients = [
                     {
                         "id": user.id,
@@ -123,6 +132,13 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                 if reminder_due - last_reminded_at < timedelta(days=reminder_freq):
                     continue
                 try:
+                    reminder_text = (
+                        random.choice(reminder_text_variants)
+                        if reminder_text_variants
+                        else reminder_text_fallback
+                    )
+                    if reminder_text is None:
+                        continue
                     await bot.send_message(chat_id=telegram_id, text=reminder_text)
                 except (TelegramForbiddenError, TelegramNotFound) as exc:
                     await _mark_failed_delivery(log_repr, reason=f"Telegram delivery error: {exc}")

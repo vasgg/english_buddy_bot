@@ -44,6 +44,10 @@ def get_common_content(
                     on_click=GoToEvent(url='/texts'),
                 ),
                 c.Link(
+                    components=[c.Text(text='Напоминания')],
+                    on_click=GoToEvent(url='/reminder_texts'),
+                ),
+                c.Link(
                     components=[c.Text(text='Реакции')],
                     on_click=GoToEvent(url='/reactions'),
                 ),

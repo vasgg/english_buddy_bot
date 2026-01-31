@@ -42,6 +42,7 @@ def create_app():
     from webapp.routers.newsletter import router as newsletter_fastui_router
     from webapp.routers.reactions import router as reaction_fastui_router
     from webapp.routers.root import router as root_fastui_router
+    from webapp.routers.reminder_texts import router as reminder_texts_fastui_router
     from webapp.routers.slides_get import router as slides_get_fastui_router
     from webapp.routers.slides_post import router as slides_post_fastui_router
     from webapp.routers.statistics import router as statistics_fastui_router
@@ -55,6 +56,7 @@ def create_app():
     app.include_router(users_fastui_router, prefix="/api/users")
     app.include_router(lessons_fastui_router, prefix="/api/lessons")
     app.include_router(texts_fastui_router, prefix="/api/texts")
+    app.include_router(reminder_texts_fastui_router, prefix="/api/reminder_texts")
     app.include_router(reaction_fastui_router, prefix="/api/reactions")
     app.include_router(newsletter_fastui_router, prefix="/api/newsletter")
     app.include_router(statistics_fastui_router, prefix="/api/statistics")
