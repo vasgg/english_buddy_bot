@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import random
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, types
@@ -26,6 +27,39 @@ from database.garbage_helper import collect_garbage
 from enums import UserSubscriptionType
 
 logger = logging.getLogger()
+
+def _normalize_reminder_variants(variants: list[str]) -> list[str]:
+    unique_variants = dict.fromkeys(variants)
+    return [text for text in unique_variants if text and text.strip()]
+
+
+@dataclass
+class _NonRepeatingTextPicker:
+    source_key: tuple[str, ...] | None = None
+    pool: list[str] = field(default_factory=list)
+
+    def pick(self, variants: list[str]) -> str:
+        key = tuple(variants)
+        if self.source_key != key:
+            self.source_key = key
+            self.pool.clear()
+
+        if not self.pool:
+            self.pool.extend(variants)
+
+        choice = random.choice(self.pool)
+        self.pool.remove(choice)
+        return choice
+
+
+_reminder_text_picker = _NonRepeatingTextPicker()
+
+
+def _pick_reminder_text(reminder_text_variants: list[str], reminder_text_fallback: str | None) -> str | None:
+    normalized = _normalize_reminder_variants(reminder_text_variants)
+    if normalized:
+        return _reminder_text_picker.pick(normalized)
+    return reminder_text_fallback
 
 
 def get_seconds_until_starting_mark(current_hour, utcnow):
@@ -132,11 +166,7 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                 if reminder_due - last_reminded_at < timedelta(days=reminder_freq):
                     continue
                 try:
-                    reminder_text = (
-                        random.choice(reminder_text_variants)
-                        if reminder_text_variants
-                        else reminder_text_fallback
-                    )
+                    reminder_text = _pick_reminder_text(reminder_text_variants, reminder_text_fallback)
                     if reminder_text is None:
                         continue
                     await bot.send_message(chat_id=telegram_id, text=reminder_text)
