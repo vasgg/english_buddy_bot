@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.processors.input_models import UserInputHint, UserInputMsg, UserQuizInput
-from bot.controllers.processors.quiz_helpers import error_count_exceeded, show_hint_dialog
+from bot.controllers.processors.quiz_helpers import answer_almost_right_reply, error_count_exceeded, show_hint_dialog
 from database.crud.answer import get_random_answer, get_text_by_prompt
 from database.crud.quiz_answer import log_quiz_answer
 from database.models.session import Session
@@ -67,7 +67,7 @@ async def process_quiz_input_phrase(
                 await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
                 return True
             elif trimmed_user_input in almost_right_answers:
-                await event.answer(text=slide.almost_right_answer_reply)
+                await answer_almost_right_reply(event, slide, db_session)
                 await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
                 return True
             await log_quiz_answer(session.id, slide.id, slide.slide_type, False, db_session)

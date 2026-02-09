@@ -2,11 +2,21 @@ from typing import Annotated, Type
 
 from fastapi import UploadFile
 from fastui.forms import FormFile
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 from pydantic_core import PydanticCustomError
 
 from database.models.slide import Slide
 from enums import KeyboardType
+
+
+def _has_content(value: str | None) -> bool:
+    return bool(value and value.strip())
+
+
+def _has_almost_right_answers(value: str | None) -> bool:
+    if value is None:
+        return False
+    return bool(value.replace('|', '').strip())
 
 
 class SlidesTableSchema(BaseModel):
@@ -144,7 +154,7 @@ def get_quiz_input_word_slide_data_model(slide: Slide = None) -> Type[BaseModel]
         )
         almost_right_answers: str | None = Field(
             initial=slide.almost_right_answers if slide else '',
-            description='Введите почти правильные ответы, разделённые "|". Необязательное поле.',
+            description='Введите почти правильные ответы, разделённые "|". Необязательное поле, но при заполнении требует реплику на почти правильный ответ.',
             format='textarea',
             rows=5,
             cols=None,
@@ -152,7 +162,7 @@ def get_quiz_input_word_slide_data_model(slide: Slide = None) -> Type[BaseModel]
         )
         almost_right_answer_reply: str | None = Field(
             initial=slide.almost_right_answer_reply if slide else None,
-            description='Введите реплику на почти правильный ответ. Необязательное поле.',
+            description='Введите реплику на почти правильный ответ. Необязательное поле, но обязательное, если заполнены почти правильные ответы.',
             format='textarea',
             rows=5,
             cols=None,
@@ -187,7 +197,7 @@ def get_quiz_input_phrase_slide_data_model(slide: Slide = None) -> Type[BaseMode
         )
         almost_right_answers: str | None = Field(
             initial=slide.almost_right_answers if slide else '',
-            description='Введите почти правильные ответы, разделённые "|". Необязательное поле.',
+            description='Введите почти правильные ответы, разделённые "|". Необязательное поле, но при заполнении требует реплику на почти правильный ответ.',
             format='textarea',
             rows=5,
             cols=None,
@@ -195,7 +205,7 @@ def get_quiz_input_phrase_slide_data_model(slide: Slide = None) -> Type[BaseMode
         )
         almost_right_answer_reply: str | None = Field(
             initial=slide.almost_right_answer_reply if slide else None,
-            description='Введите реплику на почти правильный ответ. Необязательное поле.',
+            description='Введите реплику на почти правильный ответ. Необязательное поле, но обязательное, если заполнены почти правильные ответы.',
             format='textarea',
             rows=5,
             cols=None,
@@ -253,6 +263,8 @@ class EditQuizOptionsSlideData(BaseModel):
 
 
 class EditQuizInputWordSlideData(BaseModel):
+    model_config = ConfigDict(validate_default=True)
+
     text: str
     right_answers: str
     almost_right_answers: str | None = None
@@ -269,13 +281,37 @@ class EditQuizInputWordSlideData(BaseModel):
             )
         return value
 
+    # noinspection PyMethodParameters
+    @field_validator('almost_right_answer_reply')
+    def almost_right_answer_reply_validator(cls, value: str | None, info: ValidationInfo) -> str | None:
+        almost_right_answers = info.data.get('almost_right_answers')
+        if _has_almost_right_answers(almost_right_answers) and not _has_content(value):
+            raise PydanticCustomError(
+                'missing_almost_right_answer_reply',
+                'Если заполнены почти правильные ответы, то реплика на почти правильный ответ обязательна.',
+            )
+        return value
+
 
 class EditQuizInputPhraseSlideData(BaseModel):
+    model_config = ConfigDict(validate_default=True)
+
     text: str
     right_answers: str
     almost_right_answers: str | None = None
     almost_right_answer_reply: str | None = None
     is_exam_slide: bool = False
+
+    # noinspection PyMethodParameters
+    @field_validator('almost_right_answer_reply')
+    def almost_right_answer_reply_validator(cls, value: str | None, info: ValidationInfo) -> str | None:
+        almost_right_answers = info.data.get('almost_right_answers')
+        if _has_almost_right_answers(almost_right_answers) and not _has_content(value):
+            raise PydanticCustomError(
+                'missing_almost_right_answer_reply',
+                'Если заполнены почти правильные ответы, то реплика на почти правильный ответ обязательна.',
+            )
+        return value
 
 
 class EditImageSlideData(BaseModel):
