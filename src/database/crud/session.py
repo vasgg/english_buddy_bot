@@ -99,16 +99,20 @@ async def abort_in_progress_sessions_by_lesson(lesson_id: int, db_session: Async
     await db_session.execute(query)
 
 
-async def get_in_progress_lessons_recent_first(user_id: int, db_session: AsyncSession) -> list[tuple[int, "datetime"]]:
-    subq = (
-        select(
-            Session.lesson_id.label('lesson_id'),
-            func.max(Session.created_at).label('last_started_at'),
-        )
+async def get_in_progress_lessons_recent_first(user_id: int, db_session: AsyncSession) -> list[Session]:
+    query = (
+        select(Session)
         .filter(Session.user_id == user_id, Session.status == SessionStatus.IN_PROGRESS)
-        .group_by(Session.lesson_id)
-        .subquery()
+        .order_by(Session.created_at.desc(), Session.id.desc())
     )
-    query = select(subq.c.lesson_id, subq.c.last_started_at).order_by(subq.c.last_started_at.desc())
     result = await db_session.execute(query)
-    return list(result.all())
+    sessions = result.scalars().all()
+
+    unique_sessions: list[Session] = []
+    seen_lesson_ids: set[int] = set()
+    for session in sessions:
+        if session.lesson_id in seen_lesson_ids:
+            continue
+        unique_sessions.append(session)
+        seen_lesson_ids.add(session.lesson_id)
+    return unique_sessions

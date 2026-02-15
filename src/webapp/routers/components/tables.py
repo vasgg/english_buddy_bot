@@ -160,6 +160,7 @@ def get_slides_table(slides: list[dict]) -> c.Table:
         data=slides,
         columns=[
             DisplayLookup(field='index', table_width_percent=3),
+            DisplayLookup(field='id', title='id', table_width_percent=8),
             DisplayLookup(field='emoji', table_width_percent=3),
             DisplayLookup(field='text'),
             DisplayLookup(field='delay', table_width_percent=2),
@@ -199,6 +200,7 @@ def get_extra_slides_table(slides: list[dict]) -> c.Table:
         data=slides,
         columns=[
             DisplayLookup(field='index', table_width_percent=3),
+            DisplayLookup(field='id', title='id', table_width_percent=8),
             DisplayLookup(field='emoji', table_width_percent=3),
             DisplayLookup(field='text'),
             DisplayLookup(field='delay', table_width_percent=2),

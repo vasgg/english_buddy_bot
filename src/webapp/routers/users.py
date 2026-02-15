@@ -1,4 +1,5 @@
 import logging
+from contextlib import suppress
 from typing import Annotated
 
 from fastapi import APIRouter
@@ -14,7 +15,9 @@ from database.crud.lesson import (
     get_lesson_by_id,
 )
 from database.crud.session import get_in_progress_lessons_recent_first
+from database.crud.slide import get_slide_by_id
 from enums import SelectOneEnum, UserSubscriptionType, sub_status_to_select_one
+from lesson_path import LessonPath
 from webapp.controllers.users import get_users_table_content
 from webapp.db import AsyncDBSession
 from webapp.routers.components.buttons import back_button, create_send_message_button
@@ -62,12 +65,50 @@ async def edit_user_page(user_id: int, db_session: AsyncDBSession) -> list[AnyCo
     ]
     in_progress_components: list[AnyComponent] = []
     in_progress = await get_in_progress_lessons_recent_first(user.id, db_session)
-    for lesson_id, last_started_at in in_progress:
-        lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
+    for session in in_progress:
+        lesson = await get_lesson_by_id(lesson_id=session.lesson_id, db_session=db_session)
         if not lesson or not getattr(lesson, 'title', None):
             continue
-        humanized_started = arrow.get(last_started_at).humanize(locale='ru')
-        in_progress_components.append(c.Paragraph(text=f"{lesson.title} — {humanized_started}"))
+
+        humanized_started = arrow.get(session.created_at).humanize(locale='ru')
+        current_slide_id: int | None
+        try:
+            current_slide_id = session.get_slide()
+        except Exception:
+            current_slide_id = None
+
+        lesson_path_str = lesson.path_extra if session.in_extra else lesson.path
+        lesson_path = LessonPath(lesson_path_str).path
+        slide_index_in_lesson: int | None = None
+        if current_slide_id is not None:
+            with suppress(ValueError):
+                slide_index_in_lesson = lesson_path.index(current_slide_id) + 1
+
+        slide = await get_slide_by_id(current_slide_id, db_session) if current_slide_id is not None else None
+        source = 'extra' if session.in_extra else 'regular'
+        slide_url = (
+            f'/slides/edit/{source}/{slide.slide_type}/{current_slide_id}/{slide_index_in_lesson}/'
+            if slide and slide_index_in_lesson is not None
+            else f'/slides/lesson{lesson.id}/'
+        )
+        slide_id_component: AnyComponent
+        if current_slide_id is None:
+            slide_id_component = c.Text(text='—')
+        else:
+            slide_id_component = c.Link(
+                components=[c.Text(text=str(current_slide_id))],
+                on_click=GoToEvent(url=slide_url),
+            )
+        in_progress_components.append(
+            c.Div(
+                class_name='+ d-flex flex-wrap align-items-baseline gap-1',
+                components=[
+                    c.Text(text=f"{lesson.title} — {humanized_started} — слайд {slide_index_in_lesson or '—'} (id:"),
+                    slide_id_component,
+                    c.Text(text=')'),
+                ],
+            ),
+        )
     if not in_progress_components:
         in_progress_components = [c.Paragraph(text='Нет начатых, но не завершённых уроков')]
     in_progress_block: list[AnyComponent] = [
