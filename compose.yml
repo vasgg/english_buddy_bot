@@ -4,8 +4,9 @@ services:
     command: redis-server --appendonly yes
     restart: unless-stopped
     volumes:
-      - redisdata:/data
+      - english_buddy_bot_redisdata:/data
     ports:
       - "127.0.0.1:6379:6379"
 volumes:
-  redisdata:
+  english_buddy_bot_redisdata:
+    external: true
