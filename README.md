@@ -13,5 +13,4 @@ Python version: `3.13` (see `.python-version`).
 - Lint: `uv run ruff check .`
 - Typecheck (informational for now): `uv run ty check src`
 - Run bot (polling): `uv run bot-run` (requires Redis, see `compose.yml`)
-- Run webapp: `uv run webapp-run --host 127.0.0.1 --port 8000`
-  - On VPS/ngrok: `uv run webapp-run --host 0.0.0.0 --proxy-headers --forwarded-allow-ips '*'`
+- Run webapp: `uv run webapp-run` (or `source .venv/bin/activate && webapp-run`)
