@@ -5,12 +5,11 @@ from bot.keyboards.callback_data import (
     HintCallbackFactory,
     LessonStartsFromCallbackFactory,
     LessonsCallbackFactory,
-    PaymentSentCallbackFactory,
     QuizCallbackFactory,
     RemindersCallbackFactory, PremiumSubDurationCallbackFactory,
 )
 from database.models.lesson import Lesson
-from enums import LessonStartsFrom, LessonStatus, SubscriptionType, UserLessonProgress, SubscriptionDuration
+from enums import LessonStartsFrom, LessonStatus, SubscriptionDuration, UserLessonProgress
 
 
 def get_lesson_picker_keyboard(lessons: list[Lesson], completed_lessons: set[int]) -> InlineKeyboardMarkup:
@@ -227,4 +226,3 @@ def get_premium_keyboard() -> InlineKeyboardMarkup:
             ],
         ],
     )
-

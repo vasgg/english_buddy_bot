@@ -16,7 +16,7 @@ from database.crud.lesson import (
 )
 from database.crud.session import get_in_progress_lessons_recent_first
 from database.crud.slide import get_slide_by_id
-from enums import SelectOneEnum, UserSubscriptionType, sub_status_to_select_one
+from enums import SelectOneEnum, UserSubscriptionType
 from lesson_path import LessonPath
 from webapp.controllers.users import get_users_table_content
 from webapp.db import AsyncDBSession
