@@ -1,12 +1,29 @@
 services:
   redis:
     image: 'redis:7.2-alpine'
-    command: redis-server --appendonly yes
+    command: >
+      redis-server --appendonly yes
+      --maxmemory 1.4gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --stop-writes-on-bgsave-error no
     restart: unless-stopped
     volumes:
       - english_buddy_bot_redisdata:/data
     ports:
       - "127.0.0.1:6379:6379"
+    mem_limit: 1.7g
+    mem_reservation: 1g
+    sysctls:
+      - net.core.somaxconn=511
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   english_buddy_bot_redisdata:
     external: true
