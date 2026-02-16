@@ -32,7 +32,7 @@ async def get_all_slides_from_lesson_by_order_fastui(db_session: AsyncDBSession,
         )
         # noinspection PyTypeChecker
         slide_data = {
-            'id': slide.id,
+            'id': str(slide.id),
             'lesson_id': slide.lesson_id,
             'slide_type': slide.slide_type,
             'index': index,

@@ -26,11 +26,11 @@ async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession)
                 source = SlidesMenuType.EXTRA
             except ValueError:
                 continue
-        link = f'/slides/edit/{source}/{index + 1}/{slide.id}/'
+        link = f'/slides/edit/{source}/{slide.slide_type}/{slide.id}/{index + 1}/'
         slide_data = {
             'slide_type': get_slide_emoji(slide.slide_type),
             'is_exam_slide': '🎓' if slide.is_exam_slide else ' ',
-            'slide_id': slide.id,
+            'slide_id': str(slide.id),
             'lesson_title': lesson.title,
             'count_correct': str(i.correct),
             'count_wrong': str(i.wrong),
