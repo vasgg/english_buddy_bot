@@ -30,7 +30,8 @@ async def lesson_callback_processing(
     user: User,
     db_session: AsyncSession,
 ) -> None:
-    await callback.answer()
+    with suppress(TelegramBadRequest):
+        await callback.answer()
     with suppress(TelegramBadRequest):
         await callback.message.delete()
 
@@ -100,7 +101,8 @@ async def lesson_start_from_callback_processing(
     state: FSMContext,
     db_session: AsyncSession,
 ) -> None:
-    await callback.answer()
+    with suppress(TelegramBadRequest):
+        await callback.answer()
     with suppress(TelegramBadRequest, AttributeError):
         await callback.message.delete()
 
@@ -128,6 +130,8 @@ async def reminders_callback_processing(
     db_session: AsyncSession,
 ) -> None:
     with suppress(TelegramBadRequest):
+        await callback.answer()
+    with suppress(TelegramBadRequest):
         await callback.message.delete()
 
     frequency = callback_data.frequency
@@ -147,6 +151,5 @@ async def reminders_callback_processing(
     await set_user_reminders(user_id=user.id, reminder_freq=frequency if frequency > 0 else None, db_session=db_session)
     await db_session.commit()
     await callback.message.answer(text=message)
-    await callback.answer()
     # TODO: вот тут нужен правильный флаг, чтобы после команды не показывать старт меню
     await show_start_menu(event=callback.message, user_id=user.id, db_session=db_session)

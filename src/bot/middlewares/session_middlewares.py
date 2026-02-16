@@ -2,6 +2,7 @@ from contextlib import suppress
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
 from database.crud.session import get_last_session_with_progress, get_session
 from database.database_connector import DatabaseConnector
@@ -84,7 +85,8 @@ class SessionMiddleware(BaseMiddleware):
         await state.clear()
         message = 'Не удалось найти активный урок. Начните урок заново через меню.'
         if isinstance(event, CallbackQuery):
-            await event.answer(message)
+            with suppress(TelegramBadRequest):
+                await event.answer(message)
             if event.message:
                 await event.message.answer(message)
         else:

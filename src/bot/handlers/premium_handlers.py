@@ -63,7 +63,8 @@ async def on_successful_payment(
 async def premium_types_message(
     callback: types.CallbackQuery, callback_data: PremiumSubDurationCallbackFactory
 ) -> None:
-    await callback.answer()
+    with suppress(TelegramBadRequest):
+        await callback.answer()
     with suppress(TelegramBadRequest):
         await callback.message.delete_reply_markup()
     match callback_data.duration:
@@ -93,7 +94,8 @@ async def premium_types_message(
 async def premium_payment_sent_message(
     callback: types.CallbackQuery, callback_data: PaymentSentCallbackFactory, user: User, db_session: AsyncSession
 ) -> None:
-    await callback.answer()
+    with suppress(TelegramBadRequest):
+        await callback.answer()
     with suppress(TelegramBadRequest):
         await callback.message.delete_reply_markup()
     lessons = await get_active_lessons(db_session)
@@ -120,13 +122,18 @@ async def discount_button_callback_processing(
     callback: types.CallbackQuery,
     db_session: AsyncSession,
 ) -> None:
-    await callback.answer()
-    await callback.message.delete()
     image_paths = get_image_paths()
     caption = await get_text_by_prompt(prompt='discount_button_caption', db_session=db_session)
     if not image_paths:
-        await callback.answer("Нет доступных изображений для репоста.")
+        with suppress(TelegramBadRequest):
+            await callback.answer("Нет доступных изображений для репоста.")
+        with suppress(TelegramBadRequest):
+            await callback.message.delete()
         return
+    with suppress(TelegramBadRequest):
+        await callback.answer()
+    with suppress(TelegramBadRequest):
+        await callback.message.delete()
 
     media = MediaGroupBuilder(caption=caption)
     for path in image_paths:

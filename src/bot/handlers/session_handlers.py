@@ -32,7 +32,8 @@ async def further_button_callback_processing(
         session: Session,
         db_session: AsyncSession,
 ) -> None:
-    await callback.answer()
+    with suppress(TelegramBadRequest):
+        await callback.answer()
     with suppress(TelegramBadRequest):
         await callback.message.delete_reply_markup()
     session.current_step += 1
@@ -48,10 +49,11 @@ async def quiz_callback_processing(
         db_session: AsyncSession,
 ) -> None:
     with suppress(TelegramBadRequest):
+        await callback.answer()
+    with suppress(TelegramBadRequest):
         await callback.message.delete_reply_markup()
     user_input = UserInputMsg(text=callback_data.answer)
     await show_slides(callback.message, state, session, db_session, user_input)
-    await callback.answer()
 
 
 @router.callback_query(HintCallbackFactory.filter())
@@ -62,9 +64,10 @@ async def hint_callback(
         session: Session,
         db_session: AsyncSession,
 ) -> None:
+    with suppress(TelegramBadRequest):
+        await callback.answer()
     user_input = UserInputHint(hint_requested=callback_data.hint_requested)
     await show_slides(callback.message, state, session, db_session, user_input)
-    await callback.answer()
 
 
 @router.message(States.INPUT_PHRASE)
@@ -87,6 +90,8 @@ async def handle_extra_slide_answer(
         session: Session,
         db_session: AsyncSession,
 ) -> None:
+    with suppress(TelegramBadRequest):
+        await callback.answer()
     with suppress(TelegramBadRequest):
         await callback.message.delete_reply_markup()
     if callback_data.extra_slides_requested:
