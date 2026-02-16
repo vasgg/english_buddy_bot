@@ -20,7 +20,7 @@ def _has_almost_right_answers(value: str | None) -> bool:
 
 
 class SlidesTableSchema(BaseModel):
-    id: int
+    id: str
     text: str | None = Field(title='Контент')
     details: str | None = Field(title='Контекст')
     is_exam_slide: str = Field(title=' ')
