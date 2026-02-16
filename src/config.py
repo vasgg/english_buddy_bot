@@ -18,13 +18,13 @@ class Settings(BaseSettings):
     TOP_BAD_SLIDES_COUNT: int
     STAGE: Stage
     db_echo: bool = False
-    allowed_image_formats: list[str] = ['png', 'jpg', 'jpeg', 'gif', 'heic', 'tiff', 'webp']
+    allowed_image_formats: list[str] = ["png", "jpg", "jpeg", "gif", "heic", "tiff", "webp"]
 
     @property
     def aiosqlite_db_url(self) -> str:
-        return f'sqlite+aiosqlite:///{self.DB_NAME}.db'
+        return f"sqlite+aiosqlite:///{self.DB_NAME}.db"
 
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
 @lru_cache

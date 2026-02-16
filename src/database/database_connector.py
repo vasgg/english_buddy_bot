@@ -17,5 +17,8 @@ class DatabaseConnector:
             event.listen(self.engine.sync_engine, "connect", _set_sqlite_pragmas)
 
         self.session_factory = async_sessionmaker(
-            bind=self.engine, expire_on_commit=False, autocommit=False, autoflush=False,
+            bind=self.engine,
+            expire_on_commit=False,
+            autocommit=False,
+            autoflush=False,
         )

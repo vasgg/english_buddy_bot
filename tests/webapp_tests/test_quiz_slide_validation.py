@@ -39,4 +39,3 @@ def test_quiz_input_phrase_allows_missing_reply_when_no_almost_answers():
         text="translate me",
         right_answers="x|y",
     )
-

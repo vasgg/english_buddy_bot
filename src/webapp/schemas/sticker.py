@@ -11,8 +11,8 @@ def get_sticker_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class StickerSlideDataModel(BaseModel):
         sticker_type: StickerType = Field(
             s_type if slide else None,
-            description='Выберите тип стикера. Обязательное поле.',
-            title='sticker type',
+            description="Выберите тип стикера. Обязательное поле.",
+            title="sticker type",
         )
 
         model_config = ConfigDict(from_attributes=True)

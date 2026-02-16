@@ -16,24 +16,24 @@ def _has_content(value: str | None) -> bool:
 def _has_almost_right_answers(value: str | None) -> bool:
     if value is None:
         return False
-    return bool(value.replace('|', '').strip())
+    return bool(value.replace("|", "").strip())
 
 
 class SlidesTableSchema(BaseModel):
     id: str
-    text: str | None = Field(title='Контент')
-    details: str | None = Field(title='Контекст')
-    is_exam_slide: str = Field(title=' ')
-    index: int = Field(title=' ')
-    lesson_id: int = Field(title=' ')
-    slide_type: str = Field(title=' ')
-    delay: str = Field(title='⏲︎')
-    emoji: str = Field(title=' ')
-    edit_button: str = Field(title=' ')
-    up_button: str = Field(title=' ')
-    down_button: str = Field(title=' ')
-    plus_button: str = Field(title=' ')
-    minus_button: str = Field(title=' ')
+    text: str | None = Field(title="Контент")
+    details: str | None = Field(title="Контекст")
+    is_exam_slide: str = Field(title=" ")
+    index: int = Field(title=" ")
+    lesson_id: int = Field(title=" ")
+    slide_type: str = Field(title=" ")
+    delay: str = Field(title="⏲︎")
+    emoji: str = Field(title=" ")
+    edit_button: str = Field(title=" ")
+    up_button: str = Field(title=" ")
+    down_button: str = Field(title=" ")
+    plus_button: str = Field(title=" ")
+    minus_button: str = Field(title=" ")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -41,27 +41,27 @@ class SlidesTableSchema(BaseModel):
 def get_text_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class TextSlideDataModel(BaseModel):
         text: str = Field(
-            initial=slide.text if slide else '',
-            description='Введите текст слайда. Обязательное поле.',
-            format='textarea',
+            initial=slide.text if slide else "",
+            description="Введите текст слайда. Обязательное поле.",
+            format="textarea",
             rows=5,
             cols=None,
-            title='текст слайда',
+            title="текст слайда",
         )
         delay: float | None = Field(
             slide.delay if slide else None,
-            description='Введите задержку после слайда (например, 1 секунда). Необязательное поле.',
-            title='задержка',
+            description="Введите задержку после слайда (например, 1 секунда). Необязательное поле.",
+            title="задержка",
         )
         keyboard_type: bool | None = Field(
             bool(slide and slide.keyboard_type == KeyboardType.FURTHER),
-            description='Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.',
+            description="Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.",
             title='Кнопка "далее"',
         )
         is_exam_slide: bool = Field(
             slide.is_exam_slide if slide else False,
-            description='Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.',
-            title='exam slide',
+            description="Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.",
+            title="exam slide",
         )
 
     return TextSlideDataModel
@@ -71,22 +71,22 @@ def get_image_slide_data_model(slide: Slide = None, lesson_id: int = None) -> Ty
     class ImageSlideData(BaseModel):
         select_picture: str | None = Field(
             slide.picture if slide else None,
-            description='Выберите изображение из папки с загруженными изображениями этого урока. Необязательное поле.',
-            title='выбор картинки из загруженных',
-            json_schema_extra={'search_url': f'/api/files/{lesson_id if lesson_id else slide.lesson_id}/'},
+            description="Выберите изображение из папки с загруженными изображениями этого урока. Необязательное поле.",
+            title="выбор картинки из загруженных",
+            json_schema_extra={"search_url": f"/api/files/{lesson_id if lesson_id else slide.lesson_id}/"},
         )
-        upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=10_000_000)] | None = Field(
-            description='Загрузите файл с вашего компьютера. Поддерживаются только изображения до 10мб. Необязательное поле.',
-            title='загрузка картинки',
+        upload_new_picture: Annotated[UploadFile, FormFile(accept="image/*", max_size=10_000_000)] | None = Field(
+            description="Загрузите файл с вашего компьютера. Поддерживаются только изображения до 10мб. Необязательное поле.",
+            title="загрузка картинки",
         )
         delay: float | None = Field(
             slide.delay if slide else None,
-            description='Введите задержку после слайда (например, 1 секунда). Необязательное поле.',
-            title='задержка',
+            description="Введите задержку после слайда (например, 1 секунда). Необязательное поле.",
+            title="задержка",
         )
         keyboard_type: bool | None = Field(
             bool(slide and slide.keyboard_type == KeyboardType.FURTHER),
-            description='Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.',
+            description="Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.",
             title='Кнопка "далее"',
         )
 
@@ -96,12 +96,12 @@ def get_image_slide_data_model(slide: Slide = None, lesson_id: int = None) -> Ty
 def get_pin_dict_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class PinDictSlideDataModel(BaseModel):
         text: str = Field(
-            initial=slide.text if slide else '',
-            description='Введите текст слайда, который будет прикреплён, как словарик урока. Обязательное поле.',
-            format='textarea',
+            initial=slide.text if slide else "",
+            description="Введите текст слайда, который будет прикреплён, как словарик урока. Обязательное поле.",
+            format="textarea",
             rows=5,
             cols=None,
-            title='текст слайда',
+            title="текст слайда",
         )
 
     return PinDictSlideDataModel
@@ -110,28 +110,28 @@ def get_pin_dict_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
 def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class QuizOptionsSlideDataModel(BaseModel):
         text: str = Field(
-            initial=slide.text if slide else '',
+            initial=slide.text if slide else "",
             description='Введите текст вопроса с пропущенным словом, отмеченным "_". Обязательное поле.',
-            format='textarea',
+            format="textarea",
             rows=5,
             cols=None,
-            title='текст вопроса',
+            title="текст вопроса",
         )
         right_answers: str = Field(
-            slide.right_answers if slide else '',
-            description='Введите правильный ответ. Обязательное поле.',
-            title='правильный ответ',
+            slide.right_answers if slide else "",
+            description="Введите правильный ответ. Обязательное поле.",
+            title="правильный ответ",
         )
         keyboard: str = Field(
-            slide.keyboard if slide else '',
+            slide.keyboard if slide else "",
             description='Введите варианты неправильных ответов, разделённые "|". '
-            'Квиз будет составлен из неправильных вариантов + правильный ответ. Обязательное поле.',
-            title='неправильные ответы',
+            "Квиз будет составлен из неправильных вариантов + правильный ответ. Обязательное поле.",
+            title="неправильные ответы",
         )
         is_exam_slide: bool = Field(
             slide.is_exam_slide if slide else False,
-            description='Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.',
-            title='exam slide',
+            description="Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.",
+            title="exam slide",
         )
 
     return QuizOptionsSlideDataModel
@@ -140,38 +140,38 @@ def get_quiz_options_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
 def get_quiz_input_word_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class QuizInputWordSlideDataModel(BaseModel):
         text: str = Field(
-            initial=slide.text if slide else '',
+            initial=slide.text if slide else "",
             description='Введите текст вопроса с пропущенным словом, отмеченным "_". Обязательное поле.',
-            format='textarea',
+            format="textarea",
             rows=5,
             cols=None,
-            title='текст вопроса',
+            title="текст вопроса",
         )
         right_answers: str = Field(
             slide.right_answers if slide else None,
-            description='Введите правильный ответ. Обязательное поле.',
-            title='правильный ответ',
+            description="Введите правильный ответ. Обязательное поле.",
+            title="правильный ответ",
         )
         almost_right_answers: str | None = Field(
-            initial=slide.almost_right_answers if slide else '',
+            initial=slide.almost_right_answers if slide else "",
             description='Введите почти правильные ответы, разделённые "|". Необязательное поле, но при заполнении требует реплику на почти правильный ответ.',
-            format='textarea',
+            format="textarea",
             rows=5,
             cols=None,
-            title='почти правильные ответы',
+            title="почти правильные ответы",
         )
         almost_right_answer_reply: str | None = Field(
             initial=slide.almost_right_answer_reply if slide else None,
-            description='Введите реплику на почти правильный ответ. Необязательное поле, но обязательное, если заполнены почти правильные ответы.',
-            format='textarea',
+            description="Введите реплику на почти правильный ответ. Необязательное поле, но обязательное, если заполнены почти правильные ответы.",
+            format="textarea",
             rows=5,
             cols=None,
-            title='реплика на почти правильный ответ.',
+            title="реплика на почти правильный ответ.",
         )
         is_exam_slide: bool = Field(
             slide.is_exam_slide if slide else False,
-            description='Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.',
-            title='exam slide',
+            description="Поставьте эту галочку, если это вопрос с экзамена. Необязательное поле.",
+            title="exam slide",
         )
 
     return QuizInputWordSlideDataModel
@@ -180,41 +180,41 @@ def get_quiz_input_word_slide_data_model(slide: Slide = None) -> Type[BaseModel]
 def get_quiz_input_phrase_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class QuizInputPhraseSlideDataModel(BaseModel):
         text: str = Field(
-            initial=slide.text if slide else '',
-            description='Введите фразу на русском для перевода на английский. Обязательное поле.',
-            format='textarea',
+            initial=slide.text if slide else "",
+            description="Введите фразу на русском для перевода на английский. Обязательное поле.",
+            format="textarea",
             rows=5,
             cols=None,
-            title='текст вопроса',
+            title="текст вопроса",
         )
         right_answers: str = Field(
-            initial=slide.right_answers if slide else '',
+            initial=slide.right_answers if slide else "",
             description='Введите правильные ответы, разделённые "|". Обязательное поле.',
-            format='textarea',
+            format="textarea",
             rows=5,
             cols=None,
-            title='правильные ответы',
+            title="правильные ответы",
         )
         almost_right_answers: str | None = Field(
-            initial=slide.almost_right_answers if slide else '',
+            initial=slide.almost_right_answers if slide else "",
             description='Введите почти правильные ответы, разделённые "|". Необязательное поле, но при заполнении требует реплику на почти правильный ответ.',
-            format='textarea',
+            format="textarea",
             rows=5,
             cols=None,
-            title='почти правильные ответы',
+            title="почти правильные ответы",
         )
         almost_right_answer_reply: str | None = Field(
             initial=slide.almost_right_answer_reply if slide else None,
-            description='Введите реплику на почти правильный ответ. Необязательное поле, но обязательное, если заполнены почти правильные ответы.',
-            format='textarea',
+            description="Введите реплику на почти правильный ответ. Необязательное поле, но обязательное, если заполнены почти правильные ответы.",
+            format="textarea",
             rows=5,
             cols=None,
-            title='реплика на почти правильный ответ.',
+            title="реплика на почти правильный ответ.",
         )
         is_exam_slide: bool = Field(
             slide.is_exam_slide if slide else False,
-            description='Отметьте эту опцию, если это вопрос с экзамена. Необязательное поле.',
-            title='exam slide',
+            description="Отметьте эту опцию, если это вопрос с экзамена. Необязательное поле.",
+            title="exam slide",
         )
 
     return QuizInputPhraseSlideDataModel
@@ -222,7 +222,7 @@ def get_quiz_input_phrase_slide_data_model(slide: Slide = None) -> Type[BaseMode
 
 def get_delete_slide_confirmation_data_model(slide: Slide = None) -> Type[BaseModel]:
     class DeleteSlideConfirmationDataModel(BaseModel):
-        confirm: bool = Field(False, description=f'Вы действительно хотите удалить слайд {slide.id}?', title='Confirm')
+        confirm: bool = Field(False, description=f"Вы действительно хотите удалить слайд {slide.id}?", title="Confirm")
 
     return DeleteSlideConfirmationDataModel
 
@@ -234,10 +234,10 @@ class EditTextSlideDataModel(BaseModel):
     is_exam_slide: bool = False
 
     # noinspection PyMethodParameters
-    @field_validator('delay')
+    @field_validator("delay")
     def delay_validator(cls, value: float) -> float:
         if value <= 0:
-            raise PydanticCustomError('delay', 'Задержка не может быть отрицательной или равной 0.')
+            raise PydanticCustomError("delay", "Задержка не может быть отрицательной или равной 0.")
         return value
 
 
@@ -252,11 +252,11 @@ class EditQuizOptionsSlideData(BaseModel):
     is_exam_slide: bool = False
 
     # noinspection PyMethodParameters
-    @field_validator('text')
+    @field_validator("text")
     def text_validator(cls, value: str) -> str:
-        if '_' not in value:
+        if "_" not in value:
             raise PydanticCustomError(
-                'missing_symbol',
+                "missing_symbol",
                 'Текст вопроса должен содержать символ "_" для подстановки правильного значения.',
             )
         return value
@@ -272,23 +272,23 @@ class EditQuizInputWordSlideData(BaseModel):
     is_exam_slide: bool = False
 
     # noinspection PyMethodParameters
-    @field_validator('text')
+    @field_validator("text")
     def text_validator(cls, value: str) -> str:
-        if '_' not in value:
+        if "_" not in value:
             raise PydanticCustomError(
-                'missing_symbol',
+                "missing_symbol",
                 'Текст вопроса должен содержать символ "_" для подстановки правильного значения.',
             )
         return value
 
     # noinspection PyMethodParameters
-    @field_validator('almost_right_answer_reply')
+    @field_validator("almost_right_answer_reply")
     def almost_right_answer_reply_validator(cls, value: str | None, info: ValidationInfo) -> str | None:
-        almost_right_answers = info.data.get('almost_right_answers')
+        almost_right_answers = info.data.get("almost_right_answers")
         if _has_almost_right_answers(almost_right_answers) and not _has_content(value):
             raise PydanticCustomError(
-                'missing_almost_right_answer_reply',
-                'Если заполнены почти правильные ответы, то реплика на почти правильный ответ обязательна.',
+                "missing_almost_right_answer_reply",
+                "Если заполнены почти правильные ответы, то реплика на почти правильный ответ обязательна.",
             )
         return value
 
@@ -303,13 +303,13 @@ class EditQuizInputPhraseSlideData(BaseModel):
     is_exam_slide: bool = False
 
     # noinspection PyMethodParameters
-    @field_validator('almost_right_answer_reply')
+    @field_validator("almost_right_answer_reply")
     def almost_right_answer_reply_validator(cls, value: str | None, info: ValidationInfo) -> str | None:
-        almost_right_answers = info.data.get('almost_right_answers')
+        almost_right_answers = info.data.get("almost_right_answers")
         if _has_almost_right_answers(almost_right_answers) and not _has_content(value):
             raise PydanticCustomError(
-                'missing_almost_right_answer_reply',
-                'Если заполнены почти правильные ответы, то реплика на почти правильный ответ обязательна.',
+                "missing_almost_right_answer_reply",
+                "Если заполнены почти правильные ответы, то реплика на почти правильный ответ обязательна.",
             )
         return value
 
@@ -318,11 +318,11 @@ class EditImageSlideData(BaseModel):
     delay: float | None = None
     select_picture: str | None = None
     keyboard_type: bool = False
-    upload_new_picture: Annotated[UploadFile, FormFile(accept='image/*', max_size=10_000_000)] | None
+    upload_new_picture: Annotated[UploadFile, FormFile(accept="image/*", max_size=10_000_000)] | None
 
     # noinspection PyMethodParameters
-    @field_validator('delay')
+    @field_validator("delay")
     def delay_validator(cls, value: float) -> float:
         if value <= 0:
-            raise PydanticCustomError('delay', 'Задержка не может быть отрицательной или равной 0.')
+            raise PydanticCustomError("delay", "Задержка не может быть отрицательной или равной 0.")
         return value

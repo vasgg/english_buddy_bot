@@ -19,7 +19,7 @@ async def show_hint_dialog(
     db_session: AsyncSession,
 ):
     await event.answer(
-        text=(await get_text_by_prompt(prompt='3_wrong_answers', db_session=db_session)),
+        text=(await get_text_by_prompt(prompt="3_wrong_answers", db_session=db_session)),
         reply_markup=get_hint_keyboard(),
     )
 
@@ -36,17 +36,17 @@ def _report_missing_almost_right_answer_reply(slide: Slide) -> None:
         return
     _missing_almost_right_answer_reply_reported.add(slide.id)
 
-    slide_type = slide.slide_type.value if hasattr(slide.slide_type, 'value') else str(slide.slide_type)
+    slide_type = slide.slide_type.value if hasattr(slide.slide_type, "value") else str(slide.slide_type)
     message = (
-        'Slide has almost_right_answers but missing almost_right_answer_reply. '
-        f'slide_id={slide.id} lesson_id={slide.lesson_id} slide_type={slide_type}'
+        "Slide has almost_right_answers but missing almost_right_answer_reply. "
+        f"slide_id={slide.id} lesson_id={slide.lesson_id} slide_type={slide_type}"
     )
     logger.warning(message)
 
     with sentry_sdk.new_scope() as scope:
-        scope.set_tag('slide_type', slide_type)
-        scope.set_context('slide', {'slide_id': slide.id, 'lesson_id': slide.lesson_id, 'slide_type': slide_type})
-        sentry_sdk.capture_message(message, level='warning')
+        scope.set_tag("slide_type", slide_type)
+        scope.set_context("slide", {"slide_id": slide.id, "lesson_id": slide.lesson_id, "slide_type": slide_type})
+        sentry_sdk.capture_message(message, level="warning")
 
 
 async def answer_almost_right_reply(event: types.Message, slide: Slide, db_session: AsyncSession) -> None:
@@ -54,13 +54,13 @@ async def answer_almost_right_reply(event: types.Message, slide: Slide, db_sessi
     if not reply or not str(reply).strip():
         _report_missing_almost_right_answer_reply(slide)
         try:
-            reply = await get_text_by_prompt(prompt='missing_almost_right_answer_reply', db_session=db_session)
+            reply = await get_text_by_prompt(prompt="missing_almost_right_answer_reply", db_session=db_session)
         except Exception:
             logger.exception(
-                'Failed to load fallback text for prompt=%s. slide_id=%s',
-                'missing_almost_right_answer_reply',
+                "Failed to load fallback text for prompt=%s. slide_id=%s",
+                "missing_almost_right_answer_reply",
                 slide.id,
             )
-            reply = 'Почти правильно!'
+            reply = "Почти правильно!"
 
     await event.answer(text=str(reply))

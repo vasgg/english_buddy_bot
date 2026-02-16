@@ -47,11 +47,11 @@ async def response_input_word_correct(
                     if "_" in slide.text
                     else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
                     'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
-                    'варианта.'
+                    "варианта."
                 ),
             )
     except KeyError:
-        logging.exception('something went wrong with quiz_input_word')
+        logging.exception("something went wrong with quiz_input_word")
     await event.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
     await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
 
@@ -75,11 +75,11 @@ async def response_input_word_almost_correct(
                     if "_" in slide.text
                     else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "впиши слово" '
                     'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
-                    'варианта.'
+                    "варианта."
                 ),
             )
     except KeyError:
-        logging.exception('something went wrong with quiz_input_word')
+        logging.exception("something went wrong with quiz_input_word")
     await answer_almost_right_reply(event, slide, db_session)
     await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
 
@@ -101,8 +101,8 @@ async def process_quiz_input_word(
                 with suppress(TelegramBadRequest):
                     await event.delete_reply_markup()
                 await event.answer(
-                    text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
-                        slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0],
+                    text=(await get_text_by_prompt(prompt="right_answer", db_session=db_session)).format(
+                        slide.right_answers if "|" not in slide.right_answers else slide.right_answers.split("|")[0],
                     ),
                 )
                 await asyncio.sleep(2)

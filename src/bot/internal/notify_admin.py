@@ -13,7 +13,7 @@ async def on_startup_notify(bot: Bot):
     try:
         await bot.send_message(
             get_settings().ADMIN,
-            f'{bot_info.username} started\n\n/start',
+            f"{bot_info.username} started\n\n/start",
             disable_notification=True,
         )
     except (TelegramForbiddenError, TelegramNotFound) as exc:
@@ -25,7 +25,7 @@ async def on_shutdown_notify(bot: Bot):
     try:
         await bot.send_message(
             get_settings().ADMIN,
-            f'{bot_info.username} shutdown',
+            f"{bot_info.username} shutdown",
             disable_notification=True,
         )
     except (TelegramForbiddenError, TelegramNotFound) as exc:
@@ -33,7 +33,7 @@ async def on_shutdown_notify(bot: Bot):
 
 
 def build_exception_message(exc: BaseException, *, context: Optional[str] = None) -> str:
-    exc_traceback = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    exc_traceback = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
     tb_tail = exc_traceback[-3500:]
     header = "🚨 <b>An error occurred</b> 🚨"
     if context:

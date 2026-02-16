@@ -138,7 +138,7 @@ def sub_status_to_select_one(sub_status: UserSubscriptionType) -> SelectOneEnum:
         case UserSubscriptionType.ACCESS_INFO_REQUESTED:
             return SelectOneEnum.NO_ACCESS
         case _:
-            assert False, f'Unexpected sub_status={sub_status!r}'
+            assert False, f"Unexpected sub_status={sub_status!r}"
 
 
 def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom:
@@ -148,5 +148,5 @@ def lesson_to_session(lesson_starts_from: LessonStartsFrom) -> SessionStartsFrom
         case LessonStartsFrom.EXAM:
             return SessionStartsFrom.EXAM
         case _:
-            msg = f'Unknown lesson_starts_from={lesson_starts_from!r}'
+            msg = f"Unknown lesson_starts_from={lesson_starts_from!r}"
             raise AssertionError(msg)

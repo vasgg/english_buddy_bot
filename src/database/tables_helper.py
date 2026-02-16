@@ -59,7 +59,7 @@ def get_db() -> DatabaseConnector:
     return DatabaseConnector(url=settings.aiosqlite_db_url, echo=settings.db_echo)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import asyncio
 
     db = get_db()

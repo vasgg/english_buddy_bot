@@ -35,12 +35,12 @@ logger = logging.getLogger()
 
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
 async def users_page(db_session: AsyncDBSession, user: str | None = None) -> list[AnyComponent]:
-    logger.info('users router called')
+    logger.info("users router called")
     users = await get_users_table_content(db_session)
     filter_form_initial = {}
     if user:
         users = [u for u in users if user.lower() in u.credentials.lower()]
-        filter_form_initial['users'] = {'value': user}
+        filter_form_initial["users"] = {"value": user}
     return get_users_page(users, filter_form_initial)
 
 
@@ -51,26 +51,30 @@ async def edit_user_page(user_id: int, db_session: AsyncDBSession) -> list[AnyCo
     lesson_components: list[AnyComponent] = []
     for lesson_id, last_completed_at in completed_lessons_ids:
         lesson = await get_lesson_by_id(lesson_id=lesson_id, db_session=db_session)
-        if not lesson or not getattr(lesson, 'title', None):
+        if not lesson or not getattr(lesson, "title", None):
             continue
-        humanized = arrow.get(last_completed_at).humanize(locale='ru')
+        humanized = arrow.get(last_completed_at).humanize(locale="ru")
         lesson_components.append(c.Paragraph(text=f"{lesson.title} — {humanized}"))
     if not lesson_components:
-        lesson_components = [c.Paragraph(text='У пользователя нет пройденных уроков')]
-    info_block: list[AnyComponent] = [
-        c.Heading(text='Пройденные уроки:', level=5),
-        c.Paragraph(text=''),
-    ] + lesson_components + [
-        c.Paragraph(text=''),
-    ]
+        lesson_components = [c.Paragraph(text="У пользователя нет пройденных уроков")]
+    info_block: list[AnyComponent] = (
+        [
+            c.Heading(text="Пройденные уроки:", level=5),
+            c.Paragraph(text=""),
+        ]
+        + lesson_components
+        + [
+            c.Paragraph(text=""),
+        ]
+    )
     in_progress_components: list[AnyComponent] = []
     in_progress = await get_in_progress_lessons_recent_first(user.id, db_session)
     for session in in_progress:
         lesson = await get_lesson_by_id(lesson_id=session.lesson_id, db_session=db_session)
-        if not lesson or not getattr(lesson, 'title', None):
+        if not lesson or not getattr(lesson, "title", None):
             continue
 
-        humanized_started = arrow.get(session.created_at).humanize(locale='ru')
+        humanized_started = arrow.get(session.created_at).humanize(locale="ru")
         current_slide_id: int | None
         try:
             current_slide_id = session.get_slide()
@@ -85,15 +89,15 @@ async def edit_user_page(user_id: int, db_session: AsyncDBSession) -> list[AnyCo
                 slide_index_in_lesson = lesson_path.index(current_slide_id) + 1
 
         slide = await get_slide_by_id(current_slide_id, db_session) if current_slide_id is not None else None
-        source = 'extra' if session.in_extra else 'regular'
+        source = "extra" if session.in_extra else "regular"
         slide_url = (
-            f'/slides/edit/{source}/{slide.slide_type}/{current_slide_id}/{slide_index_in_lesson}/'
+            f"/slides/edit/{source}/{slide.slide_type}/{current_slide_id}/{slide_index_in_lesson}/"
             if slide and slide_index_in_lesson is not None
-            else f'/slides/lesson{lesson.id}/'
+            else f"/slides/lesson{lesson.id}/"
         )
         slide_id_component: AnyComponent
         if current_slide_id is None:
-            slide_id_component = c.Text(text='—')
+            slide_id_component = c.Text(text="—")
         else:
             slide_id_component = c.Link(
                 components=[c.Text(text=str(current_slide_id))],
@@ -101,38 +105,42 @@ async def edit_user_page(user_id: int, db_session: AsyncDBSession) -> list[AnyCo
             )
         in_progress_components.append(
             c.Div(
-                class_name='+ d-flex flex-wrap align-items-baseline gap-1',
+                class_name="+ d-flex flex-wrap align-items-baseline gap-1",
                 components=[
                     c.Text(text=f"{lesson.title} — {humanized_started} — слайд {slide_index_in_lesson or '—'} (id:"),
                     slide_id_component,
-                    c.Text(text=')'),
+                    c.Text(text=")"),
                 ],
             ),
         )
     if not in_progress_components:
-        in_progress_components = [c.Paragraph(text='Нет начатых, но не завершённых уроков')]
-    in_progress_block: list[AnyComponent] = [
-        c.Heading(text='Начатые, но не завершённые уроки:', level=5),
-        c.Paragraph(text=''),
-    ] + in_progress_components + [
-        c.Paragraph(text=''),
-    ]
-    submit_url = f'/api/users/edit/{user_id}/'
+        in_progress_components = [c.Paragraph(text="Нет начатых, но не завершённых уроков")]
+    in_progress_block: list[AnyComponent] = (
+        [
+            c.Heading(text="Начатые, но не завершённые уроки:", level=5),
+            c.Paragraph(text=""),
+        ]
+        + in_progress_components
+        + [
+            c.Paragraph(text=""),
+        ]
+    )
+    submit_url = f"/api/users/edit/{user_id}/"
     form = c.ModelForm(model=get_user_data_model(user), submit_url=submit_url)
-    name = f'{user.fullname} | {user.username}' if user.username else user.fullname
+    name = f"{user.fullname} | {user.username}" if user.username else user.fullname
     return get_common_content(
-        c.Link(components=[c.Button(text='Назад', named_style='secondary')], on_click=GoToEvent(url='/users')),
-        c.Paragraph(text=''),
+        c.Link(components=[c.Button(text="Назад", named_style="secondary")], on_click=GoToEvent(url="/users")),
+        c.Paragraph(text=""),
         create_send_message_button(user.id),
-        c.Paragraph(text=''),
+        c.Paragraph(text=""),
         *info_block,
         *in_progress_block,
         form,
-        title=f'edit | user {user.id} | {name}',
+        title=f"edit | user {user.id} | {name}",
     )
 
 
-@router.post('/edit/{user_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/edit/{user_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def edit_user(
     user_id: int,
     db_session: AsyncDBSession,
@@ -151,10 +159,10 @@ async def edit_user(
         user.subscription_expired_at = None
 
     await db_session.flush()
-    return [c.FireEvent(event=GoToEvent(url='/users'))]
+    return [c.FireEvent(event=GoToEvent(url="/users"))]
 
 
-@router.get('/send_message/{user_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get("/send_message/{user_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def send_message_page(
     user_id: int,
     db_session: AsyncDBSession,
@@ -162,45 +170,45 @@ async def send_message_page(
     status: str | None = None,
 ) -> list[AnyComponent]:
     user = await get_user_from_db_by_id(user_id, db_session)
-    form = c.ModelForm(model=SendMessageModel, submit_url=f'/api/users/send_message/{user_id}/')
+    form = c.ModelForm(model=SendMessageModel, submit_url=f"/api/users/send_message/{user_id}/")
     title = f"send message | user {user.id} | {user.fullname}"
     warn_components: list[AnyComponent] = []
-    if not getattr(user, 'telegram_id', None):
-        warn_components.append(
-            c.Paragraph(text='⚠️ У пользователя отсутствует telegram_id — отправка невозможна')
-        )
+    if not getattr(user, "telegram_id", None):
+        warn_components.append(c.Paragraph(text="⚠️ У пользователя отсутствует telegram_id — отправка невозможна"))
     messages: list[AnyComponent] = []
-    if status == 'sent':
-        messages.append(c.Paragraph(text='✅ Сообщение успешно отправлено'))
-    if error == 'forbidden':
-        messages.append(c.Paragraph(text='❌ Бот заблокирован пользователем. Сообщение не доставлено.'))
-    if error == 'notelegram':
-        messages.append(c.Paragraph(text='❌ У пользователя отсутствует telegram_id — сообщение не отправлено'))
-    if error == 'unknown':
-        messages.append(c.Paragraph(text='❌ Произошла ошибка при отправке сообщения'))
+    if status == "sent":
+        messages.append(c.Paragraph(text="✅ Сообщение успешно отправлено"))
+    if error == "forbidden":
+        messages.append(c.Paragraph(text="❌ Бот заблокирован пользователем. Сообщение не доставлено."))
+    if error == "notelegram":
+        messages.append(c.Paragraph(text="❌ У пользователя отсутствует telegram_id — сообщение не отправлено"))
+    if error == "unknown":
+        messages.append(c.Paragraph(text="❌ Произошла ошибка при отправке сообщения"))
     nav_components: list[AnyComponent] = []
-    if status == 'sent' or error in {'forbidden', 'notelegram', 'unknown'}:
+    if status == "sent" or error in {"forbidden", "notelegram", "unknown"}:
         nav_components.append(
             c.Link(
-                components=[c.Button(text='Назад', named_style='secondary')],
-                on_click=GoToEvent(url=f'/users/edit/{user_id}/'),
+                components=[c.Button(text="Назад", named_style="secondary")],
+                on_click=GoToEvent(url=f"/users/edit/{user_id}/"),
             )
         )
-    hide_top_back = status == 'sent' or error in {'forbidden', 'notelegram', 'unknown'}
+    hide_top_back = status == "sent" or error in {"forbidden", "notelegram", "unknown"}
     return get_common_content(
-        *([] if hide_top_back else [back_button, c.Paragraph(text='')]),
-        c.Paragraph(text=f"Получатель: {user.fullname} (@{user.username})" if user.username else f"Получатель: {user.fullname}"),
+        *([] if hide_top_back else [back_button, c.Paragraph(text="")]),
+        c.Paragraph(
+            text=f"Получатель: {user.fullname} (@{user.username})" if user.username else f"Получатель: {user.fullname}"
+        ),
         c.Paragraph(text=f"telegram_id: {getattr(user, 'telegram_id', '—')}"),
         *messages,
         *nav_components,
         *warn_components,
-        c.Paragraph(text=''),
+        c.Paragraph(text=""),
         form,
         title=title,
     )
 
 
-@router.post('/send_message/{user_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/send_message/{user_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def send_message(
     user_id: int,
     db_session: AsyncDBSession,
@@ -208,8 +216,8 @@ async def send_message(
 ) -> list[AnyComponent]:
     user = await get_user_from_db_by_id(user_id, db_session)
     settings = get_settings()
-    if not getattr(user, 'telegram_id', None):
-        return [c.FireEvent(event=GoToEvent(url=f'/users/send_message/{user_id}/?error=notelegram'))]
+    if not getattr(user, "telegram_id", None):
+        return [c.FireEvent(event=GoToEvent(url=f"/users/send_message/{user_id}/?error=notelegram"))]
     try:
         async with Bot(
             token=settings.BOT_TOKEN.get_secret_value(),
@@ -217,7 +225,7 @@ async def send_message(
         ) as bot:
             await bot.send_message(chat_id=user.telegram_id, text=form.message)
     except TelegramForbiddenError:
-        return [c.FireEvent(event=GoToEvent(url=f'/users/send_message/{user_id}/?error=forbidden'))]
+        return [c.FireEvent(event=GoToEvent(url=f"/users/send_message/{user_id}/?error=forbidden"))]
     except Exception:
-        return [c.FireEvent(event=GoToEvent(url=f'/users/send_message/{user_id}/?error=unknown'))]
-    return [c.FireEvent(event=GoToEvent(url=f'/users/send_message/{user_id}/?status=sent'))]
+        return [c.FireEvent(event=GoToEvent(url=f"/users/send_message/{user_id}/?error=unknown"))]
+    return [c.FireEvent(event=GoToEvent(url=f"/users/send_message/{user_id}/?status=sent"))]

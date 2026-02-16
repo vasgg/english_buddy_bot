@@ -16,7 +16,7 @@ async def get_reminder_text_variants_table_content(session: AsyncDBSession) -> l
     variants: list[ReminderTextVariantTableSchema] = []
     for variant in results:
         variants.append(ReminderTextVariantTableSchema.model_validate(variant))
-    logger.info('processed %s reminder text variants', len(variants))
+    logger.info("processed %s reminder text variants", len(variants))
     return variants
 
 
@@ -29,4 +29,3 @@ async def get_reminder_text_variant_by_id(variant_id: int, db_session: AsyncDBSe
 async def delete_reminder_text_variant_by_id(variant_id: int, db_session: AsyncDBSession) -> None:
     query = delete(ReminderTextVariant).filter(ReminderTextVariant.id == variant_id)
     await db_session.execute(query)
-

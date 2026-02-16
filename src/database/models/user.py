@@ -8,7 +8,7 @@ from enums import UserSubscriptionType
 
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     telegram_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
     fullname: Mapped[str]
@@ -23,7 +23,7 @@ class User(Base):
     comment: Mapped[str | None]
 
     def __str__(self):
-        return f'{self.__class__.__name__}(id={self.id}, ' f'telegram_id={self.telegram_id}, fullname={self.fullname})'
+        return f"{self.__class__.__name__}(id={self.id}, telegram_id={self.telegram_id}, fullname={self.fullname})"
 
     def __repr__(self):
         return str(self)

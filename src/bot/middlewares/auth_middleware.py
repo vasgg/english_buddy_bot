@@ -16,15 +16,15 @@ class AuthMiddleware(BaseMiddleware):
         event: Message,
         data: Dict[str, Any],
     ) -> Any:
-        session = data['db_session']
+        session = data["db_session"]
         user = await get_user_from_db_by_tg_id(event.from_user.id, session)
-        data['is_new_user'] = False
+        data["is_new_user"] = False
         if not user:
             user = await add_user_to_db(event.from_user, session)
             await session.commit()
-            data['is_new_user'] = True
+            data["is_new_user"] = True
             # if settings.STAGE == Stage.PROD:
             #     await blink1_green()
             #     await sheet_update('C3', user.id)
-        data['user'] = user
+        data["user"] = user
         return await handler(event, data)

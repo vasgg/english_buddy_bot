@@ -9,11 +9,11 @@ from database.models.user import User
 from enums import SessionStartsFrom, SessionStatus, SlideType
 
 
-async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_lesson(db: 'DatabaseConnector'):
+async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_lesson(db: "DatabaseConnector"):
     async with db.session_factory.begin() as session:
-        session.add(User(telegram_id=100500, fullname='Vasya', last_reminded_at=datetime.now(timezone.utc)))
-        session.add(Lesson(title='Lesson 1', path='11.12.13'))
-        session.add(Lesson(title='Lesson 2', path='21.22'))
+        session.add(User(telegram_id=100500, fullname="Vasya", last_reminded_at=datetime.now(timezone.utc)))
+        session.add(Lesson(title="Lesson 1", path="11.12.13"))
+        session.add(Lesson(title="Lesson 2", path="21.22"))
 
         session.add_all(
             [
@@ -37,7 +37,7 @@ async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_l
                 status=SessionStatus.IN_PROGRESS,
                 starts_from=SessionStartsFrom.BEGIN,
                 current_step=0,
-                path='11.12.13',
+                path="11.12.13",
                 created_at=old,
             ),
         )
@@ -48,7 +48,7 @@ async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_l
                 status=SessionStatus.IN_PROGRESS,
                 starts_from=SessionStartsFrom.BEGIN,
                 current_step=1,
-                path='11.12.13',
+                path="11.12.13",
                 created_at=newer,
             ),
         )
@@ -58,7 +58,7 @@ async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_l
                 user_id=1,
                 status=SessionStatus.ABORTED,
                 starts_from=SessionStartsFrom.BEGIN,
-                path='11.12.13',
+                path="11.12.13",
                 created_at=newest,
             ),
         )
@@ -69,7 +69,7 @@ async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_l
                 status=SessionStatus.IN_PROGRESS,
                 starts_from=SessionStartsFrom.BEGIN,
                 current_step=0,
-                path='21.22',
+                path="21.22",
                 created_at=newest,
             ),
         )
@@ -81,10 +81,10 @@ async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_l
     assert [s.created_at for s in in_progress] == [newest, newer]
 
 
-async def test_get_in_progress_lessons_recent_first_prefers_higher_id_on_same_timestamp(db: 'DatabaseConnector'):
+async def test_get_in_progress_lessons_recent_first_prefers_higher_id_on_same_timestamp(db: "DatabaseConnector"):
     async with db.session_factory.begin() as session:
-        session.add(User(telegram_id=100500, fullname='Vasya', last_reminded_at=datetime.now(timezone.utc)))
-        session.add(Lesson(title='Lesson 1', path='11.12'))
+        session.add(User(telegram_id=100500, fullname="Vasya", last_reminded_at=datetime.now(timezone.utc)))
+        session.add(Lesson(title="Lesson 1", path="11.12"))
         session.add_all(
             [
                 Slide(id=11, lesson_id=1, slide_type=SlideType.TEXT),
@@ -102,7 +102,7 @@ async def test_get_in_progress_lessons_recent_first_prefers_higher_id_on_same_ti
                 status=SessionStatus.IN_PROGRESS,
                 starts_from=SessionStartsFrom.BEGIN,
                 current_step=0,
-                path='11.12',
+                path="11.12",
                 created_at=same_time,
             ),
         )
@@ -113,7 +113,7 @@ async def test_get_in_progress_lessons_recent_first_prefers_higher_id_on_same_ti
                 status=SessionStatus.IN_PROGRESS,
                 starts_from=SessionStartsFrom.BEGIN,
                 current_step=1,
-                path='11.12',
+                path="11.12",
                 created_at=same_time,
             ),
         )

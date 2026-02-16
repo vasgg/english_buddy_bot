@@ -5,16 +5,16 @@ from sqlalchemy import JSON, Engine, event, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-@event.listens_for(Engine, 'connect')
+@event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, _):
     cursor = dbapi_connection.cursor()
-    cursor.execute('PRAGMA foreign_keys=ON')
+    cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
 
 class Base(DeclarativeBase):
     __abstract__ = True
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     type_annotation_map = {dict[str, Any]: JSON}
 
     id: Mapped[int] = mapped_column(primary_key=True)

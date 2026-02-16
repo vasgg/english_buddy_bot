@@ -7,7 +7,7 @@ from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui import FastUI as _FastUI
 
-static_files_path = join(dirname(realpath(__file__)), 'static')
+static_files_path = join(dirname(realpath(__file__)), "static")
 assert exists(static_files_path), static_files_path
 
 

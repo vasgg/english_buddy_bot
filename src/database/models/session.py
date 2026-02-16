@@ -6,16 +6,16 @@ from enums import SessionStartsFrom, SessionStatus
 
 
 class Session(Base):
-    __tablename__ = 'sessions'
+    __tablename__ = "sessions"
 
-    lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id', ondelete='CASCADE'))
+    lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"))
     path: Mapped[str]
     path_extra: Mapped[str | None]
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    current_step: Mapped[int] = mapped_column(default=0, server_default='0')
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    current_step: Mapped[int] = mapped_column(default=0, server_default="0")
     starts_from: Mapped[SessionStartsFrom] = mapped_column()
     status: Mapped[SessionStatus] = mapped_column(default=SessionStatus.IN_PROGRESS)
-    in_extra: Mapped[bool] = mapped_column(default=False, server_default='0')
+    in_extra: Mapped[bool] = mapped_column(default=False, server_default="0")
 
     def get_path(self):
         if self.in_extra:

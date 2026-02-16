@@ -24,27 +24,27 @@ logger = logging.getLogger()
 
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
 async def newsletter_page() -> list[AnyComponent]:
-    logger.info('newsletter router called')
-    submit_url = '/api/newsletter/send/'
+    logger.info("newsletter router called")
+    submit_url = "/api/newsletter/send/"
     form = c.ModelForm(model=get_newsletter_data_model(), submit_url=submit_url)
     return get_common_content(
-        c.Paragraph(text=''),
+        c.Paragraph(text=""),
         form,
-        c.Paragraph(text=''),
-        title='Рассылка',
+        c.Paragraph(text=""),
+        title="Рассылка",
     )
 
 
 @router.get("/sent/", response_model=FastUI, response_model_exclude_none=True)
 async def newsletter_page_response() -> list[AnyComponent]:
     return get_common_content(
-        c.Paragraph(text=''),
-        c.Paragraph(text=''),
-        title='Рассылка отправлена!',
+        c.Paragraph(text=""),
+        c.Paragraph(text=""),
+        title="Рассылка отправлена!",
     )
 
 
-@router.post('/send/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/send/", response_model=FastUI, response_model_exclude_none=True)
 async def send_newsletter(
     image_file: Annotated[bytes, Depends(extract_img_from_form)],
     db_session: AsyncDBSession,
@@ -53,8 +53,8 @@ async def send_newsletter(
 ) -> list[AnyComponent]:
     users = [user.telegram_id for user in await get_all_users(db_session)]
     text = form.text
-    if form.upload_new_picture.filename != '':
-        if form.upload_new_picture.filename.rsplit('.', 1)[1].lower() in settings.allowed_image_formats:
+    if form.upload_new_picture.filename != "":
+        if form.upload_new_picture.filename.rsplit(".", 1)[1].lower() in settings.allowed_image_formats:
             directory = Path("src/webapp/static/uploaded_images/")
             directory.mkdir(parents=True, exist_ok=True)
             image = Image.open(io.BytesIO(image_file))
@@ -74,4 +74,4 @@ async def send_newsletter(
 
     else:
         await send_newsletter_to_users(settings.BOT_TOKEN.get_secret_value(), users, text)
-    return [c.FireEvent(event=GoToEvent(url='/newsletter/sent/'))]
+    return [c.FireEvent(event=GoToEvent(url="/newsletter/sent/"))]

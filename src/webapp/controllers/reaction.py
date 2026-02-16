@@ -18,7 +18,7 @@ async def get_reactions_table_content(reaction_type: ReactionType, session: Asyn
     for reaction in results:
         valid_reaction = ReactionsTableSchema.model_validate(reaction)
         reactions.append(valid_reaction)
-    logger.info(f'processed {len(reactions)} {reaction_type.value} reactions')
+    logger.info(f"processed {len(reactions)} {reaction_type.value} reactions")
     return reactions
 
 

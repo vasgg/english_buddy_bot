@@ -6,16 +6,16 @@ from enums import KeyboardType, SlideType
 
 
 class Slide(Base):
-    __tablename__ = 'slides'
+    __tablename__ = "slides"
 
     text: Mapped[str | None]
     picture: Mapped[str | None]
     delay: Mapped[float | None]
     slide_type: Mapped[SlideType]
-    lesson_id: Mapped[int] = mapped_column(ForeignKey('lessons.id', ondelete='CASCADE'))
+    lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"))
     right_answers: Mapped[str | None]
     almost_right_answers: Mapped[str | None]
     almost_right_answer_reply: Mapped[str | None]
     keyboard_type: Mapped[KeyboardType | None]
     keyboard: Mapped[str | None]
-    is_exam_slide: Mapped[bool] = mapped_column(default=False, server_default='0')
+    is_exam_slide: Mapped[bool] = mapped_column(default=False, server_default="0")

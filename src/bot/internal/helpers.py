@@ -6,5 +6,5 @@ def get_image_paths():
     return [
         os.path.join(image_dir, fname)
         for fname in os.listdir(image_dir)
-        if fname.lower().endswith(('.jpg', '.jpeg', '.png'))
+        if fname.lower().endswith((".jpg", ".jpeg", ".png"))
     ]

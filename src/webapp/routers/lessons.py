@@ -40,31 +40,33 @@ logger = logging.getLogger()
 
 @router.get("", response_model=FastUI, response_model_exclude_none=True)
 async def lessons_page(db_session: AsyncDBSession) -> list[AnyComponent]:
-    logger.info('lessons router called')
+    logger.info("lessons router called")
     active_lessons = await get_active_lessons_fastui(db_session)
     editing_lessons = await get_editing_lessons_fastui(db_session)
 
     active_lessons_heading = [
-        c.Heading(text='Активные уроки', level=4),
-        c.Paragraph(text=''),
-        get_active_lesson_table(active_lessons) if len(active_lessons) > 0 else c.Paragraph(text='Нет активных уроков'),
-        c.Paragraph(text=''),
+        c.Heading(text="Активные уроки", level=4),
+        c.Paragraph(text=""),
+        get_active_lesson_table(active_lessons)
+        if len(active_lessons) > 0
+        else c.Paragraph(text="Нет активных уроков"),
+        c.Paragraph(text=""),
     ]
     editing_lessons_heading = [
-        c.Heading(text='Уроки в режиме редактирования', level=4),
-        c.Paragraph(text=''),
+        c.Heading(text="Уроки в режиме редактирования", level=4),
+        c.Paragraph(text=""),
         get_editing_lesson_table(editing_lessons)
         if len(editing_lessons) > 0
-        else c.Paragraph(text='Нет уроков в режиме редактирования'),
-        c.Paragraph(text=''),
+        else c.Paragraph(text="Нет уроков в режиме редактирования"),
+        c.Paragraph(text=""),
     ]
 
     return get_common_content(
-        c.Paragraph(text=''),
+        c.Paragraph(text=""),
         *active_lessons_heading,
         *editing_lessons_heading,
         create_lesson_button,
-        title='Уроки',
+        title="Уроки",
     )
 
 
@@ -74,18 +76,18 @@ async def show_lesson(
 ) -> list[AnyComponent]:
     lesson = await get_lesson_by_id(lesson_id, db_session)
     if lesson_status == LessonStatus.ACTIVE:
-        submit_url = f'/api/lessons/edit/{lesson_status}/{lesson_id}/?index={index}'
+        submit_url = f"/api/lessons/edit/{lesson_status}/{lesson_id}/?index={index}"
     else:
-        submit_url = f'/api/lessons/edit/{lesson_status}/{lesson_id}/'
+        submit_url = f"/api/lessons/edit/{lesson_status}/{lesson_id}/"
     form = c.ModelForm(model=get_lesson_data_model(lesson), submit_url=submit_url)
     return get_common_content(
-        c.Paragraph(text=''),
+        c.Paragraph(text=""),
         form,
-        title=f'edit | lesson {lesson.index} | {lesson.title}',
+        title=f"edit | lesson {lesson.index} | {lesson.title}",
     )
 
 
-@router.post('/edit/{lesson_status}/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/edit/{lesson_status}/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def edit_lesson_form(
     lesson_id: int,
     lesson_status: LessonStatus,
@@ -103,16 +105,16 @@ async def edit_lesson_form(
         await abort_in_progress_sessions_by_lesson(lesson.id, db_session)
     elif lesson_status == LessonStatus.EDITING and form.is_active is True:
         lesson.index = len(await get_active_lessons(db_session)) + 1
-        logger.info(f'index updated to {lesson.index}')
+        logger.info(f"index updated to {lesson.index}")
         lesson.is_active = LessonStatus.ACTIVE
     # noinspection PyTypeChecker
-    logger.info(f'lesson {lesson.id} updated. data: {form.dict()}')
-    return [c.FireEvent(event=GoToEvent(url='/lessons'))]
+    logger.info(f"lesson {lesson.id} updated. data: {form.dict()}")
+    return [c.FireEvent(event=GoToEvent(url="/lessons"))]
 
 
-@router.get('/up_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get("/up_button/{index}/", response_model=FastUI, response_model_exclude_none=True)
 async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
-    logger.info(f'pressed up_button with index {index}')
+    logger.info(f"pressed up_button with index {index}")
     try:
         if index == 1:
             pass
@@ -123,17 +125,19 @@ async def up_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent
             lesson_with_target_index.index = None
             await db_session.flush()
             lesson.index = index - 1
-            logger.info(f'lesson {lesson.id} updated to {lesson.index}, lesson_with_target_index '
-                        f'{lesson_with_target_index.id} updated to {lesson_with_target_index.index}')
+            logger.info(
+                f"lesson {lesson.id} updated to {lesson.index}, lesson_with_target_index "
+                f"{lesson_with_target_index.id} updated to {lesson_with_target_index.index}"
+            )
             lesson_with_target_index.index = index
     except ResponseValidationError:
-        logger.exception('unexpected behavior')
-    return [c.FireEvent(event=GoToEvent(url='/lessons'))]
+        logger.exception("unexpected behavior")
+    return [c.FireEvent(event=GoToEvent(url="/lessons"))]
 
 
-@router.get('/down_button/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get("/down_button/{index}/", response_model=FastUI, response_model_exclude_none=True)
 async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyComponent]:
-    logger.info(f'pressed down_button with index {index}')
+    logger.info(f"pressed down_button with index {index}")
     lessons = await get_active_lessons(db_session)
     try:
         if index == len(lessons):
@@ -146,45 +150,47 @@ async def down_button(index: int, db_session: AsyncDBSession) -> list[AnyCompone
             await db_session.flush()
             lesson.index = index + 1
             lesson_with_target_index.index = index
-            logger.info(f'lesson {lesson.id} updated to {lesson.index}, lesson_with_target_index '
-                        f'{lesson_with_target_index.id} updated to {lesson_with_target_index.index}')
+            logger.info(
+                f"lesson {lesson.id} updated to {lesson.index}, lesson_with_target_index "
+                f"{lesson_with_target_index.id} updated to {lesson_with_target_index.index}"
+            )
     except ResponseValidationError:
-        logger.exception('unexpected behavior')
-    return [c.FireEvent(event=GoToEvent(url='/lessons'))]
+        logger.exception("unexpected behavior")
+    return [c.FireEvent(event=GoToEvent(url="/lessons"))]
 
 
-@router.get('/add_lesson/', response_model=FastUI, response_model_exclude_none=True)
+@router.get("/add_lesson/", response_model=FastUI, response_model_exclude_none=True)
 async def add_lesson() -> list[AnyComponent]:
-    submit_url = '/api/lessons/new/'
+    submit_url = "/api/lessons/new/"
     form = c.ModelForm(model=get_new_lesson_data_model(), submit_url=submit_url)
     return get_common_content(
         back_button,
-        c.Paragraph(text=''),
+        c.Paragraph(text=""),
         form,
-        title='Создание урока',
+        title="Создание урока",
     )
 
 
-@router.get('/confirm_delete/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get("/confirm_delete/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def delete_lesson_confirm(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
     return get_common_content(
-        c.Paragraph(text='Вы уверены, что хотите удалить урок?'),
+        c.Paragraph(text="Вы уверены, что хотите удалить урок?"),
         c.Div(
             components=[
                 back_button,
                 c.Link(
-                    components=[c.Button(text='Удалить', named_style='warning')],
-                    on_click=GoToEvent(url=f'/lessons/delete/{lesson.id}/'),
-                    class_name='+ ms-2',
+                    components=[c.Button(text="Удалить", named_style="warning")],
+                    on_click=GoToEvent(url=f"/lessons/delete/{lesson.id}/"),
+                    class_name="+ ms-2",
                 ),
             ],
         ),
-        title=f'Удаление урока {lesson.index} | {lesson.title}',
+        title=f"Удаление урока {lesson.index} | {lesson.title}",
     )
 
 
-@router.get('/delete/{lesson_id}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get("/delete/{lesson_id}/", response_model=FastUI, response_model_exclude_none=True)
 async def delete_lesson(
     lesson_id: int,
     db_session: AsyncDBSession,
@@ -196,10 +202,10 @@ async def delete_lesson(
         # noinspection PyTypeChecker
         await recompose_lesson_indexes(indx, db_session)
     await abort_in_progress_sessions_by_lesson(lesson_id, db_session)
-    return [c.FireEvent(event=GoToEvent(url='/lessons'))]
+    return [c.FireEvent(event=GoToEvent(url="/lessons"))]
 
 
-@router.post('/new/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/new/", response_model=FastUI, response_model_exclude_none=True)
 async def create_new_lesson(
     db_session: AsyncDBSession,
     form: Annotated[NewLessonDataModel, fastui_form(NewLessonDataModel)],
@@ -213,4 +219,4 @@ async def create_new_lesson(
     await db_session.flush()
     directory = Path(f"src/webapp/static/lessons_images/{new_lesson.id}")
     directory.mkdir(parents=True, exist_ok=True)
-    return [c.FireEvent(event=GoToEvent(url='/lessons'))]
+    return [c.FireEvent(event=GoToEvent(url="/lessons"))]

@@ -18,9 +18,9 @@ async def process_image(
     if slide.delay:
         # noinspection PyTypeChecker
         await asyncio.sleep(slide.delay)
-    image_path = Path(f'src/webapp/static/lessons_images/{session.lesson_id}/{slide.picture}')
+    image_path = Path(f"src/webapp/static/lessons_images/{session.lesson_id}/{slide.picture}")
     if not image_path.exists():
-        image_path = Path('src/webapp/static/lessons_images/Image_not_available.png')
+        image_path = Path("src/webapp/static/lessons_images/Image_not_available.png")
     if slide.keyboard_type == KeyboardType.FURTHER:
         markup = get_further_button()
     await event.answer_photo(photo=types.FSInputFile(path=image_path), reply_markup=markup)

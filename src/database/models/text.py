@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Text(Base):
-    __tablename__ = 'texts'
+    __tablename__ = "texts"
 
     prompt: Mapped[str] = mapped_column(unique=True)
     text: Mapped[str]

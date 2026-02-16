@@ -28,7 +28,7 @@ router = APIRouter()
 logger = logging.getLogger()
 
 
-@router.post('/edit/{source}/text/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/edit/{source}/text/{slide_id}/{index}/", response_model=FastUI, response_model_exclude_none=True)
 async def edit_text_slide(
     source: SlidesMenuType,
     index: int,
@@ -48,10 +48,10 @@ async def edit_text_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(slide.lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_EDIT)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{slide.lesson_id}/"))]
 
 
-@router.post('/edit/{source}/dict/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/edit/{source}/dict/{slide_id}/{index}/", response_model=FastUI, response_model_exclude_none=True)
 async def edit_dict_slide(
     source: SlidesMenuType,
     index: int,
@@ -68,10 +68,10 @@ async def edit_dict_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(slide.lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_EDIT)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{slide.lesson_id}/"))]
 
 
-@router.post('/edit/{source}/sticker/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/edit/{source}/sticker/{slide_id}/{index}/", response_model=FastUI, response_model_exclude_none=True)
 async def edit_sticker_slide(
     source: SlidesMenuType,
     index: int,
@@ -88,10 +88,12 @@ async def edit_sticker_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(slide.lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_EDIT)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{slide.lesson_id}/"))]
 
 
-@router.post('/edit/{source}/quiz_options/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post(
+    "/edit/{source}/quiz_options/{slide_id}/{index}/", response_model=FastUI, response_model_exclude_none=True
+)
 async def edit_quiz_option_slide(
     source: SlidesMenuType,
     index: int,
@@ -112,11 +114,11 @@ async def edit_quiz_option_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(slide.lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_EDIT)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{slide.lesson_id}/"))]
 
 
 @router.post(
-    '/edit/{source}/quiz_input_word/{slide_id}/{index}/',
+    "/edit/{source}/quiz_input_word/{slide_id}/{index}/",
     response_model=FastUI,
     response_model_exclude_none=True,
 )
@@ -140,10 +142,12 @@ async def edit_quiz_input_word_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(slide.lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_EDIT)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{slide.lesson_id}/"))]
 
 
-@router.post('/edit/{source}/quiz_input_phrase/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post(
+    "/edit/{source}/quiz_input_phrase/{slide_id}/{index}/", response_model=FastUI, response_model_exclude_none=True
+)
 async def edit_quiz_input_phrase_slide(
     source: SlidesMenuType,
     index: int,
@@ -164,10 +168,10 @@ async def edit_quiz_input_phrase_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(slide.lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_EDIT)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{slide.lesson_id}/"))]
 
 
-@router.post('/edit/{source}/image/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/edit/{source}/image/{slide_id}/{index}/", response_model=FastUI, response_model_exclude_none=True)
 async def edit_image_slide(
     image_file: Annotated[bytes, Depends(extract_img_from_form)],
     settings: Annotated[Settings, Depends(get_settings)],
@@ -178,7 +182,7 @@ async def edit_image_slide(
     form: Annotated[EditImageSlideData, fastui_form(EditImageSlideData)],
 ):
     slide: Slide = await get_slide_by_id(slide_id, db_session)
-    if form.upload_new_picture.filename != '':
+    if form.upload_new_picture.filename != "":
         image_upload(image_file, form, slide.lesson_id, settings)
         slide.picture = form.upload_new_picture.filename
     else:
@@ -193,10 +197,10 @@ async def edit_image_slide(
         db_session.add(new_slide)
         await db_session.flush()
         await update_lesson_path(slide.lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_EDIT)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{slide.lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{slide.lesson_id}/"))]
 
 
-@router.post('/new/{lesson_id}/{source}/text/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/new/{lesson_id}/{source}/text/", response_model=FastUI, response_model_exclude_none=True)
 async def new_text_slide_form(
     lesson_id: int,
     source: SlidesMenuType,
@@ -215,10 +219,10 @@ async def new_text_slide_form(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_NEW)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{lesson_id}/"))]
 
 
-@router.post('/new/{lesson_id}/{source}/image/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/new/{lesson_id}/{source}/image/", response_model=FastUI, response_model_exclude_none=True)
 async def new_image_slide_form(
     image_file: Annotated[bytes, Depends(extract_img_from_form)],
     lesson_id: int,
@@ -229,7 +233,7 @@ async def new_image_slide_form(
     index: int | None = None,
 ):
     slide_picture = None
-    if form.upload_new_picture.filename != '':
+    if form.upload_new_picture.filename != "":
         image_upload(image_file, form, lesson_id, settings)
         slide_picture = form.upload_new_picture.filename
     elif form.select_picture:
@@ -244,10 +248,10 @@ async def new_image_slide_form(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_NEW)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{lesson_id}/"))]
 
 
-@router.post('/new/{lesson_id}/{source}/dict/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/new/{lesson_id}/{source}/dict/", response_model=FastUI, response_model_exclude_none=True)
 async def new_dict_slide(
     lesson_id: int,
     source: SlidesMenuType,
@@ -263,10 +267,10 @@ async def new_dict_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_NEW)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{lesson_id}/"))]
 
 
-@router.post('/new/{lesson_id}/{source}/quiz_options/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/new/{lesson_id}/{source}/quiz_options/", response_model=FastUI, response_model_exclude_none=True)
 async def new_quiz_option_slide(
     lesson_id: int,
     source: SlidesMenuType,
@@ -285,10 +289,10 @@ async def new_quiz_option_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_NEW)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{lesson_id}/"))]
 
 
-@router.post('/new/{lesson_id}/{source}/quiz_input_word/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/new/{lesson_id}/{source}/quiz_input_word/", response_model=FastUI, response_model_exclude_none=True)
 async def new_quiz_input_word_slide(
     lesson_id: int,
     source: SlidesMenuType,
@@ -308,10 +312,10 @@ async def new_quiz_input_word_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_NEW)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{lesson_id}/"))]
 
 
-@router.post('/new/{lesson_id}/{source}/quiz_input_phrase/', response_model=FastUI, response_model_exclude_none=True)
+@router.post("/new/{lesson_id}/{source}/quiz_input_phrase/", response_model=FastUI, response_model_exclude_none=True)
 async def new_quiz_input_phrase_slide(
     lesson_id: int,
     source: SlidesMenuType,
@@ -331,4 +335,4 @@ async def new_quiz_input_phrase_slide(
     db_session.add(new_slide)
     await db_session.flush()
     await update_lesson_path(lesson_id, source, new_slide.id, db_session, index, PathType.EXISTING_PATH_NEW)
-    return [c.FireEvent(event=GoToEvent(url=f'/slides/lesson{lesson_id}/'))]
+    return [c.FireEvent(event=GoToEvent(url=f"/slides/lesson{lesson_id}/"))]

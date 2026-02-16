@@ -76,7 +76,7 @@ async def show_stats(
         case SessionStartsFrom.BEGIN:
             if not exam_slide_id:
                 await event.answer(
-                    text=(await get_text_by_prompt(prompt='final_report_without_exam', db_session=db_session)).format(
+                    text=(await get_text_by_prompt(prompt="final_report_without_exam", db_session=db_session)).format(
                         lesson.title,
                         stats.correct_regular_answers,
                         stats.regular_exercises,
@@ -85,7 +85,7 @@ async def show_stats(
                 )
                 return
             await event.answer(
-                text=(await get_text_by_prompt(prompt='final_report_from_begin', db_session=db_session)).format(
+                text=(await get_text_by_prompt(prompt="final_report_from_begin", db_session=db_session)).format(
                     lesson.title,
                     stats.correct_regular_answers,
                     stats.regular_exercises,
@@ -96,7 +96,7 @@ async def show_stats(
             )
         case SessionStartsFrom.EXAM:
             await event.answer(
-                text=(await get_text_by_prompt(prompt='final_report_from_exam', db_session=db_session)).format(
+                text=(await get_text_by_prompt(prompt="final_report_from_exam", db_session=db_session)).format(
                     lesson.title,
                     stats.correct_exam_answers,
                     stats.exam_exercises,
@@ -104,7 +104,7 @@ async def show_stats(
                 reply_markup=markup,
             )
         case _:
-            msg = f'Unexpected session starts from: {session.starts_from}'
+            msg = f"Unexpected session starts from: {session.starts_from}"
             raise AssertionError(msg)
 
 
@@ -122,7 +122,7 @@ async def show_stats_extra(
     completed_lessons = await get_completed_lessons_from_sessions(user_id=session.user_id, db_session=db_session)
     lesson_picker_kb = get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons)
     await event.answer(
-        text=(await get_text_by_prompt(prompt='final_report_extra', db_session=db_session)).format(
+        text=(await get_text_by_prompt(prompt="final_report_extra", db_session=db_session)).format(
             lesson.title,
             stats.correct_answers,
             stats.exercises,
@@ -144,7 +144,7 @@ async def show_extra_slides_dialog(
     db_session: AsyncSession,
 ) -> None:
     await event.answer(
-        text=(await get_text_by_prompt(prompt='extra_slides_dialog', db_session=db_session)),
+        text=(await get_text_by_prompt(prompt="extra_slides_dialog", db_session=db_session)),
         reply_markup=get_extra_slides_keyboard(),
     )
 
@@ -153,7 +153,9 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
     with suppress(TelegramBadRequest, TelegramForbiddenError, TelegramNotFound):
         await event.bot.unpin_all_chat_messages(chat_id=event.from_user.id)
     slides_ids = session.get_path()
-    regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
+    regular_quiz_slides = await get_quiz_slides_by_mode(
+        slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session
+    )
     exam_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.EXAM, db_session=db_session)
     results_regular = await calculate_user_stats_from_slides(regular_quiz_slides, session.id, db_session)
     results_exam = await calculate_user_stats_from_slides(exam_quiz_slides, session.id, db_session)
@@ -183,7 +185,9 @@ async def finalizing(event: types.Message, state: FSMContext, session: Session, 
 
 async def finalizing_extra(event: types.Message, state: FSMContext, session: Session, db_session: AsyncSession):
     slides_ids = session.get_path()
-    regular_quiz_slides = await get_quiz_slides_by_mode(slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session)
+    regular_quiz_slides = await get_quiz_slides_by_mode(
+        slides_ids=slides_ids, mode=QuizType.REGULAR, db_session=db_session
+    )
     results_regular = await calculate_user_stats_from_slides(regular_quiz_slides, session.id, db_session)
     await finish_session(session, db_session)
     await show_stats_extra(event, results_regular, session, db_session)

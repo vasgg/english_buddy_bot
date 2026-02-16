@@ -43,8 +43,8 @@ async def process_quiz_input_phrase(
                 with suppress(TelegramBadRequest):
                     await event.delete_reply_markup()
                 await event.answer(
-                    text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
-                        slide.right_answers if '|' not in slide.right_answers else slide.right_answers.split('|')[0],
+                    text=(await get_text_by_prompt(prompt="right_answer", db_session=db_session)).format(
+                        slide.right_answers if "|" not in slide.right_answers else slide.right_answers.split("|")[0],
                     ),
                 )
                 await asyncio.sleep(2)
@@ -59,7 +59,8 @@ async def process_quiz_input_phrase(
                 normalize_apostrophes(trim_non_alpha(answer.lower())) for answer in slide.right_answers.split("|")
             ]
             almost_right_answers = [
-                normalize_apostrophes(trim_non_alpha(answer.lower())) for answer in (slide.almost_right_answers or '').split("|")
+                normalize_apostrophes(trim_non_alpha(answer.lower()))
+                for answer in (slide.almost_right_answers or "").split("|")
             ]
 
             if trimmed_user_input in right_answers:

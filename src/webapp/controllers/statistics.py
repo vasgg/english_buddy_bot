@@ -30,17 +30,17 @@ async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession)
                 source = SlidesMenuType.EXTRA
             except ValueError:
                 continue
-        link = f'/slides/edit/{source}/{slide.slide_type}/{slide.id}/{index + 1}/'
+        link = f"/slides/edit/{source}/{slide.slide_type}/{slide.id}/{index + 1}/"
         slide_data = {
-            'slide_type': get_slide_emoji(slide.slide_type),
-            'is_exam_slide': '🎓' if slide.is_exam_slide else ' ',
-            'slide_id': str(slide.id),
-            'lesson_title': lesson.title,
-            'count_correct': str(i.correct),
-            'count_wrong': str(i.wrong),
-            'icon': '✏️',
-            'link': link,
-            'correctness_rate': f'{i.correctness_rate * 100:.0f}%',
+            "slide_type": get_slide_emoji(slide.slide_type),
+            "is_exam_slide": "🎓" if slide.is_exam_slide else " ",
+            "slide_id": str(slide.id),
+            "lesson_title": lesson.title,
+            "count_correct": str(i.correct),
+            "count_wrong": str(i.wrong),
+            "icon": "✏️",
+            "link": link,
+            "correctness_rate": f"{i.correctness_rate * 100:.0f}%",
         }
         validated_slide = SlidesStatisticsTableSchema.model_validate(slide_data)
         stats.append(validated_slide)
@@ -51,18 +51,18 @@ async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession)
 
 async def get_session_stats(db_session):
     session_stats = SessionStatistics(
-        all_sessions={'description': 'Всего сессий', 'value': await get_sessions_statistics(db_session)},
+        all_sessions={"description": "Всего сессий", "value": await get_sessions_statistics(db_session)},
         completed={
-            'description': 'Завершено сессий',
-            'value': await get_sessions_statistics(db_session, status=SessionStatus.COMPLETED),
+            "description": "Завершено сессий",
+            "value": await get_sessions_statistics(db_session, status=SessionStatus.COMPLETED),
         },
         in_progress={
-            'description': 'Сессий в процессе',
-            'value': await get_sessions_statistics(db_session, status=SessionStatus.IN_PROGRESS),
+            "description": "Сессий в процессе",
+            "value": await get_sessions_statistics(db_session, status=SessionStatus.IN_PROGRESS),
         },
         aborted={
-            'description': 'Отменено сессий',
-            'value': await get_sessions_statistics(db_session, status=SessionStatus.ABORTED),
+            "description": "Отменено сессий",
+            "value": await get_sessions_statistics(db_session, status=SessionStatus.ABORTED),
         },
     )
     rows = []

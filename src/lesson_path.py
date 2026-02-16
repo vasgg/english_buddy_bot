@@ -3,14 +3,14 @@ from enums import MoveSlideDirection
 
 class LessonPath:
     def __init__(self, path: str):
-        if path is None or path == 'None' or len(path) == 0:
+        if path is None or path == "None" or len(path) == 0:
             self.path = []
         else:
-            self.path = list(map(int, path.split('.')))
+            self.path = list(map(int, path.split(".")))
 
     def add_slide(self, index: int, slide_id: int):
         if slide_id in self.path:
-            raise AssertionError(f'Slide {slide_id} already exists in path')
+            raise AssertionError(f"Slide {slide_id} already exists in path")
         self.path.insert(index, slide_id)
 
     def edit_slide(self, index: int, new_slide_id: int):
@@ -31,7 +31,7 @@ class LessonPath:
         del self.path[index - 1]
 
     def __str__(self):
-        return '.'.join(map(str, self.path))
+        return ".".join(map(str, self.path))
 
     def __len__(self):
         return len(self.path)

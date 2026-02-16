@@ -20,19 +20,19 @@ async def get_active_lessons_fastui(db_session: AsyncDBSession):
     validated_lessons = []
     for lesson in lessons:
         lesson_data = {
-            'id': lesson.id,
-            'index': lesson.index,
-            'title': lesson.title,
-            'level': lesson.level if lesson.level else None,
-            'total_slides': str(len(LessonPath(lesson.path))) if lesson.path else ' ',
-            'extra_slides': str(len(LessonPath(lesson.path_extra))) if lesson.path_extra else ' ',
-            'is_paid': '☑️' if lesson.is_paid else ' ',
-            'errors_threshold': str(lesson.errors_threshold) + '%' if lesson.errors_threshold else ' ',
-            'slides': '📖',
-            'edit_button': '✏️',
-            'up_button': '🔼',
-            'down_button': '🔽',
-            'minus_button': '➖',
+            "id": lesson.id,
+            "index": lesson.index,
+            "title": lesson.title,
+            "level": lesson.level if lesson.level else None,
+            "total_slides": str(len(LessonPath(lesson.path))) if lesson.path else " ",
+            "extra_slides": str(len(LessonPath(lesson.path_extra))) if lesson.path_extra else " ",
+            "is_paid": "☑️" if lesson.is_paid else " ",
+            "errors_threshold": str(lesson.errors_threshold) + "%" if lesson.errors_threshold else " ",
+            "slides": "📖",
+            "edit_button": "✏️",
+            "up_button": "🔼",
+            "down_button": "🔽",
+            "minus_button": "➖",
         }
         validated_lesson = ActiveLessonsTableSchema.model_validate(lesson_data)
         validated_lessons.append(validated_lesson)
@@ -47,17 +47,17 @@ async def get_editing_lessons_fastui(db_session: AsyncDBSession):
     validated_lessons = []
     for lesson in lessons:
         lesson_data = {
-            'id': lesson.id,
-            'title': lesson.title,
-            'level': lesson.level if lesson.level else None,
-            'is_paid': '☑️' if lesson.is_paid else ' ',
-            'total_slides': str(len(LessonPath(lesson.path))) if lesson.path else ' ',
-            'extra_slides': str(len(LessonPath(lesson.path_extra))) if lesson.path_extra else ' ',
-            'errors_threshold': str(lesson.errors_threshold) + '%' if lesson.errors_threshold else ' ',
-            'slides': '📖',
-            'edit_button': '✏️',
-            'minus_button': '➖',
-            'placeholder': ' ',
+            "id": lesson.id,
+            "title": lesson.title,
+            "level": lesson.level if lesson.level else None,
+            "is_paid": "☑️" if lesson.is_paid else " ",
+            "total_slides": str(len(LessonPath(lesson.path))) if lesson.path else " ",
+            "extra_slides": str(len(LessonPath(lesson.path_extra))) if lesson.path_extra else " ",
+            "errors_threshold": str(lesson.errors_threshold) + "%" if lesson.errors_threshold else " ",
+            "slides": "📖",
+            "edit_button": "✏️",
+            "minus_button": "➖",
+            "placeholder": " ",
         }
         validated_lesson = EditingLessonsTableSchema.model_validate(lesson_data)
         validated_lessons.append(validated_lesson)
@@ -86,7 +86,7 @@ async def update_lesson_path(
             else:
                 lesson.path_extra = compose_lesson_path(index, lesson.path_extra, mode, slide_id)
         case _:
-            raise AssertionError(f'Unexpected source: {source}')
+            raise AssertionError(f"Unexpected source: {source}")
 
 
 def compose_lesson_path(index, path, mode, slide_id) -> str:

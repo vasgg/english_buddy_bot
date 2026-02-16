@@ -52,8 +52,8 @@ async def process_slide(
 @asynccontextmanager
 async def paranoid(state: FSMContext):
     data = await state.get_data()
-    if 'slide_in_progress' in data:
-        assert data['slide_in_progress'] is False
+    if "slide_in_progress" in data:
+        assert data["slide_in_progress"] is False
     await state.update_data(slide_in_progress=True)
     try:
         yield

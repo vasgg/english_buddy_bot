@@ -27,7 +27,7 @@ class DBSessionMiddleware(BaseMiddleware):
     ) -> Any:
         async with self.db.session_factory() as db_session:
             # TODO: mb change to db_session factory
-            data['db_session'] = db_session
+            data["db_session"] = db_session
             try:
                 res = await handler(event, data)
             except Exception:
@@ -47,10 +47,10 @@ class SessionMiddleware(BaseMiddleware):
         event: Message | CallbackQuery,
         data: Dict[str, Any],
     ) -> Any:
-        state: FSMContext = data['state']
+        state: FSMContext = data["state"]
         state_data = await state.get_data()
-        session_id = state_data.get('session_id')
-        db_session: AsyncSession = data['db_session']
+        session_id = state_data.get("session_id")
+        db_session: AsyncSession = data["db_session"]
 
         if session_id is not None:
             user_session = await get_session(session_id, db_session)
@@ -63,16 +63,16 @@ class SessionMiddleware(BaseMiddleware):
                 await self._handle_missing_session(event, state)
                 return
 
-        data['session'] = user_session
+        data["session"] = user_session
         return await handler(event, data)
 
     @staticmethod
     async def _recover_session_from_db(
         data: Dict[str, Any],
-        db_session: 'AsyncSession',
-        state: 'FSMContext',
-    ) -> 'Session | None':
-        user = data.get('user')
+        db_session: "AsyncSession",
+        state: "FSMContext",
+    ) -> "Session | None":
+        user = data.get("user")
         if not user:
             return None
         session = await get_last_session_with_progress(user.id, db_session)
@@ -81,9 +81,9 @@ class SessionMiddleware(BaseMiddleware):
         return session
 
     @staticmethod
-    async def _handle_missing_session(event: Message | CallbackQuery, state: 'FSMContext') -> None:
+    async def _handle_missing_session(event: Message | CallbackQuery, state: "FSMContext") -> None:
         await state.clear()
-        message = 'Не удалось найти активный урок. Начните урок заново через меню.'
+        message = "Не удалось найти активный урок. Начните урок заново через меню."
         if isinstance(event, CallbackQuery):
             with suppress(TelegramBadRequest):
                 await event.answer(message)

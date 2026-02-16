@@ -9,7 +9,7 @@ from database.models.user import User
 from enums import SessionStartsFrom, SessionStatus, SlideType
 
 
-async def test_session_in_progress(db: 'DatabaseConnector'):
+async def test_session_in_progress(db: "DatabaseConnector"):
     slide_id = 1050
     path = f"1.{slide_id}"
     target_step = 199

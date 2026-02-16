@@ -7,7 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.controllers.slide_controllers import show_slides
 from bot.controllers.user_controllers import show_start_menu
-from bot.keyboards.callback_data import LessonStartsFromCallbackFactory, LessonsCallbackFactory, RemindersCallbackFactory
+from bot.keyboards.callback_data import (
+    LessonStartsFromCallbackFactory,
+    LessonsCallbackFactory,
+    RemindersCallbackFactory,
+)
 from bot.keyboards.keyboards import get_lesson_progress_keyboard
 from database.crud.answer import get_text_by_prompt
 from database.crud.lesson import get_lesson_by_id
@@ -40,7 +44,7 @@ async def lesson_callback_processing(
     lesson_path = LessonPath(lesson.path).path
     slides_count = len(lesson_path)
     if slides_count == 0:
-        await callback.message.answer(text='no slides yet in this lesson')
+        await callback.message.answer(text="no slides yet in this lesson")
         return
     first_exam_slide = await find_first_exam_slide_id(lesson_path, db_session)
     has_exam_slides = first_exam_slide is not None
@@ -48,11 +52,11 @@ async def lesson_callback_processing(
         UserSubscriptionType.UNLIMITED_ACCESS,
         UserSubscriptionType.LIMITED_ACCESS,
     ):
-        await callback.message.answer(text=await get_text_by_prompt(prompt='paywall_message', db_session=db_session))
+        await callback.message.answer(text=await get_text_by_prompt(prompt="paywall_message", db_session=db_session))
         return
     if session:
         await callback.message.answer(
-            text=await get_text_by_prompt(prompt='starts_from_with_progress', db_session=db_session),
+            text=await get_text_by_prompt(prompt="starts_from_with_progress", db_session=db_session),
             reply_markup=await get_lesson_progress_keyboard(
                 mode=UserLessonProgress.IN_PROGRESS,
                 lesson=lesson,
@@ -60,7 +64,7 @@ async def lesson_callback_processing(
             ),
         )
     else:
-        prompt = 'starts_from_with_exam' if has_exam_slides else 'starts_from_without_exam'
+        prompt = "starts_from_with_exam" if has_exam_slides else "starts_from_without_exam"
         text = await get_text_by_prompt(prompt=prompt, db_session=db_session)
         await callback.message.answer(
             text=text,
@@ -79,7 +83,7 @@ async def prepare_session(lesson: Lesson, db_session: AsyncSession, attr: Lesson
         first_exam_slide_id = await find_first_exam_slide_id(path_list, db_session)
         if first_exam_slide_id:
             path_start_index = path_list.index(first_exam_slide_id)
-            path = '.'.join(map(str, path_list[path_start_index:]))
+            path = ".".join(map(str, path_list[path_start_index:]))
 
     session = Session(
         user_id=user_id,
@@ -135,20 +139,22 @@ async def reminders_callback_processing(
         await callback.message.delete()
 
     frequency = callback_data.frequency
-    text = await get_text_by_prompt(prompt='set_reminder_message', db_session=db_session)
+    text = await get_text_by_prompt(prompt="set_reminder_message", db_session=db_session)
     if frequency > 0:
         match frequency:
             case 1:
-                message = text.format('каждый день')
+                message = text.format("каждый день")
             case 3:
-                message = text.format('каждые 3 дня')
+                message = text.format("каждые 3 дня")
             case 7:
-                message = text.format('каждую неделю')
+                message = text.format("каждую неделю")
             case _:
-                raise AssertionError('unexpected frequency')
+                raise AssertionError("unexpected frequency")
     else:
-        message = await get_text_by_prompt(prompt='unset_reminder_message', db_session=db_session)
-    await set_user_reminders(user_id=user.id, reminder_freq=frequency if frequency > 0 else None, db_session=db_session)
+        message = await get_text_by_prompt(prompt="unset_reminder_message", db_session=db_session)
+    await set_user_reminders(
+        user_id=user.id, reminder_freq=frequency if frequency > 0 else None, db_session=db_session
+    )
     await db_session.commit()
     await callback.message.answer(text=message)
     # TODO: вот тут нужен правильный флаг, чтобы после команды не показывать старт меню

@@ -41,12 +41,12 @@ async def on_successful_payment(
     match payload:
         case SubscriptionDuration.ONE_MONTH:
             months = 1
-            prompt = 'stars_payment_complete_1m'
+            prompt = "stars_payment_complete_1m"
         case SubscriptionDuration.THREE_MONTH:
             months = 3
-            prompt = 'stars_payment_complete_3m'
+            prompt = "stars_payment_complete_3m"
         case _:
-            assert False, f'Unexpected subscription type {payload}'
+            assert False, f"Unexpected subscription type {payload}"
     today = datetime.now(UTC).date()
     if user.subscription_expired_at and user.subscription_expired_at > today:
         new_expiry = user.subscription_expired_at + relativedelta(months=months)
@@ -79,7 +79,7 @@ async def premium_types_message(
                 LabeledPrice(label="Подписка на 3 месяца", amount=90),
             ]
         case _:
-            assert False, f'Unexpected subscription type {callback_data.duration}'
+            assert False, f"Unexpected subscription type {callback_data.duration}"
     await callback.message.answer_invoice(
         title="Подписка",
         description=description,
@@ -101,12 +101,12 @@ async def premium_payment_sent_message(
     lessons = await get_active_lessons(db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=user.id, db_session=db_session)
     await callback.message.answer(
-        text=await get_text_by_prompt(prompt='validating_process_text', db_session=db_session),
+        text=await get_text_by_prompt(prompt="validating_process_text", db_session=db_session),
         reply_markup=get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons),
     )
-    admin_message_text = await get_text_by_prompt(prompt='new_sub_admin_notify', db_session=db_session)
-    user_info = f'{user.fullname} (@{user.username})' if user.username else user.fullname
-    sub_type = 'monthly' if callback_data.subscription_type == SubscriptionType.LIMITED else 'alltime ⭐'
+    admin_message_text = await get_text_by_prompt(prompt="new_sub_admin_notify", db_session=db_session)
+    user_info = f"{user.fullname} (@{user.username})" if user.username else user.fullname
+    sub_type = "monthly" if callback_data.subscription_type == SubscriptionType.LIMITED else "alltime ⭐"
     for admin in get_settings().SUB_ADMINS:
         try:
             await callback.bot.send_message(
@@ -117,13 +117,13 @@ async def premium_payment_sent_message(
             logger.warning("Unable to notify admin %s about new subscription: %s", admin, exc)
 
 
-@router.callback_query(F.data == 'discount_button')
+@router.callback_query(F.data == "discount_button")
 async def discount_button_callback_processing(
     callback: types.CallbackQuery,
     db_session: AsyncSession,
 ) -> None:
     image_paths = get_image_paths()
-    caption = await get_text_by_prompt(prompt='discount_button_caption', db_session=db_session)
+    caption = await get_text_by_prompt(prompt="discount_button_caption", db_session=db_session)
     if not image_paths:
         with suppress(TelegramBadRequest):
             await callback.answer("Нет доступных изображений для репоста.")

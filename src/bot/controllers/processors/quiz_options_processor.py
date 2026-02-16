@@ -24,7 +24,7 @@ async def show_quiz_options(
     slide: Slide,
 ) -> bool:
     right_answer = slide.right_answers
-    wrong_answers = slide.keyboard.split('|')
+    wrong_answers = slide.keyboard.split("|")
     elements = [right_answer, *wrong_answers]
     options = sample(population=elements, k=len(elements))
     markup = get_quiz_keyboard(words=options)
@@ -43,15 +43,15 @@ async def response_options_correct(
         with suppress(TelegramBadRequest):
             await event.edit_text(
                 text=(
-                    slide.text.replace('_', f'<u>{slide.right_answers}</u>')
+                    slide.text.replace("_", f"<u>{slide.right_answers}</u>")
                     if "_" in slide.text
                     else slide.text + '\nSystem message!\n\nВ тексте с вопросом к квизу "выбери правильный ответ" '
                     'всегда должен быть символ "_", чтобы при правильном ответе он подменялся на текст правильного '
-                    'варианта.'
+                    "варианта."
                 ),
             )
     except KeyError:
-        logging.exception('something went wrong with quiz_options')
+        logging.exception("something went wrong with quiz_options")
     await event.answer(text=await get_random_answer(mode=ReactionType.RIGHT, db_session=db_session))
     await log_quiz_answer(session.id, slide.id, slide.slide_type, True, db_session)
 
@@ -84,7 +84,7 @@ async def process_quiz_options(
                 await event.delete_reply_markup()
             if hint_msg.hint_requested:
                 await event.answer(
-                    text=(await get_text_by_prompt(prompt='right_answer', db_session=db_session)).format(
+                    text=(await get_text_by_prompt(prompt="right_answer", db_session=db_session)).format(
                         slide.right_answers,
                     ),
                 )

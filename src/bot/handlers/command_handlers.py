@@ -27,20 +27,21 @@ async def start_message(
     await show_start_menu(message, user.id, db_session)
 
 
-@router.message(Command('premium'))
+@router.message(Command("premium"))
 async def premium_message(message: types.Message, user: User, db_session: AsyncSession) -> None:
     await message.answer(
-        text=await get_text_by_prompt(prompt='premium_text', db_session=db_session), reply_markup=get_premium_keyboard()
+        text=await get_text_by_prompt(prompt="premium_text", db_session=db_session),
+        reply_markup=get_premium_keyboard(),
     )
     if user.subscription_status == UserSubscriptionType.NO_ACCESS:
         user.subscription_status = UserSubscriptionType.ACCESS_INFO_REQUESTED
 
 
-@router.message(Command('reminders'))
+@router.message(Command("reminders"))
 async def set_user_reminders(message: types.Message, db_session: AsyncSession) -> None:
     await propose_reminder_to_user(message, db_session)
 
 
-@router.message(Command('support'))
+@router.message(Command("support"))
 async def support_message(message: types.Message, db_session: AsyncSession) -> None:
-    await message.answer(text=await get_text_by_prompt(prompt='support_text', db_session=db_session))
+    await message.answer(text=await get_text_by_prompt(prompt="support_text", db_session=db_session))

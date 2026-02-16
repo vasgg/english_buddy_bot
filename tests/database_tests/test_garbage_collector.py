@@ -5,7 +5,7 @@ from database.models.slide import Slide
 from enums import LessonStatus, SlideType
 
 
-async def test_garbage_collector(db: 'DatabaseConnector'):
+async def test_garbage_collector(db: "DatabaseConnector"):
     slide_id = 1
     path = f"1.{slide_id}"
 

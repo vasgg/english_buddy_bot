@@ -14,7 +14,11 @@ from bot.internal.notify_admin import notify_admin_about_exception
 from config import get_settings
 from consts import ONE_DAY, UTC_STARTING_MARK
 from database.crud.answer import get_text_by_prompt
-from database.crud.lesson import get_active_and_editing_lessons, get_active_lessons, get_completed_lessons_from_sessions
+from database.crud.lesson import (
+    get_active_and_editing_lessons,
+    get_active_lessons,
+    get_completed_lessons_from_sessions,
+)
 from database.crud.reminder_text_variant import get_all_reminder_text_variants
 from database.crud.user import (
     get_all_users_with_active_subscription,
@@ -27,6 +31,7 @@ from database.garbage_helper import collect_garbage
 from enums import UserSubscriptionType
 
 logger = logging.getLogger()
+
 
 def _normalize_reminder_variants(variants: list[str]) -> list[str]:
     unique_variants = dict.fromkeys(variants)
@@ -112,7 +117,7 @@ async def _set_subscription_status(
 
 async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
     await message.answer(
-        text=await get_text_by_prompt(prompt='registration_message', db_session=db_session),
+        text=await get_text_by_prompt(prompt="registration_message", db_session=db_session),
         reply_markup=get_notified_keyboard(),
     )
 
@@ -124,7 +129,7 @@ async def show_start_menu(event: types.Message, user_id: int, db_session: AsyncS
         lessons = await get_active_and_editing_lessons(db_session)
     completed_lessons = await get_completed_lessons_from_sessions(user_id=user_id, db_session=db_session)
     await event.answer(
-        text=await get_text_by_prompt(prompt='start_message', db_session=db_session),
+        text=await get_text_by_prompt(prompt="start_message", db_session=db_session),
         reply_markup=get_lesson_picker_keyboard(lessons=lessons, completed_lessons=completed_lessons),
     )
 
@@ -144,7 +149,7 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                     reminder_text_variants = []
                 reminder_text_fallback = None
                 if not reminder_text_variants:
-                    reminder_text_fallback = await get_text_by_prompt(prompt='reminder_text', db_session=session)
+                    reminder_text_fallback = await get_text_by_prompt(prompt="reminder_text", db_session=session)
                 reminder_recipients = [
                     {
                         "id": user.id,
@@ -205,8 +210,8 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                 await collect_garbage(session)
 
             async with db_connector.session_factory() as session:
-                almost_over_text = await get_text_by_prompt(prompt='subscribtion_almost_over', db_session=session)
-                over_text = await get_text_by_prompt(prompt='subscribtion_over', db_session=session)
+                almost_over_text = await get_text_by_prompt(prompt="subscribtion_almost_over", db_session=session)
+                over_text = await get_text_by_prompt(prompt="subscribtion_over", db_session=session)
                 users = [
                     {
                         "id": user.id,

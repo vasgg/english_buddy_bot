@@ -8,7 +8,7 @@ from bot.controllers.slide_controllers import paranoid
 
 async def get_flag(ctx: FSMContext):
     data = await ctx.get_data()
-    return data['slide_in_progress']
+    return data["slide_in_progress"]
 
 
 @pytest.fixture()
