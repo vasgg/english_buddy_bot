@@ -9,8 +9,8 @@ from consts import ERRORS_THRESHOLD, IMAGE_WIDTH
 from database.crud.lesson import get_lesson_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
-from database.models.slide import Slide
 from enums import MoveSlideDirection, PathType, SlideType, SlidesMenuType, StickerType
+from lesson_path import LessonPath
 from webapp.controllers.lesson import update_lesson_path
 from webapp.controllers.slide import (
     create_new_sticker,
@@ -37,8 +37,8 @@ logger = logging.getLogger()
 async def slides_page(lesson_id: int, db_session: AsyncDBSession) -> list[AnyComponent]:
     logger.info('slides router called')
     lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
-    slides = await get_all_slides_from_lesson_by_order_fastui(db_session, lesson.path)
-    extra_slides = await get_all_slides_from_lesson_by_order_fastui(db_session, str(lesson.path_extra))
+    slides = await get_all_slides_from_lesson_by_order_fastui(db_session, lesson.id, lesson.path)
+    extra_slides = await get_all_slides_from_lesson_by_order_fastui(db_session, lesson.id, str(lesson.path_extra))
 
     slides_heading = [c.Heading(text='Слайды', level=4), c.Paragraph(text='')]
     if len(slides) > 0:
@@ -137,7 +137,15 @@ async def edit_slide(
     index: int,
     db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
-    slide: Slide = await get_slide_by_id(slide_id, db_session)
+    slide = await get_slide_by_id(slide_id, db_session)
+    if slide is None:
+        logger.warning('Slide not found in DB (slide_id=%s, source=%s, index=%s)', slide_id, source, index)
+        return get_common_content(
+            back_button,
+            c.Paragraph(text=''),
+            c.Paragraph(text='⚠️ Слайд не найден в БД. Возможно, lesson.path содержит несуществующий id.'),
+            title=f'Слайд {slide_id} не найден',
+        )
     optionnal_component = c.Paragraph(text='')
     match slide_type:
         case SlideType.SMALL_STICKER | SlideType.BIG_STICKER:
@@ -169,30 +177,38 @@ async def edit_slide(
     )
 
 
-@router.get('/confirm_delete/{source}/{slide_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
+@router.get('/confirm_delete/{source}/{lesson_id}/{index}/', response_model=FastUI, response_model_exclude_none=True)
 async def show_delete_slide_dialog(
     source: SlidesMenuType,
-    slide_id: int,
+    lesson_id: int,
     index: int,
     db_session: AsyncDBSession,
 ) -> list[AnyComponent]:
-    slide: Slide = await get_slide_by_id(slide_id, db_session)
+    lesson: Lesson = await get_lesson_by_id(lesson_id, db_session)
+    lesson_path_str = lesson.path_extra if source == SlidesMenuType.EXTRA else lesson.path
+    lesson_path = LessonPath(lesson_path_str).path
+    slide_id = lesson_path[index - 1] if 0 < index <= len(lesson_path) else None
+    slide = await get_slide_by_id(slide_id, db_session) if slide_id is not None else None
     logger.info(
-        f'delete slide dialog called in lesson {slide.lesson_id}. ' f'slide_id: {slide_id}, index: {index}, source: {source}'
+        f'delete slide dialog called in lesson {lesson_id}. ' f'slide_id: {slide_id}, index: {index}, source: {source}'
     )
     return get_common_content(
-        c.Paragraph(text='Вы уверены, что хотите удалить слайд?'),
+        c.Paragraph(text=f'Вы уверены, что хотите удалить слайд {slide_id if slide_id is not None else "—"}?'),
         c.Div(
             components=[
                 back_button,
                 c.Link(
                     components=[c.Button(text='Удалить', named_style='warning')],
-                    on_click=GoToEvent(url=f'/slides/delete/{source}/{slide.lesson_id}/{index}/'),
+                    on_click=GoToEvent(url=f'/slides/delete/{source}/{lesson_id}/{index}/'),
                     class_name='+ ms-2',
                 ),
             ],
         ),
-        title=f'Удаление слайда {slide_id} | {slide.slide_type.value}',
+        title=(
+            f'Удаление слайда {slide_id} | {slide.slide_type.value}'
+            if slide_id is not None and slide is not None
+            else f'Удаление слайда {slide_id if slide_id is not None else "—"}'
+        ),
     )
 
 

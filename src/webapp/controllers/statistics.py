@@ -14,7 +14,11 @@ async def get_errors_stats_table_content(limit: int, db_session: AsyncDBSession)
     stats = []
     for i in slides_by_errors:
         slide = await get_slide_by_id(i.slide_id, db_session)
+        if slide is None:
+            continue
         lesson = await get_lesson_by_id(slide.lesson_id, db_session)
+        if lesson is None:
+            continue
         lesson_path = LessonPath(lesson.path).path
         lesson_path_extra = LessonPath(lesson.path_extra).path
         try:

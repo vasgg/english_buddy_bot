@@ -4,17 +4,26 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_slide_by_id(slide_id: int, db_session: AsyncSession) -> Slide:
+async def get_slide_by_id(slide_id: int, db_session: AsyncSession) -> Slide | None:
     query = select(Slide).filter(Slide.id == slide_id)
     result = await db_session.execute(query)
     slide = result.scalar()
     return slide
 
 
+async def get_slides_by_ids(slide_ids: list[int], db_session: AsyncSession) -> dict[int, Slide]:
+    if not slide_ids:
+        return {}
+    query = select(Slide).where(Slide.id.in_(slide_ids))
+    result = await db_session.execute(query)
+    slides = result.scalars().all()
+    return {slide.id: slide for slide in slides}
+
+
 async def find_first_exam_slide_id(slide_ids: list[int], db_session: AsyncSession) -> int | None:
     for slide_id in slide_ids:
-        slide: Slide = await get_slide_by_id(slide_id, db_session)
-        if slide.is_exam_slide:
+        slide = await get_slide_by_id(slide_id, db_session)
+        if slide and slide.is_exam_slide:
             return slide_id
     return None
 

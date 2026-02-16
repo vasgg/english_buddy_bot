@@ -188,7 +188,7 @@ def get_slides_table(slides: list[dict]) -> c.Table:
             ),
             DisplayLookup(
                 field='minus_button',
-                on_click=GoToEvent(url='/slides/confirm_delete/regular/{id}/{index}/'),
+                on_click=GoToEvent(url='/slides/confirm_delete/regular/{lesson_id}/{index}/'),
                 table_width_percent=3,
             ),
         ],
@@ -227,7 +227,7 @@ def get_extra_slides_table(slides: list[dict]) -> c.Table:
             ),
             DisplayLookup(
                 field='minus_button',
-                on_click=GoToEvent(url='/slides/confirm_delete/extra/{id}/{index}/'),
+                on_click=GoToEvent(url='/slides/confirm_delete/extra/{lesson_id}/{index}/'),
                 table_width_percent=3,
             ),
         ],

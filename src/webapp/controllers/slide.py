@@ -2,7 +2,7 @@ import logging
 
 from fastui import components as c
 
-from database.crud.slide import get_slide_by_id
+from database.crud.slide import get_slides_by_ids
 from database.models.lesson import Lesson
 from database.models.slide import Slide
 from enums import MoveSlideDirection, SlideType, SlidesMenuType, StickerType
@@ -22,31 +22,57 @@ from webapp.schemas.slide import (
 logger = logging.getLogger()
 
 
-async def get_all_slides_from_lesson_by_order_fastui(db_session: AsyncDBSession, path: str | None = None) -> list:
+async def get_all_slides_from_lesson_by_order_fastui(
+    db_session: AsyncDBSession,
+    lesson_id: int,
+    path: str | None = None,
+) -> list:
     lesson_path = LessonPath(path).path
+    slides_by_id = await get_slides_by_ids(lesson_path, db_session)
     ordered_slides = []
     for index, slide_id in enumerate(lesson_path, start=1):
-        slide = await get_slide_by_id(slide_id, db_session)
-        slide_text = (
-            slide.slide_type.value.replace('_', ' ').capitalize() if 'sticker' in slide.slide_type.value else slide.text
-        )
-        # noinspection PyTypeChecker
-        slide_data = {
-            'id': str(slide.id),
-            'lesson_id': slide.lesson_id,
-            'slide_type': slide.slide_type,
-            'index': index,
-            'emoji': get_slide_emoji(slide.slide_type),
-            'text': slide.picture if slide.slide_type.value == 'image' else slide_text,
-            'delay': str(int(slide.delay)) if slide.delay else ' ',
-            'details': get_slide_details(slide),
-            'is_exam_slide': '🎓' if slide.is_exam_slide else ' ',
-            'edit_button': '✏️',
-            'up_button': '🔼',
-            'down_button': '🔽',
-            'plus_button': '➕',
-            'minus_button': '➖',
-        }
+        slide = slides_by_id.get(slide_id)
+        if slide is None:
+            logger.warning('Slide not found in DB (lesson_id=%s, index=%s, slide_id=%s)', lesson_id, index, slide_id)
+            slide_data = {
+                'id': str(slide_id),
+                'lesson_id': lesson_id,
+                'slide_type': SlideType.TEXT,
+                'index': index,
+                'emoji': '⚠️',
+                'text': '⚠️ Слайд не найден в БД — удалите или замените его в lesson.path',
+                'delay': ' ',
+                'details': ' ',
+                'is_exam_slide': ' ',
+                'edit_button': ' ',
+                'up_button': '🔼',
+                'down_button': '🔽',
+                'plus_button': '➕',
+                'minus_button': '➖',
+            }
+        else:
+            slide_text = (
+                slide.slide_type.value.replace('_', ' ').capitalize()
+                if 'sticker' in slide.slide_type.value
+                else slide.text
+            )
+            # noinspection PyTypeChecker
+            slide_data = {
+                'id': str(slide.id),
+                'lesson_id': lesson_id,
+                'slide_type': slide.slide_type,
+                'index': index,
+                'emoji': get_slide_emoji(slide.slide_type),
+                'text': slide.picture if slide.slide_type.value == 'image' else slide_text,
+                'delay': str(int(slide.delay)) if slide.delay else ' ',
+                'details': get_slide_details(slide),
+                'is_exam_slide': '🎓' if slide.is_exam_slide else ' ',
+                'edit_button': '✏️',
+                'up_button': '🔼',
+                'down_button': '🔽',
+                'plus_button': '➕',
+                'minus_button': '➖',
+            }
         validated_slide = SlidesTableSchema.model_validate(slide_data)
         ordered_slides.append(validated_slide)
     logger.info(f"Processed slides: {len(ordered_slides)}")
