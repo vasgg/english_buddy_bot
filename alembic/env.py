@@ -8,7 +8,7 @@ from pathlib import Path
 
 from alembic import context
 from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -54,10 +54,11 @@ def do_run_migrations(connection) -> None:
 
 
 async def run_migrations_online() -> None:
-    connectable = async_engine_from_config(
-        {"sqlalchemy.url": get_url()},
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        get_url(),
         poolclass=pool.NullPool,
+        pool_pre_ping=True,
+        connect_args={"server_settings": {"timezone": "UTC"}},
     )
 
     async with connectable.connect() as connection:

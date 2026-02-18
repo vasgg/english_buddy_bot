@@ -7,6 +7,7 @@ Create Date: 2026-02-17 00:00:00.000000
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import ENUM
 
 from enums import (
     KeyboardType,
@@ -32,18 +33,25 @@ depends_on = None
 
 def _enum_types() -> dict[str, sa.Enum]:
     return {
-        "keyboardtype": sa.Enum(KeyboardType, name="keyboardtype"),
-        "lessonlevel": sa.Enum(LessonLevel, name="lessonlevel"),
-        "lessonstatus": sa.Enum(LessonStatus, name="lessonstatus"),
-        "notificationcampaignstatus": sa.Enum(NotificationCampaignStatus, name="notificationcampaignstatus"),
-        "notificationdeliverystatus": sa.Enum(NotificationDeliveryStatus, name="notificationdeliverystatus"),
-        "notificationsegmentmode": sa.Enum(NotificationSegmentMode, name="notificationsegmentmode"),
-        "reactiontype": sa.Enum(ReactionType, name="reactiontype"),
-        "sessionstartsfrom": sa.Enum(SessionStartsFrom, name="sessionstartsfrom"),
-        "sessionstatus": sa.Enum(SessionStatus, name="sessionstatus"),
-        "slidetype": sa.Enum(SlideType, name="slidetype"),
-        "stickertype": sa.Enum(StickerType, name="stickertype"),
-        "usersubscriptiontype": sa.Enum(UserSubscriptionType, name="usersubscriptiontype"),
+        # Use Postgres ENUM with create_type=False so we can safely create types
+        # once (with checkfirst=True) and avoid a duplicate CREATE TYPE during
+        # table creation.
+        "keyboardtype": ENUM(KeyboardType, name="keyboardtype", create_type=False),
+        "lessonlevel": ENUM(LessonLevel, name="lessonlevel", create_type=False),
+        "lessonstatus": ENUM(LessonStatus, name="lessonstatus", create_type=False),
+        "notificationcampaignstatus": ENUM(
+            NotificationCampaignStatus, name="notificationcampaignstatus", create_type=False
+        ),
+        "notificationdeliverystatus": ENUM(
+            NotificationDeliveryStatus, name="notificationdeliverystatus", create_type=False
+        ),
+        "notificationsegmentmode": ENUM(NotificationSegmentMode, name="notificationsegmentmode", create_type=False),
+        "reactiontype": ENUM(ReactionType, name="reactiontype", create_type=False),
+        "sessionstartsfrom": ENUM(SessionStartsFrom, name="sessionstartsfrom", create_type=False),
+        "sessionstatus": ENUM(SessionStatus, name="sessionstatus", create_type=False),
+        "slidetype": ENUM(SlideType, name="slidetype", create_type=False),
+        "stickertype": ENUM(StickerType, name="stickertype", create_type=False),
+        "usersubscriptiontype": ENUM(UserSubscriptionType, name="usersubscriptiontype", create_type=False),
     }
 
 
