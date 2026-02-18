@@ -13,7 +13,7 @@ class NotificationCampaign(Base):
     name: Mapped[str] = mapped_column(String(128))
     status: Mapped[NotificationCampaignStatus] = mapped_column(
         default=NotificationCampaignStatus.DRAFT,
-        server_default=NotificationCampaignStatus.DRAFT.value,
+        server_default=NotificationCampaignStatus.DRAFT.name,
     )
     message_text: Mapped[str] = mapped_column(Text)
     send_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -27,7 +27,7 @@ class NotificationSegment(Base):
     campaign_id: Mapped[int] = mapped_column(ForeignKey("notification_campaigns.id", ondelete="CASCADE"))
     mode: Mapped[NotificationSegmentMode] = mapped_column(
         default=NotificationSegmentMode.EXCLUDE,
-        server_default=NotificationSegmentMode.EXCLUDE.value,
+        server_default=NotificationSegmentMode.EXCLUDE.name,
     )
     name: Mapped[str | None] = mapped_column(String(128))
     registered_before: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -57,7 +57,7 @@ class NotificationDelivery(Base):
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     status: Mapped[NotificationDeliveryStatus] = mapped_column(
         default=NotificationDeliveryStatus.QUEUED,
-        server_default=NotificationDeliveryStatus.QUEUED.value,
+        server_default=NotificationDeliveryStatus.QUEUED.name,
     )
     attempts: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     last_error: Mapped[str | None] = mapped_column(Text)

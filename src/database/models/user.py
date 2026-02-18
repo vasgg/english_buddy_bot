@@ -23,7 +23,7 @@ class User(Base):
     completed_all_lessons: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     # noinspection PyTypeChecker
     subscription_status: Mapped[UserSubscriptionType] = mapped_column(
-        default=UserSubscriptionType.NO_ACCESS, server_default=UserSubscriptionType.NO_ACCESS.value
+        default=UserSubscriptionType.NO_ACCESS, server_default=UserSubscriptionType.NO_ACCESS.name
     )
     subscription_expired_at: Mapped[date | None]
     comment: Mapped[str | None]
