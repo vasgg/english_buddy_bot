@@ -85,6 +85,25 @@ class Stage(StrEnum):
     PROD = auto()
 
 
+class NotificationCampaignStatus(StrEnum):
+    DRAFT = auto()
+    ACTIVE = auto()
+    PAUSED = auto()
+    ARCHIVED = auto()
+
+
+class NotificationSegmentMode(StrEnum):
+    EXCLUDE = auto()
+    INCLUDE = auto()
+
+
+class NotificationDeliveryStatus(StrEnum):
+    QUEUED = auto()
+    SENT = auto()
+    FAILED = auto()
+    SKIPPED = auto()
+
+
 class UserSubscriptionType(StrEnum):
     NO_ACCESS = auto()
     UNLIMITED_ACCESS = auto()

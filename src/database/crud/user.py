@@ -25,7 +25,7 @@ async def get_user_from_db_by_tg_id(telegram_id: int, db_session: AsyncSession) 
     result: Result = await db_session.execute(query)
     user = result.scalar()
     if user:
-        user.last_reminded_at = user.last_reminded_at.replace(tzinfo=timezone.utc)
+        user.last_reminded_at = _ensure_utc(user.last_reminded_at)
     return user
 
 
@@ -33,7 +33,7 @@ async def get_user_from_db_by_id(user_id: int, db_session: AsyncSession) -> User
     query = select(User).filter(User.id == user_id)
     result: Result = await db_session.execute(query)
     user = result.scalar()
-    user.last_reminded_at = user.last_reminded_at.replace(tzinfo=timezone.utc)
+    user.last_reminded_at = _ensure_utc(user.last_reminded_at)
     return user
 
 
@@ -44,6 +44,12 @@ def _get_previous_reminder_slot(utcnow: datetime) -> datetime:
     if utcnow < slot_today:
         slot_today -= timedelta(days=1)
     return slot_today
+
+
+def _ensure_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 
 async def set_user_reminders(user_id: int, reminder_freq: int | None, db_session: AsyncSession) -> None:

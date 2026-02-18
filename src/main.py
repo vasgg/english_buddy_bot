@@ -62,7 +62,7 @@ async def main():
 
         task.add_done_callback(_callback)
 
-    redis = Redis(db=1)
+    redis = Redis.from_url(settings.REDIS_URL)
     storage = RedisStorage(redis)
     db = get_db()
     dispatcher = Dispatcher(storage=storage, events_isolation=SimpleEventIsolation())

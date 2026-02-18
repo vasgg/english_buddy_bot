@@ -12,17 +12,19 @@ class Settings(BaseSettings):
     ADMIN: int
     SUB_ADMINS: list[int]
     TEACHERS: list[int]
-    DB_NAME: str
+    DATABASE_URL: SecretStr
     SENTRY_AIOGRAM_DSN: SecretStr | None = None
     SENTRY_FASTAPI_DSN: SecretStr | None = None
     TOP_BAD_SLIDES_COUNT: int
     STAGE: Stage
     db_echo: bool = False
+    REDIS_URL: str
+    TASKIQ_REDIS_URL: str
     allowed_image_formats: list[str] = ["png", "jpg", "jpeg", "gif", "heic", "tiff", "webp"]
 
     @property
-    def aiosqlite_db_url(self) -> str:
-        return f"sqlite+aiosqlite:///{self.DB_NAME}.db"
+    def database_url(self) -> str:
+        return self.DATABASE_URL.get_secret_value()
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

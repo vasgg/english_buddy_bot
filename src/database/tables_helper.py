@@ -13,6 +13,9 @@ from database.models.lesson import Lesson
 import database.models.quiz_answer_log
 
 # noinspection PyUnresolvedReferences
+import database.models.notification
+
+# noinspection PyUnresolvedReferences
 from database.models.reaction import Reaction, ReactionType
 
 # noinspection PyUnresolvedReferences
@@ -56,7 +59,7 @@ async def populate_db(dc: DatabaseConnector):
 
 def get_db() -> DatabaseConnector:
     settings = get_settings()
-    return DatabaseConnector(url=settings.aiosqlite_db_url, echo=settings.db_echo)
+    return DatabaseConnector(url=settings.database_url, echo=settings.db_echo)
 
 
 if __name__ == "__main__":
