@@ -40,6 +40,8 @@ requires-python = ">=3.13"
 [project.scripts]
 bot-run = "main:run_main"
 webapp-run = "webapp_run:run_main"
+worker-run = "worker_run:run_main"
+scheduler-run = "scheduler_run:run_main"
 
 [dependency-groups]
 dev = [

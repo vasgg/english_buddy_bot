@@ -55,10 +55,10 @@ Make sure you run **both** worker and scheduler in production.
 
 Run worker (start with 1 process, increase later if needed):
 ```bash
-uv run python -m taskiq worker tasks.broker:broker tasks.tasks -w 1
+uv run --env-file .env worker-run --workers 1
 ```
 
 Run scheduler:
 ```bash
-uv run python -m taskiq scheduler tasks.scheduler:scheduler tasks.tasks --skip-first-run
+uv run --env-file .env scheduler-run --skip-first-run
 ```
