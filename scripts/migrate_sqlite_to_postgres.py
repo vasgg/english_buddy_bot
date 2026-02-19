@@ -113,10 +113,27 @@ def _chunked(items: list[dict], chunk_size: int) -> Iterable[list[dict]]:
 
 def _sqlite_rows(conn: sqlite3.Connection, table: str) -> list[dict]:
     try:
-        cursor = conn.execute(f"SELECT * FROM {table}")
+        if table == "quiz_answer_logs":
+            # SQLite might contain orphaned logs (foreign keys are often disabled),
+            # but Postgres enforces FKs. Filter those out on read.
+            total = conn.execute("SELECT COUNT(*) FROM quiz_answer_logs").fetchone()[0]
+            cursor = conn.execute(
+                """
+                SELECT qal.*
+                FROM quiz_answer_logs AS qal
+                JOIN sessions AS s ON s.id = qal.session_id
+                JOIN slides AS sl ON sl.id = qal.slide_id
+                """
+            )
+        else:
+            cursor = conn.execute(f"SELECT * FROM {table}")
     except sqlite3.OperationalError:
         return []
     rows = [dict(row) for row in cursor.fetchall()]
+    if table == "quiz_answer_logs":
+        dropped = int(total) - len(rows)
+        if dropped:
+            logger.warning("Dropped %s orphan quiz_answer_logs rows during SQLite read", dropped)
     return rows
 
 
