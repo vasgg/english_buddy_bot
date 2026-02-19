@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import logging.config
 import os
 from pathlib import Path
@@ -62,4 +63,4 @@ def run_main(argv: list[str] | None = None) -> None:
         update_interval=args.update_interval,
         loop_interval=args.loop_interval,
     )
-    run_scheduler(scheduler_args)
+    asyncio.run(run_scheduler(scheduler_args))
