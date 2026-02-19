@@ -1,5 +1,6 @@
 import logging
 import traceback
+from html import escape
 from typing import Optional
 
 from aiogram import Bot
@@ -34,14 +35,16 @@ async def on_shutdown_notify(bot: Bot):
 
 def build_exception_message(exc: BaseException, *, context: Optional[str] = None) -> str:
     exc_traceback = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-    tb_tail = exc_traceback[-3500:]
+    # Telegram HTML is strict: raw "<...>" from exceptions breaks parsing.
+    tb_tail = escape(exc_traceback[-2500:])
+    safe_exc = escape(str(exc))
     header = "🚨 <b>An error occurred</b> 🚨"
     if context:
-        header = f"{header}\n<b>Context:</b> {context}"
+        header = f"{header}\n<b>Context:</b> {escape(context)}"
     return (
         f"{header}\n\n"
         f"<b>Type:</b> {type(exc).__name__}\n"
-        f"<b>Message:</b> {exc}\n\n"
+        f"<b>Message:</b> {safe_exc}\n\n"
         f"<b>Traceback:</b>\n<code>{tb_tail}</code>"
     )
 
