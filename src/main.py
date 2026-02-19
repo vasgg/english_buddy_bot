@@ -6,18 +6,17 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import SimpleEventIsolation
-from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from redis.asyncio import Redis
 import sentry_sdk
 
-from bot.controllers.user_controllers import check_user_reminders, daily_routine
 from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
 from bot.handlers.lesson_handlers import router as lesson_router
 from bot.handlers.premium_handlers import router as premium_router
 from bot.handlers.session_handlers import router as quiz_router
 from bot.internal.commands import set_bot_commands
-from bot.internal.notify_admin import notify_admin_about_exception, on_shutdown_notify, on_startup_notify
+from bot.internal.notify_admin import on_shutdown_notify, on_startup_notify
 from bot.middlewares.auth_middleware import AuthMiddleware
 from bot.middlewares.session_middlewares import DBSessionMiddleware
 from bot.middlewares.updates_dumper_middleware import UpdatesDumperMiddleware
@@ -47,23 +46,11 @@ async def main():
     bot = Bot(token=settings.BOT_TOKEN.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     logging.info("bot started")
 
-    def supervise_task(task: asyncio.Task, *, context: str) -> None:
-        async def _notify(exc: BaseException) -> None:
-            await notify_admin_about_exception(bot, exc, context=context)
-
-        def _callback(done_task: asyncio.Task) -> None:
-            try:
-                done_task.result()
-            except asyncio.CancelledError:
-                return
-            except Exception as exc:
-                logging.exception("Background task %s crashed", context, exc_info=exc)
-                asyncio.create_task(_notify(exc))
-
-        task.add_done_callback(_callback)
-
     redis = Redis.from_url(settings.REDIS_URL)
-    storage = RedisStorage(redis)
+    storage = RedisStorage(
+        redis,
+        key_builder=DefaultKeyBuilder(prefix=f"english_buddy_bot:{settings.STAGE.value}"),
+    )
     db = get_db()
     dispatcher = Dispatcher(storage=storage, events_isolation=SimpleEventIsolation())
     db_session_middleware = DBSessionMiddleware(db)
@@ -76,12 +63,6 @@ async def main():
     dispatcher.startup.register(on_startup_notify)
     dispatcher.shutdown.register(on_shutdown_notify)
     dispatcher.include_routers(base_router, errors_router, lesson_router, quiz_router, premium_router)
-    # noinspection PyUnusedLocal
-    reminders_task = asyncio.create_task(check_user_reminders(bot=bot, db_connector=db), name="check_user_reminders")
-    supervise_task(reminders_task, context="check_user_reminders")
-    # noinspection PyUnusedLocal
-    daily_task = asyncio.create_task(daily_routine(bot=bot, db_connector=db), name="daily_routine")
-    supervise_task(daily_task, context="daily_routine")
     await dispatcher.start_polling(bot)
 
 

@@ -48,3 +48,17 @@ If you have an existing SQLite DB file:
 ### Run
 - Run bot (polling): `uv run bot-run` (requires Redis)
 - Run webapp: `uv run webapp-run`
+
+### Background Workers (Taskiq)
+This project uses Taskiq for background jobs (notifications, daily routine).
+Make sure you run **both** worker and scheduler in production.
+
+Run worker (start with 1 process, increase later if needed):
+```bash
+uv run python -m taskiq worker tasks.broker:broker tasks.tasks -w 1
+```
+
+Run scheduler:
+```bash
+uv run python -m taskiq scheduler tasks.scheduler:scheduler tasks.tasks --skip-first-run
+```
