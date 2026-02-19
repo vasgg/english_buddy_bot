@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import os
 import sqlite3
 import sys
+import time
+from collections.abc import Iterable
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -18,6 +21,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # no
 from database.models.base import Base  # noqa: E402
 import database.tables_helper  # noqa: F401,E402
 
+logger = logging.getLogger("migrate_sqlite_to_postgres")
 
 TABLE_ORDER = [
     "lessons",
@@ -54,6 +58,57 @@ DATETIME_COLUMNS = {
     "sent_at",
 }
 DATE_COLUMNS = {"subscription_expired_at"}
+
+
+DEFAULT_LOG_FILE = ROOT / "migrate_sqlite_to_postgres.log"
+
+
+def _setup_logging(log_file: Path, level: str) -> None:
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    numeric_level = getattr(logging, level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f"Invalid log level: {level!r}")
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(numeric_level)
+    root_logger.handlers.clear()
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s.%(msecs)03dZ [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+    )
+    formatter.converter = time.gmtime  # timestamps in UTC
+
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(numeric_level)
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(numeric_level)
+    stream_handler.setFormatter(formatter)
+    root_logger.addHandler(stream_handler)
+
+
+def _redact_url(url: str) -> str:
+    # Best-effort: replace password part of "user:pass@" with "user:***@".
+    try:
+        prefix, rest = url.split("://", 1)
+    except ValueError:
+        return "<invalid DATABASE_URL>"
+    if "@" not in rest:
+        return f"{prefix}://{rest}"
+    creds, tail = rest.split("@", 1)
+    if ":" not in creds:
+        return f"{prefix}://{creds}@{tail}"
+    user, _pw = creds.split(":", 1)
+    return f"{prefix}://{user}:***@{tail}"
+
+
+def _chunked(items: list[dict], chunk_size: int) -> Iterable[list[dict]]:
+    for i in range(0, len(items), chunk_size):
+        yield items[i : i + chunk_size]
 
 
 def _sqlite_rows(conn: sqlite3.Connection, table: str) -> list[dict]:
@@ -129,12 +184,26 @@ def _filter_columns(table, rows: list[dict]) -> list[dict]:
     return filtered
 
 
-async def _insert_rows(session_maker, table, rows: list[dict]) -> None:
+async def _insert_rows(session_maker, table, rows: list[dict], *, chunk_size: int) -> None:
     if not rows:
         return
     async with session_maker() as session:
-        await session.execute(insert(table).values(rows))
-        await session.commit()
+        for n, chunk in enumerate(_chunked(rows, chunk_size), start=1):
+            try:
+                # Use executemany-style call; it's easier to debug by chunk.
+                await session.execute(insert(table), chunk)
+                await session.commit()
+            except Exception as exc:  # noqa: BLE001
+                await session.rollback()
+                logger.exception(
+                    "Failed inserting into %s (chunk %s, rows %s..%s): %s",
+                    table.name,
+                    n,
+                    (n - 1) * chunk_size + 1,
+                    (n - 1) * chunk_size + len(chunk),
+                    exc,
+                )
+                raise
 
 
 async def _reset_sequences(session_maker, table_names: list[str]) -> None:
@@ -142,34 +211,45 @@ async def _reset_sequences(session_maker, table_names: list[str]) -> None:
         for table in table_names:
             stmt = sa_text(
                 """
-                SELECT setval(
-                    pg_get_serial_sequence(:table_name, 'id'),
-                    COALESCE((SELECT MAX(id) FROM {table}), 1),
-                    (SELECT MAX(id) FROM {table}) IS NOT NULL
-                );
+                SELECT
+                    CASE
+                        WHEN pg_get_serial_sequence(:table_name, 'id') IS NULL THEN NULL
+                        ELSE setval(
+                            pg_get_serial_sequence(:table_name, 'id'),
+                            COALESCE((SELECT MAX(id) FROM {table}), 1),
+                            (SELECT MAX(id) FROM {table}) IS NOT NULL
+                        )
+                    END;
                 """.format(table=table)
             )
             await session.execute(stmt, {"table_name": table})
         await session.commit()
 
 
-async def migrate(sqlite_path: Path, database_url: str) -> None:
+async def migrate(sqlite_path: Path, database_url: str, *, chunk_size: int, sql_echo: bool) -> None:
     conn = sqlite3.connect(sqlite_path)
     conn.row_factory = sqlite3.Row
 
-    engine = create_async_engine(database_url)
+    engine = create_async_engine(
+        database_url,
+        echo=sql_echo,
+        connect_args={"server_settings": {"timezone": "UTC"}},
+    )
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
     for table_name in TABLE_ORDER:
         if table_name not in Base.metadata.tables:
             continue
+        logger.info("Migrating table: %s", table_name)
         rows = _sqlite_rows(conn, table_name)
+        logger.info("SQLite rows fetched: %s", len(rows))
         if table_name == "users":
             rows = _prepare_users(rows)
         if table_name == "sessions":
             rows = _prepare_sessions(rows)
         rows = _filter_columns(Base.metadata.tables[table_name], rows)
-        await _insert_rows(session_maker, Base.metadata.tables[table_name], rows)
+        logger.info("Rows after column filter/normalization: %s", len(rows))
+        await _insert_rows(session_maker, Base.metadata.tables[table_name], rows, chunk_size=chunk_size)
 
     await _reset_sequences(session_maker, [t for t in TABLE_ORDER if t in Base.metadata.tables])
     await engine.dispose()
@@ -179,17 +259,40 @@ async def migrate(sqlite_path: Path, database_url: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sqlite-path", default="prod_english_buddy.db")
+    parser.add_argument("--log-file", default=str(DEFAULT_LOG_FILE))
+    parser.add_argument("--log-level", default="INFO")
+    parser.add_argument("--chunk-size", type=int, default=500)
+    parser.add_argument("--sql-echo", action="store_true")
     args = parser.parse_args()
+
+    _setup_logging(Path(args.log_file), args.log_level)
 
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise RuntimeError("DATABASE_URL is required for migration")
+    logger.info("DATABASE_URL=%s", _redact_url(database_url))
 
     sqlite_path = Path(args.sqlite_path)
     if not sqlite_path.exists():
         raise FileNotFoundError(f"SQLite DB not found: {sqlite_path}")
 
-    asyncio.run(migrate(sqlite_path, database_url))
+    logger.info("SQLite path: %s", sqlite_path)
+    logger.info("Log file: %s", args.log_file)
+    logger.info("Chunk size: %s", args.chunk_size)
+    logger.info("SQL echo: %s", args.sql_echo)
+
+    try:
+        asyncio.run(
+            migrate(
+                sqlite_path,
+                database_url,
+                chunk_size=max(1, int(args.chunk_size)),
+                sql_echo=bool(args.sql_echo),
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Migration failed: %s", exc)
+        raise
 
 
 if __name__ == "__main__":
