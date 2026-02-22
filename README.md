@@ -28,11 +28,12 @@ Example:
 DATABASE_URL=postgresql+asyncpg://user:pass@127.0.0.1:5432/english_buddy_bot
 REDIS_URL=redis://:redis_pass@127.0.0.1:6379/1
 TASKIQ_REDIS_URL=redis://:redis_pass@127.0.0.1:6379/2
+STAGE=dev
 ```
 
 ### Setup & checks
 - Install dependencies: `uv sync --all-groups`
-- Run tests: `uv run pytest`
+- Run tests (PostgreSQL only): `TEST_DATABASE_URL=postgresql+asyncpg://... uv run pytest`
 - Lint: `uv run ruff check .`
 - Format check: `uv run ruff format --check .`
 - Typecheck (informational): `uv run ty check src`

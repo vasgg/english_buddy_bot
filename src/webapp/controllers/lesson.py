@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 
 async def get_active_lessons_fastui(db_session: AsyncDBSession):
-    query = select(Lesson).group_by(Lesson.index).filter(Lesson.is_active == LessonStatus.ACTIVE)
+    query = select(Lesson).filter(Lesson.is_active == LessonStatus.ACTIVE).order_by(Lesson.index)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     validated_lessons = []
@@ -41,7 +41,7 @@ async def get_active_lessons_fastui(db_session: AsyncDBSession):
 
 
 async def get_editing_lessons_fastui(db_session: AsyncDBSession):
-    query = select(Lesson).group_by(Lesson.created_at).filter(Lesson.is_active == LessonStatus.EDITING)
+    query = select(Lesson).filter(Lesson.is_active == LessonStatus.EDITING).order_by(Lesson.created_at)
     result = await db_session.execute(query)
     lessons = result.scalars().all()
     validated_lessons = []
