@@ -229,7 +229,7 @@ def get_users_page(users: list[dict], filter_form_initial: dict, blocked_users_c
                 DisplayLookup(field="registration_date", title="зарегистрирован", table_width_percent=10),
                 DisplayLookup(field="comment", title="комментарий", table_width_percent=20),
                 DisplayLookup(field="subscription_expired_at", title="доступ истекает", table_width_percent=13),
-                DisplayLookup(field="bot_blocked_icon", title="бот", table_width_percent=3),
+                DisplayLookup(field="bot_blocked_icon", title="блок", table_width_percent=3),
                 DisplayLookup(field="color_code", title=" ", table_width_percent=3),
                 DisplayLookup(field="icon", table_width_percent=3, title=" ", on_click=GoToEvent(url="{link}")),
             ],
