@@ -1,11 +1,17 @@
 from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent
+from webapp.schemas.lesson import ActiveLessonsTableSchema, EditingLessonsTableSchema
+from webapp.schemas.reaction import ReactionsTableSchema
+from webapp.schemas.reminder_texts import ReminderTextVariantTableSchema
+from webapp.schemas.slide import SlidesTableSchema
 
 
 def get_active_lesson_table(lessons: list[dict]) -> c.Table:
     return c.Table(
         data=lessons,
+        data_model=ActiveLessonsTableSchema,
+        no_data_message="Нет активных уроков",
         columns=[
             DisplayLookup(
                 field="index",
@@ -62,6 +68,8 @@ def get_active_lesson_table(lessons: list[dict]) -> c.Table:
 def get_editing_lesson_table(lessons: list[dict]) -> c.Table:
     return c.Table(
         data=lessons,
+        data_model=EditingLessonsTableSchema,
+        no_data_message="Нет уроков в режиме редактирования",
         columns=[
             DisplayLookup(
                 field="placeholder",
@@ -116,6 +124,8 @@ def get_editing_lesson_table(lessons: list[dict]) -> c.Table:
 def get_reactions_table(reactions: list[dict]) -> c.Table:
     return c.Table(
         data=reactions,
+        data_model=ReactionsTableSchema,
+        no_data_message="Нет реакций",
         columns=[
             DisplayLookup(field="text", title="text"),
             DisplayLookup(
@@ -137,6 +147,8 @@ def get_reactions_table(reactions: list[dict]) -> c.Table:
 def get_reminder_texts_table(variants: list[dict]) -> c.Table:
     return c.Table(
         data=variants,
+        data_model=ReminderTextVariantTableSchema,
+        no_data_message="Нет вариантов текста",
         columns=[
             DisplayLookup(field="text", title="text"),
             DisplayLookup(
@@ -158,6 +170,8 @@ def get_reminder_texts_table(variants: list[dict]) -> c.Table:
 def get_slides_table(slides: list[dict]) -> c.Table:
     return c.Table(
         data=slides,
+        data_model=SlidesTableSchema,
+        no_data_message="Слайды не найдены",
         columns=[
             DisplayLookup(field="index", table_width_percent=3),
             DisplayLookup(field="id", title="id", table_width_percent=8),
@@ -198,6 +212,8 @@ def get_slides_table(slides: list[dict]) -> c.Table:
 def get_extra_slides_table(slides: list[dict]) -> c.Table:
     return c.Table(
         data=slides,
+        data_model=SlidesTableSchema,
+        no_data_message="Экстра-слайды не найдены",
         columns=[
             DisplayLookup(field="index", table_width_percent=3),
             DisplayLookup(field="id", title="id", table_width_percent=8),

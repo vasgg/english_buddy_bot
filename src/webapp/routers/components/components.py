@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 
 from enums import SlidesMenuType
 from webapp.routers.components.buttons import back_button
+from webapp.schemas.statistics import SessionsStatisticsTableSchema, SlidesStatisticsTableSchema
+from webapp.schemas.text import TextsTableSchema
+from webapp.schemas.user import UsersSchema
 
 try:
     c.AnyComponent = AnyComponent  # type: ignore[attr-defined]
@@ -148,6 +151,7 @@ def get_statistics_page(users_count: int, rows: list[dict], errors_stats: list[d
         c.Heading(text="Сессии", level=4),
         c.Table(
             data=rows,
+            data_model=SessionsStatisticsTableSchema,
             columns=[
                 DisplayLookup(field="description", title="описание"),
                 DisplayLookup(field="value", title="значение", table_width_percent=38),
@@ -157,6 +161,8 @@ def get_statistics_page(users_count: int, rows: list[dict], errors_stats: list[d
         c.Paragraph(text=" "),
         c.Table(
             data=errors_stats,
+            data_model=SlidesStatisticsTableSchema,
+            no_data_message="Нет данных по ошибкам",
             columns=[
                 DisplayLookup(field="slide_type", table_width_percent=3, title=" "),
                 DisplayLookup(field="is_exam_slide", table_width_percent=3, title=" "),
@@ -182,6 +188,8 @@ def get_texts_page(texts: list[dict]) -> list[AnyComponent]:
         c.Paragraph(text=""),
         c.Table(
             data=texts,
+            data_model=TextsTableSchema,
+            no_data_message="Тексты не найдены",
             columns=[
                 DisplayLookup(field="description", title="description"),
                 DisplayLookup(field="text", title="text"),
@@ -222,6 +230,8 @@ def get_users_page(users: list[dict], filter_form_initial: dict, blocked_users_c
         ),
         c.Table(
             data=users,
+            data_model=UsersSchema,
+            no_data_message="Пользователи не найдены",
             columns=[
                 DisplayLookup(field="number", title=" ", table_width_percent=3),
                 DisplayLookup(field="fullname", title="полное имя", table_width_percent=15),

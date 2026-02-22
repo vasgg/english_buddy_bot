@@ -43,3 +43,19 @@ async def test_get(client: AsyncClient, db, url):
     await populate_db(db)
     resp = await client.get(url)
     assert resp.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/api/notifications/",
+        "/api/reactions/",
+        "/api/reminder_texts/",
+        "/api/texts/",
+        "/api/users/",
+        "/api/statistics/",
+    ],
+)
+async def test_get_empty_table_pages(client: AsyncClient, url):
+    resp = await client.get(url)
+    assert resp.status_code == 200

@@ -8,6 +8,11 @@ from enums import NotificationCampaignMode
 from webapp.controllers.notifications import get_campaign_preview_count
 
 
+async def test_notifications_page_handles_empty_campaigns(client):
+    response = await client.get("/api/notifications")
+    assert response.status_code == 200
+
+
 async def test_add_notification_campaign_via_api_creates_campaign_and_segment(client, db):
     payload = {
         "name": "Retention campaign",

@@ -22,7 +22,7 @@ from webapp.controllers.notifications import get_campaign_preview_count, get_not
 from webapp.db import AsyncDBSession
 from webapp.routers.components.buttons import back_button
 from webapp.routers.components.components import get_common_content
-from webapp.schemas.notification import NotificationCampaignForm, campaign_form_initial
+from webapp.schemas.notification import NotificationCampaignForm, NotificationCampaignTableSchema, campaign_form_initial
 
 router = APIRouter()
 logger = logging.getLogger()
@@ -165,6 +165,8 @@ async def notifications_page(db_session: AsyncDBSession) -> list[AnyComponent]:
         c.Paragraph(text=""),
         c.Table(
             data=campaigns,
+            data_model=NotificationCampaignTableSchema,
+            no_data_message="Нет созданных уведомлений",
             columns=[
                 DisplayLookup(field="name", title="Название"),
                 DisplayLookup(field="mode", title="Режим", table_width_percent=12),
