@@ -23,6 +23,7 @@ from database.crud.reminder_text_variant import get_all_reminder_text_variants
 from database.crud.user import (
     get_all_users_with_active_subscription,
     get_all_users_with_reminders,
+    set_user_bot_blocked,
     set_subscription_status,
     update_last_reminded_at,
 )
@@ -115,6 +116,16 @@ async def _set_subscription_status(
         await set_subscription_status(user_id=user_id, new_status=new_status, db_session=session)
 
 
+async def _set_user_blocked_state(
+    db_connector: DatabaseConnector,
+    *,
+    user_id: int,
+    bot_blocked: bool,
+) -> None:
+    async with db_connector.session_factory.begin() as session:
+        await set_user_bot_blocked(user_id=user_id, bot_blocked=bot_blocked, db_session=session)
+
+
 async def propose_reminder_to_user(message: types.Message, db_session: AsyncSession) -> None:
     await message.answer(
         text=await get_text_by_prompt(prompt="registration_message", db_session=db_session),
@@ -177,6 +188,11 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                     await bot.send_message(chat_id=telegram_id, text=reminder_text)
                 except (TelegramForbiddenError, TelegramNotFound) as exc:
                     await _mark_failed_delivery(log_repr, reason=f"Telegram delivery error: {exc}")
+                    await _set_user_blocked_state(
+                        db_connector,
+                        user_id=user_id,
+                        bot_blocked=True,
+                    )
                     await _update_reminder_timestamp(
                         db_connector,
                         user_id=user_id,
@@ -186,6 +202,11 @@ async def check_user_reminders(bot: Bot, db_connector: DatabaseConnector):
                     logger.exception("Failed to send reminder to %s", log_repr, exc_info=send_exc)
                 else:
                     logger.info("Reminder sent to %s", log_repr)
+                    await _set_user_blocked_state(
+                        db_connector,
+                        user_id=user_id,
+                        bot_blocked=False,
+                    )
                     await _update_reminder_timestamp(
                         db_connector,
                         user_id=user_id,
@@ -236,12 +257,22 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                         )
                     except (TelegramForbiddenError, TelegramNotFound) as exc:
                         await _mark_failed_delivery(user["log_repr"], reason=f"Telegram delivery error: {exc}")
+                        await _set_user_blocked_state(
+                            db_connector,
+                            user_id=user["id"],
+                            bot_blocked=True,
+                        )
                     except Exception as send_exc:  # noqa: BLE001
                         logger.exception(
                             "Failed to send subscription reminder to %s", user["log_repr"], exc_info=send_exc
                         )
                     else:
                         logger.info("Ending subscription reminder was sent to %s", user["log_repr"])
+                        await _set_user_blocked_state(
+                            db_connector,
+                            user_id=user["id"],
+                            bot_blocked=False,
+                        )
 
                 elif days_to_expiry == 0:
                     await _set_subscription_status(
@@ -257,6 +288,11 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                         )
                     except (TelegramForbiddenError, TelegramNotFound) as exc:
                         await _mark_failed_delivery(user["log_repr"], reason=f"Telegram delivery error: {exc}")
+                        await _set_user_blocked_state(
+                            db_connector,
+                            user_id=user["id"],
+                            bot_blocked=True,
+                        )
                     except Exception as send_exc:  # noqa: BLE001
                         logger.exception(
                             "Failed to send subscription expiration notice to %s",
@@ -265,6 +301,11 @@ async def daily_routine(bot: Bot, db_connector: DatabaseConnector):
                         )
                     else:
                         logger.info("Ending subscription notification was sent to %s", user["log_repr"])
+                        await _set_user_blocked_state(
+                            db_connector,
+                            user_id=user["id"],
+                            bot_blocked=False,
+                        )
         except asyncio.CancelledError:
             raise
         except Exception as exc:

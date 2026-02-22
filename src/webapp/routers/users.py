@@ -9,7 +9,7 @@ from fastui.events import GoToEvent
 from fastui.forms import fastui_form
 import arrow
 
-from database.crud.user import get_user_from_db_by_id
+from database.crud.user import get_user_from_db_by_id, set_user_bot_blocked
 from database.crud.lesson import (
     get_completed_lessons_recent_first,
     get_lesson_by_id,
@@ -27,7 +27,7 @@ from config import get_settings
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.exceptions import TelegramForbiddenError
+from aiogram.exceptions import TelegramForbiddenError, TelegramNotFound
 
 router = APIRouter()
 logger = logging.getLogger()
@@ -41,7 +41,8 @@ async def users_page(db_session: AsyncDBSession, user: str | None = None) -> lis
     if user:
         users = [u for u in users if user.lower() in u.credentials.lower()]
         filter_form_initial["users"] = {"value": user}
-    return get_users_page(users, filter_form_initial)
+    blocked_users_count = sum(1 for u in users if u.bot_blocked)
+    return get_users_page(users, filter_form_initial, blocked_users_count=blocked_users_count)
 
 
 @router.get("/edit/{user_id}/", response_model=FastUI, response_model_exclude_none=True)
@@ -199,6 +200,7 @@ async def send_message_page(
             text=f"Получатель: {user.fullname} (@{user.username})" if user.username else f"Получатель: {user.fullname}"
         ),
         c.Paragraph(text=f"telegram_id: {getattr(user, 'telegram_id', '—')}"),
+        c.Paragraph(text=f"Статус бота: {'🚫 заблокирован' if user.bot_blocked else '✅ доступен'}"),
         *messages,
         *nav_components,
         *warn_components,
@@ -224,8 +226,12 @@ async def send_message(
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         ) as bot:
             await bot.send_message(chat_id=user.telegram_id, text=form.message)
-    except TelegramForbiddenError:
+    except (TelegramForbiddenError, TelegramNotFound):
+        await set_user_bot_blocked(user_id=user.id, bot_blocked=True, db_session=db_session)
+        await db_session.flush()
         return [c.FireEvent(event=GoToEvent(url=f"/users/send_message/{user_id}/?error=forbidden"))]
     except Exception:
         return [c.FireEvent(event=GoToEvent(url=f"/users/send_message/{user_id}/?error=unknown"))]
+    await set_user_bot_blocked(user_id=user.id, bot_blocked=False, db_session=db_session)
+    await db_session.flush()
     return [c.FireEvent(event=GoToEvent(url=f"/users/send_message/{user_id}/?status=sent"))]

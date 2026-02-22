@@ -52,8 +52,8 @@ def get_common_content(
                     on_click=GoToEvent(url="/reactions"),
                 ),
                 c.Link(
-                    components=[c.Text(text="Рассылка")],
-                    on_click=GoToEvent(url="/newsletter"),
+                    components=[c.Text(text="Настройки уведомлений")],
+                    on_click=GoToEvent(url="/notifications"),
                 ),
                 c.Link(
                     components=[c.Text(text="Пользователи")],
@@ -202,7 +202,7 @@ class FilterForm(BaseModel):
     user: str = Field(json_schema_extra={"search_url": "/api/forms/search", "placeholder": "Поиск пользователя..."})
 
 
-def get_users_page(users: list[dict], filter_form_initial: dict) -> list[AnyComponent]:
+def get_users_page(users: list[dict], filter_form_initial: dict, blocked_users_count: int) -> list[AnyComponent]:
     return get_common_content(
         c.Paragraph(text=" "),
         c.Paragraph(text="⬜ нет доступа"),
@@ -210,6 +210,7 @@ def get_users_page(users: list[dict], filter_form_initial: dict) -> list[AnyComp
         c.Paragraph(text="🟥 доступ истёк"),
         c.Paragraph(text="🟨 нет доступа, интересовался"),
         c.Paragraph(text="⭐ доступ навсегда"),
+        c.Paragraph(text=f"🚫 заблокировали бота: {blocked_users_count}"),
         c.Paragraph(text=" "),
         c.ModelForm(
             model=FilterForm,
@@ -228,6 +229,7 @@ def get_users_page(users: list[dict], filter_form_initial: dict) -> list[AnyComp
                 DisplayLookup(field="registration_date", title="зарегистрирован", table_width_percent=10),
                 DisplayLookup(field="comment", title="комментарий", table_width_percent=20),
                 DisplayLookup(field="subscription_expired_at", title="доступ истекает", table_width_percent=13),
+                DisplayLookup(field="bot_blocked_icon", title="бот", table_width_percent=3),
                 DisplayLookup(field="color_code", title=" ", table_width_percent=3),
                 DisplayLookup(field="icon", table_width_percent=3, title=" ", on_click=GoToEvent(url="{link}")),
             ],

@@ -1,5 +1,6 @@
 import logging
 from contextlib import suppress
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from aiogram import types
@@ -25,6 +26,7 @@ from database.crud.session import (
     update_session_status,
 )
 from database.crud.slide import find_first_exam_slide_id, get_quiz_slides_by_mode
+from database.crud.user import refresh_user_lesson_progress
 from database.models.session import Session
 from enums import QuizType, SessionStartsFrom, SessionStatus
 
@@ -132,11 +134,13 @@ async def show_stats_extra(
 
 
 async def finish_session(session: Session, db_session: AsyncSession) -> None:
+    completed_at = datetime.now(timezone.utc)
     await update_session_status(
         session_id=session.id,
         new_status=SessionStatus.COMPLETED,
         db_session=db_session,
     )
+    await refresh_user_lesson_progress(user_id=session.user_id, completed_at=completed_at, db_session=db_session)
 
 
 async def show_extra_slides_dialog(

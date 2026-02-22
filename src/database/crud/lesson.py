@@ -55,7 +55,7 @@ async def get_completed_lessons_recent_first(user_id: int, db_session: AsyncSess
     subq = (
         select(
             Session.lesson_id.label("lesson_id"),
-            func.max(Session.created_at).label("last_completed_at"),
+            func.max(func.coalesce(Session.completed_at, Session.created_at)).label("last_completed_at"),
         )
         .filter(Session.status == SessionStatus.COMPLETED, Session.user_id == user_id)
         .group_by(Session.lesson_id)

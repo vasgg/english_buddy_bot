@@ -39,6 +39,8 @@ async def get_users_table_content(session: AsyncDBSession):
             "subscription_expired_at": expired_at,
             "comment": user.comment if user.comment else " ",
             "registration_date": arrow.get(user.created_at).humanize(locale="ru"),
+            "bot_blocked": bool(user.bot_blocked),
+            "bot_blocked_icon": "🚫" if user.bot_blocked else " ",
         }
         valid_user = UsersSchema.model_validate(user_data)
         users.append(valid_user)

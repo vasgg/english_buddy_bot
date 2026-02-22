@@ -92,6 +92,22 @@ class NotificationCampaignStatus(StrEnum):
     ARCHIVED = auto()
 
 
+class NotificationCampaignMode(StrEnum):
+    FILTER = auto()
+    TIMER = auto()
+
+
+class NotificationTimerAnchor(StrEnum):
+    REGISTRATION = auto()
+    LAST_ACTIVITY = auto()
+    LAST_LESSON_COMPLETED = auto()
+
+
+class NotificationTimeUnit(StrEnum):
+    HOURS = auto()
+    DAYS = auto()
+
+
 class NotificationSegmentMode(StrEnum):
     EXCLUDE = auto()
     INCLUDE = auto()

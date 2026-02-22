@@ -1,12 +1,8 @@
-import asyncio
 import io
 import logging
 from pathlib import Path
 
 from PIL import Image
-import aiofiles
-import aiohttp
-from aiohttp import FormData
 import fastapi
 
 from config import Settings
@@ -77,51 +73,6 @@ async def extract_img_from_form(request: fastapi.Request):
             image_obj = form_data.get("upload_new_picture")
             data = await image_obj.read()
         return data
-
-
-async def send_newsletter(bot_token: str, user_id: int, message: str, image_path: Path = None) -> None:
-    async with aiohttp.ClientSession() as session:
-        if image_path is not None:
-            url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
-            data = FormData()
-            data.add_field("chat_id", str(user_id))
-            data.add_field("caption", message)
-            data.add_field("disable_notification", True)
-            data.add_field("parse_mode", "HTML")
-            async with aiofiles.open(image_path, "rb") as photo:
-                photo_data = await photo.read()
-                data.add_field("photo", photo_data, filename=image_path.name)
-
-            text_ok = (
-                f'Сообщение с рассылкой "{message}" и файлом {image_path.name} было отправлено пользователю {user_id}.'
-            )
-            text_error = (
-                f'Произошла ошибка при отправке рассылки "{message}" и файлом {image_path.name} пользователю {user_id}: '
-                + "{}. {}"
-            )
-        else:
-            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-            data = {
-                "chat_id": str(user_id),
-                "text": message,
-                "disable_notification": True,
-                "parse_mode": "HTML",
-            }
-            text_ok = f'Сообщение с рассылкой "{message}" было отправлено пользователю {user_id}.'
-            text_error = f'Произошла ошибка при отправке рассылки "{message}" пользователю {user_id}: ' + "{}. {}"
-
-        async with session.post(url, data=data) as response:
-            if response.status == 200:
-                logger.info(text_ok)
-            else:
-                error_text = await response.text()
-                logger.info(text_error.format(response.status, error_text))
-
-
-async def send_newsletter_to_users(bot_token: str, users: list[int], message: str, image_path: Path = None) -> None:
-    for user in users:
-        await send_newsletter(bot_token, user, message, image_path)
-        await asyncio.sleep(1)
 
 
 def image_upload(image_file: bytes, form: EditImageSlideData, lesson_id: int, settings: Settings):

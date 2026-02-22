@@ -39,7 +39,7 @@ def create_app():
         pass
 
     from webapp.routers.lessons import router as lessons_fastui_router
-    from webapp.routers.newsletter import router as newsletter_fastui_router
+    from webapp.routers.notifications import router as notifications_fastui_router
     from webapp.routers.reactions import router as reaction_fastui_router
     from webapp.routers.root import router as root_fastui_router
     from webapp.routers.reminder_texts import router as reminder_texts_fastui_router
@@ -58,7 +58,7 @@ def create_app():
     app.include_router(texts_fastui_router, prefix="/api/texts")
     app.include_router(reminder_texts_fastui_router, prefix="/api/reminder_texts")
     app.include_router(reaction_fastui_router, prefix="/api/reactions")
-    app.include_router(newsletter_fastui_router, prefix="/api/newsletter")
+    app.include_router(notifications_fastui_router, prefix="/api/notifications")
     app.include_router(statistics_fastui_router, prefix="/api/statistics")
     app.include_router(root_fastui_router)
     return app

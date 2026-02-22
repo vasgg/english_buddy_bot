@@ -20,6 +20,8 @@ class UsersSchema(BaseModel):
     subscription_expired_at: str
     comment: str
     registration_date: str
+    bot_blocked: bool
+    bot_blocked_icon: str
 
     model_config = ConfigDict(extra="allow", from_attributes=True)
 

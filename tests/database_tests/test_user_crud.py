@@ -8,6 +8,7 @@ from database.crud.user import (
     add_user_to_db,
     get_all_users_with_reminders,
     get_user_from_db_by_tg_id,
+    set_user_bot_blocked,
     set_user_reminders,
     update_last_reminded_at,
 )
@@ -91,3 +92,15 @@ async def test_update_last_reminded_at(user_db_model: UserDbModel, db, user: Use
         selected_user = await get_user_from_db_by_tg_id(user.id, session)
 
     assert selected_user.last_reminded_at == dt
+
+
+async def test_set_user_bot_blocked(user_db_model: UserDbModel, db, user: User):
+    assert user_db_model.bot_blocked is False
+
+    async with db.session_factory.begin() as session:
+        await set_user_bot_blocked(user_db_model.id, True, session)
+
+    async with db.session_factory.begin() as session:
+        selected_user = await get_user_from_db_by_tg_id(user.id, session)
+
+    assert selected_user.bot_blocked is True

@@ -5,6 +5,7 @@ from config import Settings, get_settings
 from database.database_connector import DatabaseConnector
 from database.models.base import Base
 from database.tables_helper import get_db
+from enums import Stage
 from webapp.create_app import create_app
 
 
@@ -22,6 +23,15 @@ async def db():
 
 def override_settings():
     return Settings(
+        BOT_TOKEN="test-token",
+        ADMIN=1,
+        SUB_ADMINS=[],
+        TEACHERS=[],
+        DATABASE_URL="sqlite+aiosqlite://",
+        TOP_BAD_SLIDES_COUNT=10,
+        STAGE=Stage.DEV,
+        REDIS_URL="redis://localhost:6379/1",
+        TASKIQ_REDIS_URL="redis://localhost:6379/2",
         allowed_image_formats=[],
     )
 

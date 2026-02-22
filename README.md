@@ -41,10 +41,6 @@ TASKIQ_REDIS_URL=redis://:redis_pass@127.0.0.1:6379/2
 - Run migrations: `DATABASE_URL=... uv run alembic upgrade head`
 - Create new migration: `DATABASE_URL=... uv run alembic revision --autogenerate -m "message"`
 
-### Data migration (SQLite -> Postgres)
-If you have an existing SQLite DB file:
-- `DATABASE_URL=... uv run python scripts/migrate_sqlite_to_postgres.py --sqlite-path prod_english_buddy.db`
-
 ### Run
 - Run bot (polling): `uv run bot-run` (requires Redis)
 - Run webapp: `uv run webapp-run`

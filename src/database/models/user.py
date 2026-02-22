@@ -18,6 +18,7 @@ class User(Base):
     last_activity_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_lesson_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_notification_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    bot_blocked: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
     completed_lessons_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     completed_all_lessons: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")

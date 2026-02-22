@@ -4,16 +4,20 @@ from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from consts import UTC_STARTING_MARK
+from database.models.lesson import Lesson
+from database.models.session import Session
 from database.models.user import User
-from enums import UserSubscriptionType
+from enums import LessonStatus, SessionStatus, UserSubscriptionType
 
 
 async def add_user_to_db(user, db_session) -> User:
+    now = datetime.now(timezone.utc)
     new_user = User(
         telegram_id=user.id,
         fullname=user.full_name,
         username=user.username,
-        last_reminded_at=datetime.now(timezone.utc),
+        last_reminded_at=now,
+        last_activity_at=now,
     )
     db_session.add(new_user)
     await db_session.flush()
@@ -79,6 +83,49 @@ async def get_all_users_with_active_subscription(db_session: AsyncSession) -> li
 
 async def update_last_reminded_at(user_id: int, timestamp: datetime, db_session: AsyncSession) -> None:
     await db_session.execute(update(User).filter(User.id == user_id).values(last_reminded_at=timestamp))
+
+
+async def update_last_notification_sent_at(user_id: int, timestamp: datetime, db_session: AsyncSession) -> None:
+    await db_session.execute(update(User).filter(User.id == user_id).values(last_notification_sent_at=timestamp))
+
+
+async def set_user_bot_blocked(user_id: int, bot_blocked: bool, db_session: AsyncSession) -> None:
+    await db_session.execute(update(User).filter(User.id == user_id).values(bot_blocked=bot_blocked))
+
+
+async def touch_user_activity(user_id: int, timestamp: datetime, db_session: AsyncSession) -> None:
+    await db_session.execute(update(User).filter(User.id == user_id).values(last_activity_at=timestamp))
+
+
+async def refresh_user_lesson_progress(user_id: int, completed_at: datetime, db_session: AsyncSession) -> None:
+    total_active_lessons_query = (
+        select(func.count()).select_from(Lesson).filter(Lesson.is_active == LessonStatus.ACTIVE)
+    )
+    total_active_lessons_result = await db_session.execute(total_active_lessons_query)
+    total_active_lessons = int(total_active_lessons_result.scalar() or 0)
+
+    completed_active_lessons_query = (
+        select(func.count(func.distinct(Session.lesson_id)))
+        .select_from(Session)
+        .join(Lesson, Session.lesson_id == Lesson.id)
+        .filter(
+            Session.user_id == user_id,
+            Session.status == SessionStatus.COMPLETED,
+            Lesson.is_active == LessonStatus.ACTIVE,
+        )
+    )
+    completed_active_lessons_result = await db_session.execute(completed_active_lessons_query)
+    completed_active_lessons = int(completed_active_lessons_result.scalar() or 0)
+
+    await db_session.execute(
+        update(User)
+        .filter(User.id == user_id)
+        .values(
+            last_lesson_completed_at=completed_at,
+            completed_lessons_count=completed_active_lessons,
+            completed_all_lessons=bool(total_active_lessons and completed_active_lessons >= total_active_lessons),
+        )
+    )
 
 
 async def set_subscription_status(

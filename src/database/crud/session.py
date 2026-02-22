@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import Result, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +39,10 @@ async def get_session(session_id: int, db_session: AsyncSession) -> Session | No
 
 
 async def update_session_status(session_id: int, new_status: SessionStatus, db_session: AsyncSession) -> None:
-    query = update(Session).filter(Session.id == session_id).values(status=new_status)
+    values: dict[str, object] = {"status": new_status}
+    if new_status == SessionStatus.COMPLETED:
+        values["completed_at"] = datetime.now(timezone.utc)
+    query = update(Session).filter(Session.id == session_id).values(**values)
     await db_session.execute(query)
 
 
