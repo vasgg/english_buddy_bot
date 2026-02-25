@@ -7,6 +7,7 @@ from fastui.events import GoToEvent
 
 from consts import ERRORS_THRESHOLD, IMAGE_WIDTH
 from database.crud.lesson import get_lesson_by_id
+from database.crud.media_asset import get_media_asset_by_id
 from database.crud.slide import get_slide_by_id
 from database.models.lesson import Lesson
 from enums import MoveSlideDirection, PathType, SlideType, SlidesMenuType, StickerType
@@ -166,7 +167,23 @@ async def edit_slide(
             submit_url = f"/api/slides/edit/{source}/image/{slide_id}/{index}/"
             form = c.ModelForm(model=get_image_slide_data_model(slide), submit_url=submit_url)
         case _:
-            form = get_edit_slide_form_by_slide_type(source, slide, index)
+            media_file_id = None
+            media_type = None
+            media_comment = None
+            if slide.slide_type == SlideType.MEDIA and slide.media_asset_id:
+                media_asset = await get_media_asset_by_id(slide.media_asset_id, db_session)
+                if media_asset:
+                    media_file_id = media_asset.file_id
+                    media_type = media_asset.media_type
+                    media_comment = media_asset.comment
+            form = get_edit_slide_form_by_slide_type(
+                source,
+                slide,
+                index,
+                media_file_id=media_file_id,
+                media_type=media_type,
+                media_comment=media_comment,
+            )
     return get_common_content(
         back_button,
         c.Paragraph(text=""),

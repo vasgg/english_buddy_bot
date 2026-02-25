@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ADMIN: int
     SUB_ADMINS: list[int]
     TEACHERS: list[int]
+    MEDIA_CHAT_ID: int
     DATABASE_URL: SecretStr
     SENTRY_AIOGRAM_DSN: SecretStr | None = None
     SENTRY_FASTAPI_DSN: SecretStr | None = None

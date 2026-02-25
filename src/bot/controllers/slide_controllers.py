@@ -7,6 +7,7 @@ from bot.controllers.final_controllers import finalizing, finalizing_extra
 from bot.controllers.processors.dict_processor import process_dict
 from bot.controllers.processors.image_processor import process_image
 from bot.controllers.processors.input_models import UserQuizInput
+from bot.controllers.processors.media_processor import process_media
 from bot.controllers.processors.quiz_input_phrase_processor import process_quiz_input_phrase
 from bot.controllers.processors.quiz_input_word_processor import process_quiz_input_word
 from bot.controllers.processors.quiz_options_processor import process_quiz_options
@@ -36,6 +37,8 @@ async def process_slide(
             return await process_text(event, slide)
         case SlideType.IMAGE:
             return await process_image(event, slide, session)
+        case SlideType.MEDIA:
+            return await process_media(event, slide, session, db_session)
         case SlideType.PIN_DICT:
             return await process_dict(event, slide.text)
         case SlideType.QUIZ_OPTIONS:

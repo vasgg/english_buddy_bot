@@ -12,12 +12,21 @@ class States(StatesGroup):
 class SlideType(StrEnum):
     TEXT = auto()
     IMAGE = auto()
+    MEDIA = auto()
     SMALL_STICKER = auto()
     BIG_STICKER = auto()
     PIN_DICT = auto()
     QUIZ_OPTIONS = auto()
     QUIZ_INPUT_WORD = auto()
     QUIZ_INPUT_PHRASE = auto()
+
+
+class TelegramMediaType(StrEnum):
+    VIDEO = auto()
+    AUDIO = auto()
+    VOICE = auto()
+    ANIMATION = auto()
+    DOCUMENT = auto()
 
 
 class LessonLevel(StrEnum):

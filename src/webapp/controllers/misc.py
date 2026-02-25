@@ -17,6 +17,7 @@ def get_slide_emoji(slide_type: SlideType) -> str:
     slide_type_to_emoji = {
         SlideType.TEXT: "🖋",
         SlideType.IMAGE: "🖼",
+        SlideType.MEDIA: "🎞",
         SlideType.PIN_DICT: "📎",
         SlideType.SMALL_STICKER: "🧨",
         SlideType.BIG_STICKER: "💣",
@@ -31,6 +32,7 @@ def get_slide_type_text(slide_type: SlideType) -> str:
     slide_type_to_text = {
         SlideType.TEXT: "text",
         SlideType.IMAGE: "image",
+        SlideType.MEDIA: "media",
         SlideType.PIN_DICT: "dict",
         SlideType.SMALL_STICKER: "sticker",
         SlideType.BIG_STICKER: "sticker",
@@ -56,6 +58,7 @@ def get_slide_details(slide: Slide) -> str:
     slide_type_to_str = {
         SlideType.TEXT: slide.keyboard_type if slide.keyboard_type else " ",
         SlideType.IMAGE: slide.keyboard_type if slide.keyboard_type else " ",
+        SlideType.MEDIA: slide.keyboard_type if slide.keyboard_type else " ",
         SlideType.PIN_DICT: " ",
         SlideType.SMALL_STICKER: " ",
         SlideType.BIG_STICKER: " ",

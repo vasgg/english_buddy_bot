@@ -46,6 +46,7 @@ def override_settings():
         ADMIN=1,
         SUB_ADMINS=[],
         TEACHERS=[],
+        MEDIA_CHAT_ID=-1000000000000,
         DATABASE_URL=_get_test_database_url(),
         TOP_BAD_SLIDES_COUNT=10,
         STAGE=Stage.DEV,

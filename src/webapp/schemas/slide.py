@@ -93,6 +93,38 @@ def get_image_slide_data_model(slide: Slide = None, lesson_id: int = None) -> Ty
     return ImageSlideData
 
 
+def get_media_slide_data_model(
+    slide: Slide = None,
+    media_file_id: str | None = None,
+    media_type: str | None = None,
+    media_comment: str | None = None,
+) -> Type[BaseModel]:
+    media_info = f"Текущий тип: {media_type or '—'}. Комментарий: {media_comment or '—'}."
+
+    class MediaSlideDataModel(BaseModel):
+        media_id: str = Field(
+            initial=media_file_id or "",
+            description=(
+                "Вставьте file_id медиа из чата Медиа English buddy. "
+                "Если file_id не найден в базе, слайд не будет создан. "
+                + media_info
+            ),
+            title="media_id",
+        )
+        delay: float | None = Field(
+            slide.delay if slide else None,
+            description="Введите задержку после слайда (например, 1 секунда). Необязательное поле.",
+            title="задержка",
+        )
+        keyboard_type: bool | None = Field(
+            bool(slide and slide.keyboard_type == KeyboardType.FURTHER),
+            description="Если под слайдом нужна кнопка далее, поставьте галочку. Необязательное поле.",
+            title='Кнопка "далее"',
+        )
+
+    return MediaSlideDataModel
+
+
 def get_pin_dict_slide_data_model(slide: Slide = None) -> Type[BaseModel]:
     class PinDictSlideDataModel(BaseModel):
         text: str = Field(
@@ -323,6 +355,29 @@ class EditImageSlideData(BaseModel):
     # noinspection PyMethodParameters
     @field_validator("delay")
     def delay_validator(cls, value: float) -> float:
+        if value <= 0:
+            raise PydanticCustomError("delay", "Задержка не может быть отрицательной или равной 0.")
+        return value
+
+
+class EditMediaSlideData(BaseModel):
+    media_id: str
+    delay: float | None = None
+    keyboard_type: bool = False
+
+    # noinspection PyMethodParameters
+    @field_validator("media_id")
+    def media_id_validator(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise PydanticCustomError("media_id", "Поле media_id не может быть пустым.")
+        return value
+
+    # noinspection PyMethodParameters
+    @field_validator("delay")
+    def delay_validator(cls, value: float | None) -> float | None:
+        if value is None:
+            return value
         if value <= 0:
             raise PydanticCustomError("delay", "Задержка не может быть отрицательной или равной 0.")
         return value

@@ -13,6 +13,7 @@ import sentry_sdk
 from bot.handlers.command_handlers import router as base_router
 from bot.handlers.errors_handler import router as errors_router
 from bot.handlers.lesson_handlers import router as lesson_router
+from bot.handlers.media_info_handlers import router as media_info_router
 from bot.handlers.premium_handlers import router as premium_router
 from bot.handlers.session_handlers import router as quiz_router
 from bot.internal.commands import set_bot_commands
@@ -62,7 +63,7 @@ async def main():
     dispatcher.startup.register(set_bot_commands)
     dispatcher.startup.register(on_startup_notify)
     dispatcher.shutdown.register(on_shutdown_notify)
-    dispatcher.include_routers(base_router, errors_router, lesson_router, quiz_router, premium_router)
+    dispatcher.include_routers(media_info_router, base_router, errors_router, lesson_router, quiz_router, premium_router)
     await dispatcher.start_polling(bot)
 
 

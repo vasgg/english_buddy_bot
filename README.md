@@ -19,6 +19,7 @@ Set these in `.env` (see `.env.example`):
 - `TASKIQ_REDIS_URL`
 - `BOT_TOKEN`
 - `ADMIN`, `SUB_ADMINS`, `TEACHERS`
+- `MEDIA_CHAT_ID`
 - `TOP_BAD_SLIDES_COUNT`
 - `STAGE`
 - Optional: `SENTRY_AIOGRAM_DSN`, `SENTRY_FASTAPI_DSN`

@@ -98,6 +98,13 @@ def get_add_slide_page(lesson_id: int, source: SlidesMenuType, index: int | None
         ),
         c.Paragraph(text=""),
         c.Button(
+            text="🎞  медиа",
+            on_click=GoToEvent(url=f"/slides/new/{lesson_id}/{source}/media/" + suffix),
+            class_name="+ ms-2",
+            named_style="secondary",
+        ),
+        c.Paragraph(text=""),
+        c.Button(
             text="📎  словарик",
             on_click=GoToEvent(url=f"/slides/new/{lesson_id}/{source}/pin_dict/" + suffix),
             class_name="+ ms-2",

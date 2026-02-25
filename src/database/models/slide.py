@@ -18,4 +18,5 @@ class Slide(Base):
     almost_right_answer_reply: Mapped[str | None]
     keyboard_type: Mapped[KeyboardType | None]
     keyboard: Mapped[str | None]
+    media_asset_id: Mapped[int | None] = mapped_column(ForeignKey("media_assets.id", ondelete="SET NULL"))
     is_exam_slide: Mapped[bool] = mapped_column(default=False, server_default="0")

@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
+from aiogram.enums import ChatType
 from aiogram.types import CallbackQuery, Message
 
 from config import get_settings
@@ -17,6 +18,13 @@ class AuthMiddleware(BaseMiddleware):
         event: Message | CallbackQuery,
         data: Dict[str, Any],
     ) -> Any:
+        chat = event.chat if isinstance(event, Message) else event.message.chat if event.message else None
+        if chat is not None and chat.type != ChatType.PRIVATE:
+            if chat.id == settings.MEDIA_CHAT_ID:
+                return await handler(event, data)
+            # Ignore all non-private chats except dedicated media chat.
+            return None
+
         from_user = event.from_user
         if from_user is None:
             return await handler(event, data)

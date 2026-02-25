@@ -2,6 +2,7 @@ import logging
 
 from fastui import components as c
 
+from database.crud.media_asset import get_media_assets_by_ids
 from database.crud.slide import get_slides_by_ids
 from database.models.lesson import Lesson
 from database.models.slide import Slide
@@ -12,6 +13,7 @@ from webapp.db import AsyncDBSession
 from webapp.schemas.slide import (
     SlidesTableSchema,
     get_image_slide_data_model,
+    get_media_slide_data_model,
     get_pin_dict_slide_data_model,
     get_quiz_input_phrase_slide_data_model,
     get_quiz_input_word_slide_data_model,
@@ -29,6 +31,12 @@ async def get_all_slides_from_lesson_by_order_fastui(
 ) -> list:
     lesson_path = LessonPath(path).path
     slides_by_id = await get_slides_by_ids(lesson_path, db_session)
+    media_asset_ids = [
+        slide.media_asset_id
+        for slide in slides_by_id.values()
+        if slide.slide_type == SlideType.MEDIA and slide.media_asset_id is not None
+    ]
+    media_assets_by_id = await get_media_assets_by_ids(media_asset_ids, db_session)
     ordered_slides = []
     for index, slide_id in enumerate(lesson_path, start=1):
         slide = slides_by_id.get(slide_id)
@@ -51,10 +59,26 @@ async def get_all_slides_from_lesson_by_order_fastui(
                 "minus_button": "➖",
             }
         else:
+            if slide.slide_type == SlideType.MEDIA:
+                media_asset = media_assets_by_id.get(slide.media_asset_id) if slide.media_asset_id else None
+                if media_asset is None:
+                    slide_text = "⚠️ Медиа не найдено в БД"
+                    details = "⚠️"
+                else:
+                    slide_text = media_asset.comment or media_asset.file_name or media_asset.file_id
+                    details = media_asset.media_type
+            else:
+                slide_text = (
+                    slide.slide_type.value.replace("_", " ").capitalize()
+                    if "sticker" in slide.slide_type.value
+                    else slide.text
+                )
+                details = get_slide_details(slide)
+
             slide_text = (
-                slide.slide_type.value.replace("_", " ").capitalize()
-                if "sticker" in slide.slide_type.value
-                else slide.text
+                slide.picture
+                if slide.slide_type.value == "image"
+                else slide_text
             )
             # noinspection PyTypeChecker
             slide_data = {
@@ -63,9 +87,9 @@ async def get_all_slides_from_lesson_by_order_fastui(
                 "slide_type": slide.slide_type,
                 "index": index,
                 "emoji": get_slide_emoji(slide.slide_type),
-                "text": slide.picture if slide.slide_type.value == "image" else slide_text,
+                "text": slide_text,
                 "delay": str(int(slide.delay)) if slide.delay else " ",
-                "details": get_slide_details(slide),
+                "details": details,
                 "is_exam_slide": "🎓" if slide.is_exam_slide else " ",
                 "edit_button": "✏️",
                 "up_button": "🔼",
@@ -107,6 +131,9 @@ def get_new_slide_form_by_slide_type(
         case SlideType.IMAGE:
             submit_url = f"/api/slides/new/{lesson_id}/{source}/image/" + suffix
             form = c.ModelForm(model=get_image_slide_data_model(lesson_id=lesson_id), submit_url=submit_url)
+        case SlideType.MEDIA:
+            submit_url = f"/api/slides/new/{lesson_id}/{source}/media/" + suffix
+            form = c.ModelForm(model=get_media_slide_data_model(), submit_url=submit_url)
         case SlideType.PIN_DICT:
             submit_url = f"/api/slides/new/{lesson_id}/{source}/dict/" + suffix
             form = c.ModelForm(model=get_pin_dict_slide_data_model(), submit_url=submit_url)
@@ -128,11 +155,25 @@ def get_edit_slide_form_by_slide_type(
     source: SlidesMenuType,
     slide: Slide,
     index: int,
+    media_file_id: str | None = None,
+    media_type: str | None = None,
+    media_comment: str | None = None,
 ) -> c.ModelForm:
     match slide.slide_type:
         case SlideType.TEXT:
             submit_url = f"/api/slides/edit/{source}/text/{slide.id}/{index}/"
             form = c.ModelForm(model=get_text_slide_data_model(slide), submit_url=submit_url)
+        case SlideType.MEDIA:
+            submit_url = f"/api/slides/edit/{source}/media/{slide.id}/{index}/"
+            form = c.ModelForm(
+                model=get_media_slide_data_model(
+                    slide,
+                    media_file_id=media_file_id,
+                    media_type=media_type,
+                    media_comment=media_comment,
+                ),
+                submit_url=submit_url,
+            )
         case SlideType.PIN_DICT:
             submit_url = f"/api/slides/edit/{source}/dict/{slide.id}/{index}/"
             form = c.ModelForm(model=get_pin_dict_slide_data_model(slide), submit_url=submit_url)

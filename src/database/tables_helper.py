@@ -19,6 +19,9 @@ import database.models.notification
 from database.models.reaction import Reaction, ReactionType
 
 # noinspection PyUnresolvedReferences
+import database.models.media_asset
+
+# noinspection PyUnresolvedReferences
 import database.models.session
 
 # noinspection PyUnresolvedReferences
