@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     db_echo: bool = False
     REDIS_URL: str
     TASKIQ_REDIS_URL: str
+    WEBAPP_HOST: str = "0.0.0.0"
+    WEBAPP_PORT: int = 8000
+    WEBAPP_WORKERS: int = 1
+    WEBAPP_LOG_LEVEL: str = "info"
+    WEBAPP_RELOAD: bool = False
     allowed_image_formats: list[str] = ["png", "jpg", "jpeg", "gif", "heic", "tiff", "webp"]
 
     @property
