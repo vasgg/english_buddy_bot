@@ -53,9 +53,7 @@ CAMPAIGN_PROCESS_CRON = "*/15 * * * *"
 TELEGRAM_THROTTLE_SECONDS = 0.5
 
 
-async def _update_reminder_timestamp(
-    user_id: int, timestamp: datetime, *, bot_blocked: bool | None = None
-) -> None:
+async def _update_reminder_timestamp(user_id: int, timestamp: datetime, *, bot_blocked: bool | None = None) -> None:
     async with db.session_factory.begin() as session:
         await update_last_reminded_at(user_id=user_id, timestamp=timestamp, db_session=session)
         await update_last_notification_sent_at(user_id=user_id, timestamp=timestamp, db_session=session)

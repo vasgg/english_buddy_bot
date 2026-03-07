@@ -14,14 +14,10 @@ def _get_test_database_url() -> str:
     db_url = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL")
     if not db_url:
         raise RuntimeError(
-            "Set TEST_DATABASE_URL (or DATABASE_URL) for tests. "
-            "Expected PostgreSQL DSN with asyncpg driver."
+            "Set TEST_DATABASE_URL (or DATABASE_URL) for tests. Expected PostgreSQL DSN with asyncpg driver."
         )
     if not db_url.startswith("postgresql+asyncpg://"):
-        raise RuntimeError(
-            "Tests are PostgreSQL-only. "
-            "Use TEST_DATABASE_URL in format postgresql+asyncpg://..."
-        )
+        raise RuntimeError("Tests are PostgreSQL-only. Use TEST_DATABASE_URL in format postgresql+asyncpg://...")
     return db_url
 
 

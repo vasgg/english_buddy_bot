@@ -63,7 +63,9 @@ async def main():
     dispatcher.startup.register(set_bot_commands)
     dispatcher.startup.register(on_startup_notify)
     dispatcher.shutdown.register(on_shutdown_notify)
-    dispatcher.include_routers(media_info_router, base_router, errors_router, lesson_router, quiz_router, premium_router)
+    dispatcher.include_routers(
+        media_info_router, base_router, errors_router, lesson_router, quiz_router, premium_router
+    )
     await dispatcher.start_polling(bot)
 
 

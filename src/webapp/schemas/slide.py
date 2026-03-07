@@ -106,8 +106,7 @@ def get_media_slide_data_model(
             initial=media_file_id or "",
             description=(
                 "Вставьте file_id медиа из чата Медиа English buddy. "
-                "Если file_id не найден в базе, слайд не будет создан. "
-                + media_info
+                "Если file_id не найден в базе, слайд не будет создан. " + media_info
             ),
             title="media_id",
         )

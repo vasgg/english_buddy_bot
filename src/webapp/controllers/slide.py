@@ -75,11 +75,7 @@ async def get_all_slides_from_lesson_by_order_fastui(
                 )
                 details = get_slide_details(slide)
 
-            slide_text = (
-                slide.picture
-                if slide.slide_type.value == "image"
-                else slide_text
-            )
+            slide_text = slide.picture if slide.slide_type.value == "image" else slide_text
             # noinspection PyTypeChecker
             slide_data = {
                 "id": str(slide.id),

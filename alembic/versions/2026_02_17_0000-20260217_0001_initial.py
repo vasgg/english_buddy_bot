@@ -1,7 +1,7 @@
 """initial
 
 Revision ID: 20260217_0001
-Revises: 
+Revises:
 Create Date: 2026-02-17 00:00:00.000000
 """
 

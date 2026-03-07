@@ -14,8 +14,7 @@ class DatabaseConnector:
             )
         if url_obj.drivername != "postgresql+asyncpg":
             raise ValueError(
-                f"Unsupported database driver '{url_obj.drivername}'. "
-                "Use asyncpg driver: 'postgresql+asyncpg://...'."
+                f"Unsupported database driver '{url_obj.drivername}'. Use asyncpg driver: 'postgresql+asyncpg://...'."
             )
         connect_args = {"server_settings": {"timezone": "UTC"}}
 
