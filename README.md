@@ -23,6 +23,7 @@ Set these in `.env` (see `.env.example`):
 - `TOP_BAD_SLIDES_COUNT`
 - `STAGE`
 - Optional: `SENTRY_AIOGRAM_DSN`, `SENTRY_FASTAPI_DSN`
+- Optional (webapp runtime): `WEBAPP_HOST`, `WEBAPP_PORT`, `WEBAPP_WORKERS`, `WEBAPP_LOG_LEVEL`, `WEBAPP_RELOAD`
 
 Example:
 ```
@@ -30,6 +31,8 @@ DATABASE_URL=postgresql+asyncpg://user:pass@127.0.0.1:5432/english_buddy_bot
 REDIS_URL=redis://:redis_pass@127.0.0.1:6379/1
 TASKIQ_REDIS_URL=redis://:redis_pass@127.0.0.1:6379/2
 STAGE=dev
+WEBAPP_HOST=0.0.0.0
+WEBAPP_PORT=8000
 ```
 
 ### Setup & checks
@@ -45,7 +48,7 @@ STAGE=dev
 
 ### Run
 - Run bot (polling): `uv run bot-run` (requires Redis)
-- Run webapp: `uv run webapp-run`
+- Run webapp (directly on VPS): `uv run webapp-run`
 
 ### Background Workers (Taskiq)
 This project uses Taskiq for background jobs (notifications, daily routine).
