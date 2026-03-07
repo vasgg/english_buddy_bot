@@ -25,9 +25,9 @@ async def test_get_in_progress_lessons_recent_first_returns_latest_session_per_l
             ]
         )
 
-    old = datetime(2024, 1, 1, 10, 0, 0)
-    newer = datetime(2024, 1, 2, 10, 0, 0)
-    newest = datetime(2024, 1, 3, 10, 0, 0)
+    old = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
+    newer = datetime(2024, 1, 2, 10, 0, 0, tzinfo=timezone.utc)
+    newest = datetime(2024, 1, 3, 10, 0, 0, tzinfo=timezone.utc)
 
     async with db.session_factory.begin() as session:
         session.add(
@@ -92,7 +92,7 @@ async def test_get_in_progress_lessons_recent_first_prefers_higher_id_on_same_ti
             ]
         )
 
-    same_time = datetime(2024, 1, 1, 10, 0, 0)
+    same_time = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
 
     async with db.session_factory.begin() as session:
         session.add(
